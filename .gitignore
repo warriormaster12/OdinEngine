@@ -1,0 +1,7 @@
+VulkanEngine
+.vscode/
+*.code-workspace
+build/*
+debug/*
+release/*
+*.spv
