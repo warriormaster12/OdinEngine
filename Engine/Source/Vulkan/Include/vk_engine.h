@@ -5,10 +5,11 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include <functional>
-#include <deque>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include "../vk_components/Include/vk_swapchain.h"
+#include "../vk_components/Include/vk_deletionqueue.h"
 
 struct MeshPushConstants {
 	glm::vec4 data;
@@ -18,23 +19,7 @@ struct MeshPushConstants {
 
 
 
-struct DeletionQueue
-{
-	std::deque<std::function<void()>> deletors;
 
-	void push_function(std::function<void()>&& function) {
-		deletors.push_back(function);
-	}
-
-	void flush() {
-		// reverse iterate the deletion queue to execute all the functions
-		for (auto it = deletors.rbegin(); it != deletors.rend(); it++) {
-			(*it)(); //call functors
-		}
-
-		deletors.clear();
-	}
-};
 
 
 class VulkanEngine {
@@ -44,19 +29,8 @@ public:
 	VkDebugUtilsMessengerEXT _debug_messenger; // Vulkan debug output handle
 	VkPhysicalDevice _chosenGPU; // GPU chosen as the default device
 	VkDevice _device; // Vulkan device for commands
-	VkSurfaceKHR _surface; // Vulkan window surface
 
-    VkSwapchainKHR _swapchain; // from other articles
-
-	// image format expected by the windowing system
-	VkFormat _swapchainImageFormat; 	
-	
-	//array of images from the swapchain
-	std::vector<VkImage> _swapchainImages;
-
-	//array of image-views from the swapchain
-	std::vector<VkImageView> _swapchainImageViews;
-
+	vkcomponent::SwapChain _swapChain;
 	VkQueue _graphicsQueue; //queue we will submit to
 	uint32_t _graphicsQueueFamily; //family of that queue
 
@@ -76,9 +50,8 @@ public:
 	bool _isInitialized{ false };
 	int _frameNumber {0};
 
-	DeletionQueue _mainDeletionQueue;
+	vkcomponent::DeletionQueue _mainDeletionQueue;
 
-	VkExtent2D _windowExtent{ 1700 , 900 };
 	int _selectedShader{ 0 };
 
     struct SDL_Window* _window{ nullptr };
@@ -104,8 +77,7 @@ public:
 	bool load_shader_module(const char* filePath, VkShaderModule* outShaderModule);
 
 private:
-    void init_vulkan();
-    void init_swapchain();	
+    void init_vulkan();	
 	void init_commands();
 	
 	void init_default_renderpass();

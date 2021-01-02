@@ -39,8 +39,8 @@ void VulkanEngine::init()
 		"Vulkan Engine", //window title
 		SDL_WINDOWPOS_UNDEFINED, //window position x (don't care)
 		SDL_WINDOWPOS_UNDEFINED, //window position y (don't care)
-		_windowExtent.width,  //window width in pixels
-		_windowExtent.height, //window height in pixels
+		_swapChain._windowExtent.width,  //window width in pixels
+		_swapChain._windowExtent.height, //window height in pixels
 		window_flags 
 	);
 
@@ -48,7 +48,7 @@ void VulkanEngine::init()
 	init_vulkan();
 
 	//create the swapchain
-	init_swapchain();
+	_swapChain.init_swapchain(_chosenGPU, _device, _mainDeletionQueue);
 
 	init_commands();
 
@@ -84,14 +84,14 @@ void VulkanEngine::init_vulkan()
 	_debug_messenger = vkb_inst.debug_messenger; 
 
     // get the surface of the window we opened with SDL    
-	SDL_Vulkan_CreateSurface(_window, _instance, &_surface);
+	SDL_Vulkan_CreateSurface(_window, _instance, &_swapChain._surface);
 
 	//use vkbootstrap to select a GPU. 
 	//We want a GPU that can write to the SDL surface and supports Vulkan 1.1
 	vkb::PhysicalDeviceSelector selector{ vkb_inst };
 	vkb::PhysicalDevice physicalDevice = selector
 		.set_minimum_version(1, 1)
-		.set_surface(_surface)
+		.set_surface(_swapChain._surface)
 		.select()
 		.value();
 
@@ -117,29 +117,6 @@ void VulkanEngine::init_vulkan()
 
 }
 
-void VulkanEngine::init_swapchain()
-{
-	vkb::SwapchainBuilder swapchainBuilder{_chosenGPU,_device,_surface };
-
-	vkb::Swapchain vkbSwapchain = swapchainBuilder
-		.use_default_format_selection()
-		//use vsync present mode
-		.set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-		.set_desired_extent(_windowExtent.width, _windowExtent.height)
-		.build()
-		.value();
-
-	//store swapchain and its related images
-	_swapchain = vkbSwapchain.swapchain;
-	_swapchainImages = vkbSwapchain.get_images().value();
-	_swapchainImageViews = vkbSwapchain.get_image_views().value();
-
-	_swapchainImageFormat = vkbSwapchain.image_format;
-
-	_mainDeletionQueue.push_function([=]() {
-		vkDestroySwapchainKHR(_device, _swapchain, nullptr);
-	});
-}
 
 void VulkanEngine::init_commands()
 {
@@ -164,7 +141,7 @@ void VulkanEngine::init_default_renderpass()
 	// the renderpass will use this color attachment.
 	VkAttachmentDescription color_attachment = {};
 	//the attachment will have the format needed by the swapchain
-	color_attachment.format = _swapchainImageFormat;
+	color_attachment.format = _swapChain._swapchainImageFormat;
 	//1 sample, we won't be doing MSAA
 	color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	// we Clear when this attachment is loaded
@@ -268,19 +245,19 @@ void VulkanEngine::upload_mesh(Mesh& mesh)
 void VulkanEngine::init_framebuffers()
 {
 	//create the framebuffers for the swapchain images. This will connect the render-pass to the images for rendering
-	VkFramebufferCreateInfo fb_info = vkinit::framebuffer_create_info(_renderPass, _windowExtent);
+	VkFramebufferCreateInfo fb_info = vkinit::framebuffer_create_info(_renderPass, _swapChain._windowExtent);
 
-	const uint32_t swapchain_imagecount = _swapchainImages.size();
+	const uint32_t swapchain_imagecount = _swapChain._swapchainImages.size();
 	_framebuffers = std::vector<VkFramebuffer>(swapchain_imagecount);
 
 	for (int i = 0; i < swapchain_imagecount; i++) {
 
-		fb_info.pAttachments = &_swapchainImageViews[i];
+		fb_info.pAttachments = &_swapChain._swapchainImageViews[i];
 		VK_CHECK(vkCreateFramebuffer(_device, &fb_info, nullptr, &_framebuffers[i]));
 
 		_mainDeletionQueue.push_function([=]() {
 			vkDestroyFramebuffer(_device, _framebuffers[i], nullptr);
-			vkDestroyImageView(_device, _swapchainImageViews[i], nullptr);
+			vkDestroyImageView(_device, _swapChain._swapchainImageViews[i], nullptr);
     	});		
 	}
 }
@@ -369,13 +346,13 @@ VkShaderModule triangleFragShader;
 	//build viewport and scissor from the swapchain extents
 	pipelineBuilder._viewport.x = 0.0f;
 	pipelineBuilder._viewport.y = 0.0f;
-	pipelineBuilder._viewport.width = (float)_windowExtent.width;
-	pipelineBuilder._viewport.height = (float)_windowExtent.height;
+	pipelineBuilder._viewport.width = (float)_swapChain._windowExtent.width;
+	pipelineBuilder._viewport.height = (float)_swapChain._windowExtent.height;
 	pipelineBuilder._viewport.minDepth = 0.0f;
 	pipelineBuilder._viewport.maxDepth = 1.0f;
 	
 	pipelineBuilder._scissor.offset = { 0, 0 };
-	pipelineBuilder._scissor.extent = _windowExtent;
+	pipelineBuilder._scissor.extent = _swapChain._windowExtent;
 
 	//configure the rasterizer to draw filled triangles
 	pipelineBuilder._rasterizer = vkinit::rasterization_state_create_info(VK_POLYGON_MODE_FILL);
@@ -539,7 +516,7 @@ void VulkanEngine::cleanup()
 		_mainDeletionQueue.flush();
 
 		vmaDestroyAllocator(_allocator);
-		vkDestroySurfaceKHR(_instance, _surface, nullptr);
+		vkDestroySurfaceKHR(_instance, _swapChain._surface, nullptr);
 
 		vkDestroyDevice(_device, nullptr);
 		vkDestroyInstance(_instance, nullptr);
@@ -556,7 +533,7 @@ void VulkanEngine::draw()
 
 	//request image from the swapchain, one second timeout
 	uint32_t swapchainImageIndex;
-	VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1000000000, _presentSemaphore, nullptr, &swapchainImageIndex));
+	VK_CHECK(vkAcquireNextImageKHR(_device,_swapChain._swapchain, 1000000000, _presentSemaphore, nullptr, &swapchainImageIndex));
 
 	//now that we are sure that the commands finished executing, we can safely reset the command buffer to begin recording again.
 	VK_CHECK(vkResetCommandBuffer(_mainCommandBuffer, 0));
@@ -587,7 +564,7 @@ void VulkanEngine::draw()
 	rpInfo.renderPass = _renderPass;
 	rpInfo.renderArea.offset.x = 0;
 	rpInfo.renderArea.offset.y = 0;
-	rpInfo.renderArea.extent = _windowExtent;
+	rpInfo.renderArea.extent = _swapChain._windowExtent;
 	rpInfo.framebuffer = _framebuffers[swapchainImageIndex];	
 
 	//connect clear values
@@ -659,7 +636,7 @@ void VulkanEngine::draw()
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.pNext = nullptr;
 
-	presentInfo.pSwapchains = &_swapchain;
+	presentInfo.pSwapchains = &_swapChain._swapchain;
 	presentInfo.swapchainCount = 1;
 
 	presentInfo.pWaitSemaphores = &_renderSemaphore;
