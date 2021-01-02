@@ -1,11 +1,21 @@
 #pragma once
 
 #include "vk_types.h"
+#include "vk_mesh.h"
 #include <vector>
 #include <fstream>
 #include <iostream>
 #include <functional>
 #include <deque>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+struct MeshPushConstants {
+	glm::vec4 data;
+	glm::mat4 render_matrix;
+};
+
+
 
 
 struct DeletionQueue
@@ -55,6 +65,8 @@ public:
 
 	VkRenderPass _renderPass;
 
+	VmaAllocator _allocator; //vma lib allocator
+
 	std::vector<VkFramebuffer> _framebuffers;
 
 	VkSemaphore _presentSemaphore, _renderSemaphore;
@@ -71,9 +83,9 @@ public:
 
     struct SDL_Window* _window{ nullptr };
 
-	VkPipelineLayout _trianglePipelineLayout;
-	VkPipeline _trianglePipeline;
-	VkPipeline _redTrianglePipeline;
+	VkPipelineLayout _meshPipelineLayout;
+	VkPipeline _meshPipeline;
+	Mesh _triangleMesh;
 	
 	//initializes everything in the engine
 	void init();
@@ -102,6 +114,10 @@ private:
 	void init_pipelines();
 
 	void init_sync_structures();
+
+	void load_meshes();
+
+	void upload_mesh(Mesh& mesh);
 	
 };
 
