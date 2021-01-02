@@ -2,6 +2,7 @@
 
 #include "vk_types.h"
 #include <vector>
+#include <fstream>
 
 class VulkanEngine {
 public:
@@ -43,6 +44,9 @@ public:
 	VkExtent2D _windowExtent{ 1700 , 900 };
 
     struct SDL_Window* _window{ nullptr };
+
+	VkPipelineLayout _trianglePipelineLayout;
+	VkPipeline _trianglePipeline;
 	
 	//initializes everything in the engine
 	void init();
@@ -55,6 +59,11 @@ public:
 
 	//run main loop
 	void run();
+
+
+	//loads a shader module from a spir-v file. Returns false if it errors
+	bool load_shader_module(const char* filePath, VkShaderModule* outShaderModule);
+
 private:
     void init_vulkan();
     void init_swapchain();	
@@ -63,5 +72,27 @@ private:
 	void init_default_renderpass();
 	void init_framebuffers();
 
+	void init_pipelines();
+
 	void init_sync_structures();
+	
 };
+
+
+class PipelineBuilder {
+public:
+
+	std::vector<VkPipelineShaderStageCreateInfo> _shaderStages;
+	VkPipelineVertexInputStateCreateInfo _vertexInputInfo;
+	VkPipelineInputAssemblyStateCreateInfo _inputAssembly;
+	VkViewport _viewport;
+	VkRect2D _scissor;
+	VkPipelineRasterizationStateCreateInfo _rasterizer;
+	VkPipelineColorBlendAttachmentState _colorBlendAttachment;
+	VkPipelineMultisampleStateCreateInfo _multisampling;
+	VkPipelineLayout _pipelineLayout;
+
+	VkPipeline build_pipeline(VkDevice device, VkRenderPass pass);
+};
+
+
