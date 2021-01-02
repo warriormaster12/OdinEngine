@@ -20,5 +20,11 @@ namespace vkinit {
     VkPipelineColorBlendAttachmentState color_blend_attachment_state();
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info();
+
+    VkFramebufferCreateInfo framebuffer_create_info(VkRenderPass _renderPass, VkExtent2D _windowExtent);
+
+    VkFenceCreateInfo fence_create_info(VkFenceCreateFlags flag);
+
+    VkSemaphoreCreateInfo semaphore_create_info();
 }
 
