@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <glm/glm.hpp>
+#include <unordered_map>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "../vk_components/Include/vk_swapchain.h"
@@ -20,8 +21,18 @@ struct MeshPushConstants {
 
 
 
+struct Material {
+	VkPipeline pipeline;
+	VkPipelineLayout pipelineLayout;
+};
 
+struct RenderObject {
+	Mesh* mesh;
 
+	Material* material;
+
+	glm::mat4 transformMatrix;
+};
 
 class VulkanEngine {
 public:
@@ -47,6 +58,11 @@ public:
 	VkSemaphore _presentSemaphore, _renderSemaphore;
 	VkFence _renderFence;
 
+	VkPipelineLayout _meshPipelineLayout;
+	VkPipeline  _meshPipeline;
+
+	Mesh _triangleMesh;
+	Mesh _monkeyMesh;
 
 	bool _isInitialized{ false };
 	int _frameNumber {0};
@@ -57,10 +73,24 @@ public:
 
     struct SDL_Window* _window{ nullptr };
 
-	VkPipelineLayout _meshPipelineLayout;
-	VkPipeline _meshPipeline;
-	Mesh _triangleMesh;
-	Mesh _monkeyMesh;
+	//default array of renderable objects
+	std::vector<RenderObject> _renderables;
+
+	std::unordered_map<std::string,Material> _materials;
+	std::unordered_map<std::string,Mesh> _meshes;
+	//functions
+
+	//create material and add it to the map
+	Material* create_material(VkPipeline pipeline, VkPipelineLayout layout,const std::string& name);
+
+	//returns nullptr if it can't be found
+	Material* get_material(const std::string& name);
+
+	//returns nullptr if it can't be found
+	Mesh* get_mesh(const std::string& name);
+
+	//our draw function
+	void draw_objects(VkCommandBuffer cmd,RenderObject* first, int count);
 
 
 	
@@ -94,6 +124,8 @@ private:
 	void load_meshes();
 
 	void upload_mesh(Mesh& mesh);
+
+	void init_scene();
 	
 };
 
