@@ -1,7 +1,9 @@
 #pragma once 
 
 #include "../../Include/vk_types.h"
+#include "../../Include/vk_init.h"
 #include "vk_deletionqueue.h"
+#include "vk_check.h"
 #include <iostream>
 
 namespace vkcomponent
@@ -22,6 +24,12 @@ namespace vkcomponent
 
         VkExtent2D _windowExtent{ 1700 , 900 };
         VkSurfaceKHR _surface; // Vulkan window surface
-        void init_swapchain(VkPhysicalDevice _chosenGPU, VkDevice _device, DeletionQueue& _refDeletionQueue);
+
+        VkImageView _depthImageView;
+        AllocatedImage _depthImage;
+
+        //the format for the depth image
+        VkFormat _depthFormat;
+        void init_swapchain(VkPhysicalDevice _chosenGPU, VkDevice _device, VmaAllocator& _allocator,DeletionQueue& _refDeletionQueue);
     };
 }

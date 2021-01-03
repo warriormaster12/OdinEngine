@@ -10,6 +10,7 @@
 
 #include "../vk_components/Include/vk_swapchain.h"
 #include "../vk_components/Include/vk_deletionqueue.h"
+#include "../vk_components/Include/vk_check.h"
 
 struct MeshPushConstants {
 	glm::vec4 data;
@@ -59,6 +60,9 @@ public:
 	VkPipelineLayout _meshPipelineLayout;
 	VkPipeline _meshPipeline;
 	Mesh _triangleMesh;
+	Mesh _monkeyMesh;
+
+
 	
 	//initializes everything in the engine
 	void init();
@@ -106,6 +110,8 @@ public:
 	VkPipelineColorBlendAttachmentState _colorBlendAttachment;
 	VkPipelineMultisampleStateCreateInfo _multisampling;
 	VkPipelineLayout _pipelineLayout;
+
+	VkPipelineDepthStencilStateCreateInfo _depthStencil;
 
 	VkPipeline build_pipeline(VkDevice device, VkRenderPass pass);
 };
