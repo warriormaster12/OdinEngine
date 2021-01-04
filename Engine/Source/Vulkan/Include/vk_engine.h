@@ -193,8 +193,6 @@ private:
 
 	void init_vulkan();
 
-	void init_swapchain();
-
 	void init_default_renderpass();
 
 	void init_framebuffers();

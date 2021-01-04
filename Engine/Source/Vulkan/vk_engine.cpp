@@ -12,21 +12,6 @@
 #include "../third-party/Vma/vk_mem_alloc.h"
 
 constexpr bool bUseValidationLayers = true;
-
-//we want to immediately abort when there is an error. In normal engines this would give an error message to the user, or perform a dump of state.
-using namespace std;
-#define VK_CHECK(x)                                                 \
-	do                                                              \
-	{                                                               \
-		VkResult err = x;                                           \
-		if (err)                                                    \
-		{                                                           \
-			std::cout <<"Detected Vulkan error: " << err << std::endl; \
-			abort();                                                \
-		}                                                           \
-	} while (0)
-
-
 void VulkanEngine::init()
 {
 	// We initialize SDL and create a window with it. 
@@ -68,9 +53,8 @@ void VulkanEngine::init()
 void VulkanEngine::cleanup()
 {	
 	if (_isInitialized) {
-		
 		//make sure the gpu has stopped doing its things
-		vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true, 1000000000);
+		VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true, 1000000000));
 
 		_mainDeletionQueue.flush();
 
@@ -275,62 +259,6 @@ void VulkanEngine::init_vulkan()
 
 	std::cout << "The gpu has a minimum buffer alignement of " << _gpuProperties.limits.minUniformBufferOffsetAlignment << std::endl;
 
-}
-
-void VulkanEngine::init_swapchain()
-{
-	vkb::SwapchainBuilder swapchainBuilder{_chosenGPU,_device,_swapChain._surface };
-
-	vkb::Swapchain vkbSwapchain = swapchainBuilder
-		.use_default_format_selection()
-		//use vsync present mode
-		.set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-		.set_desired_extent(_swapChain._windowExtent.width, _swapChain._windowExtent.height)
-		.build()
-		.value();
-
-	//store swapchain and its related images
-	_swapChain._swapchain = vkbSwapchain.swapchain;
-	_swapChain._swapchainImages = vkbSwapchain.get_images().value();
-	_swapChain._swapchainImageViews = vkbSwapchain.get_image_views().value();
-
-	_swapChain._swapchainImageFormat = vkbSwapchain.image_format;
-
-	_mainDeletionQueue.push_function([=]() {
-		vkDestroySwapchainKHR(_device, _swapChain._swapchain, nullptr);
-	});
-
-	//depth image size will match the window
-	VkExtent3D depthImageExtent = {
-		_swapChain._windowExtent.width,
-		_swapChain._windowExtent.height,
-		1
-	};
-
-	//hardcoding the depth format to 32 bit float
-	_swapChain._depthFormat = VK_FORMAT_D32_SFLOAT;
-
-	//the depth image will be a image with the format we selected and Depth Attachment usage flag
-	VkImageCreateInfo dimg_info = vkinit::image_create_info(_swapChain._depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depthImageExtent);
-
-	//for the depth image, we want to allocate it from gpu local memory
-	VmaAllocationCreateInfo dimg_allocinfo = {};
-	dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-	dimg_allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	//allocate and create the image
-	vmaCreateImage(_allocator, &dimg_info, &dimg_allocinfo, &_swapChain._depthImage._image, &_swapChain._depthImage._allocation, nullptr);
-
-	//build a image-view for the depth image to use for rendering
-	VkImageViewCreateInfo dview_info = vkinit::imageview_create_info(_swapChain._depthFormat, _swapChain._depthImage._image, VK_IMAGE_ASPECT_DEPTH_BIT);;
-
-	VK_CHECK(vkCreateImageView(_device, &dview_info, nullptr, &_swapChain._depthImageView));
-
-	//add to deletion queues
-	_mainDeletionQueue.push_function([=]() {
-		vkDestroyImageView(_device, _swapChain._depthImageView, nullptr);
-		vmaDestroyImage(_allocator, _swapChain._depthImage._image, _swapChain._depthImage._allocation);
-	});
 }
 
 void VulkanEngine::init_default_renderpass()
@@ -1059,7 +987,18 @@ void VulkanEngine::init_descriptors()
 		VkWriteDescriptorSet setWrites[] = { cameraWrite,sceneWrite,objectWrite };
 
 		vkUpdateDescriptorSets(_device, 3, setWrites, 0, nullptr);
+		_mainDeletionQueue.push_function([=]()
+		{
+			vmaDestroyBuffer(_allocator, _sceneParameterBuffer._buffer, _sceneParameterBuffer._allocation);
+			vmaDestroyBuffer(_allocator, _frames[i].objectBuffer._buffer, _frames[i].objectBuffer._allocation);
+			vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].cameraBuffer._allocation);
+		});
 	}
+	_mainDeletionQueue.push_function([=]() {
+		vkDestroyDescriptorSetLayout(_device, _globalSetLayout, nullptr);
+		vkDestroyDescriptorSetLayout(_device, _objectSetLayout, nullptr);
+		vkDestroyDescriptorPool(_device, _descriptorPool, nullptr);
+	});
 }
 
 
