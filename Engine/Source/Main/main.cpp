@@ -1,14 +1,14 @@
-#include "../Vulkan/Include/vk_engine.h"
+#include "../Vulkan/Include/vk_renderer.h"
 
 int main(int argc, char* argv[])
 {
-	VulkanEngine engine;
+	VulkanRenderer renderer;
 
-	engine.init();
+	renderer.init();
 
-	engine.run();
+	renderer.run();
 
-	engine.cleanup();
+	renderer.cleanup();
 
 	return 0;
 }
