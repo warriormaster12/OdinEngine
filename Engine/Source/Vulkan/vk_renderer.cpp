@@ -874,8 +874,8 @@ void VulkanRenderer::init_descriptors()
 		{
 			frame.dynamicDescriptorAllocator->cleanup();
 		}
-		vkDestroyDescriptorSetLayout(_device, _globalSetLayout, nullptr);
-		vkDestroyDescriptorSetLayout(_device, _objectSetLayout, nullptr);
+		_descriptorAllocator->cleanup();
+		_descriptorLayoutCache->cleanup();
 	});
 }
 
