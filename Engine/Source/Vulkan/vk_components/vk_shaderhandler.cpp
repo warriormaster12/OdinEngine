@@ -142,103 +142,94 @@ EShLanguage vkcomponent::GetShaderStage(const std::string& stage)
 
 const std::string vkcomponent::CompileGLSL(const std::string& filename)
 {
-    if (!glslangInitialized)
-    {
-        glslang::InitializeProcess();
-        glslangInitialized = true;
-    }
-    //Load GLSL into a string
-    std::ifstream file(filename);
-
-    if (!file.is_open()) 
-    {
-        std::cout << "Failed to load shader: " << filename << std::endl;
-        throw std::runtime_error("failed to open file: " + filename);
-    }
-
-    std::string InputGLSL((std::istreambuf_iterator<char>(file)),
-                            std::istreambuf_iterator<char>());
-
-    const char* InputCString = InputGLSL.c_str();
-
-    EShLanguage ShaderType = GetShaderStage(GetSuffix(filename));
-    glslang::TShader Shader(ShaderType);
-    
-    Shader.setStrings(&InputCString, 1);
-    
-
-    int ClientInputSemanticsVersion = 100; // maps to, say, #define VULKAN 100
-    glslang::EShTargetClientVersion VulkanClientVersion = glslang::EShTargetVulkan_1_0;
-    glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_0;
-
-    Shader.setEnvInput(glslang::EShSourceGlsl, ShaderType, glslang::EShClientVulkan, ClientInputSemanticsVersion);
-    Shader.setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
-    Shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
-
-    TBuiltInResource Resources;
-    Resources = handleResources();
-    EShMessages messages = (EShMessages) (EShMsgSpvRules | EShMsgVulkanRules);
-
-    const int DefaultVersion = 100;
-
-    DirStackFileIncluder Includer;
-
-    //Get Path of File
-    std::string Path = GetFilePath(filename);
-    Includer.pushExternalLocalDirectory(Path);
-
-    std::string PreprocessedGLSL;
-
-    if (!Shader.preprocess(&Resources, DefaultVersion, ENoProfile, false, false, messages, &PreprocessedGLSL, Includer)) 
-    {
-        std::cout << "GLSL Preprocessing Failed for: " << filename << std::endl;
-        std::cout << Shader.getInfoLog() << std::endl;
-        std::cout << Shader.getInfoDebugLog() << std::endl;
-    }
-    const char* PreprocessedCStr = PreprocessedGLSL.c_str();
-    Shader.setStrings(&PreprocessedCStr, 1);
-    if (!Shader.parse(&Resources, 100, false, messages))
-    {
-        std::cout << "GLSL Parsing Failed for: " << filename << std::endl;
-        std::cout << Shader.getInfoLog() << std::endl;
-        std::cout << Shader.getInfoDebugLog() << std::endl;
-    }
-    glslang::TProgram Program;
-    Program.addShader(&Shader);
-
-    if(!Program.link(messages))
-    {
-        std::cout << "GLSL Linking Failed for: " << filename << std::endl;
-        std::cout << Shader.getInfoLog() << std::endl;
-        std::cout << Shader.getInfoDebugLog() << std::endl;
-    }
-    std::vector<unsigned int> SpirV;
-    spv::SpvBuildLogger logger;
-    glslang::SpvOptions spvOptions;
-    glslang::GlslangToSpv(*Program.getIntermediate(ShaderType), SpirV, &logger, &spvOptions);
     std::string SpirV_filename = filename + ".spv";
-    glslang::OutputSpvBin(SpirV, SpirV_filename.c_str());   
+    //Check that spv file already exists
+    std::ifstream file_spirv(SpirV_filename);
+    if (file_spirv.fail())
+    {
+        if (!glslangInitialized)
+        {
+            glslang::InitializeProcess();
+            glslangInitialized = true;
+        }
+        //Load GLSL into a string
+        std::ifstream file_glsl(filename);
 
-    return SpirV_filename;
-}
+        if (!file_glsl.is_open()) 
+        {
+            std::cout << "Failed to load shader: " << filename << std::endl;
+            throw std::runtime_error("failed to open file: " + filename);
+        }
 
-std::vector<char> vkcomponent::readFile(const std::string& filename)
-{
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+        std::string InputGLSL((std::istreambuf_iterator<char>(file_glsl)),
+                                std::istreambuf_iterator<char>());
 
-    if (!file.is_open()) {
-        throw std::runtime_error("failed to open file!");
+        const char* InputCString = InputGLSL.c_str();
+
+        EShLanguage ShaderType = GetShaderStage(GetSuffix(filename));
+        glslang::TShader Shader(ShaderType);
+        
+        Shader.setStrings(&InputCString, 1);
+        
+
+        int ClientInputSemanticsVersion = 100; // maps to, say, #define VULKAN 100
+        glslang::EShTargetClientVersion VulkanClientVersion = glslang::EShTargetVulkan_1_0;
+        glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_0;
+
+        Shader.setEnvInput(glslang::EShSourceGlsl, ShaderType, glslang::EShClientVulkan, ClientInputSemanticsVersion);
+        Shader.setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
+        Shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
+
+        TBuiltInResource Resources;
+        Resources = handleResources();
+        EShMessages messages = (EShMessages) (EShMsgSpvRules | EShMsgVulkanRules);
+
+        const int DefaultVersion = 100;
+
+        DirStackFileIncluder Includer;
+
+        //Get Path of File
+        std::string Path = GetFilePath(filename);
+        Includer.pushExternalLocalDirectory(Path);
+
+        std::string PreprocessedGLSL;
+
+        if (!Shader.preprocess(&Resources, DefaultVersion, ENoProfile, false, false, messages, &PreprocessedGLSL, Includer)) 
+        {
+            std::cout << "GLSL Preprocessing Failed for: " << filename << std::endl;
+            std::cout << Shader.getInfoLog() << std::endl;
+            std::cout << Shader.getInfoDebugLog() << std::endl;
+        }
+        const char* PreprocessedCStr = PreprocessedGLSL.c_str();
+        Shader.setStrings(&PreprocessedCStr, 1);
+        if (!Shader.parse(&Resources, 100, false, messages))
+        {
+            std::cout << "GLSL Parsing Failed for: " << filename << std::endl;
+            std::cout << Shader.getInfoLog() << std::endl;
+            std::cout << Shader.getInfoDebugLog() << std::endl;
+        }
+        glslang::TProgram Program;
+        Program.addShader(&Shader);
+
+        if(!Program.link(messages))
+        {
+            std::cout << "GLSL Linking Failed for: " << filename << std::endl;
+            std::cout << Shader.getInfoLog() << std::endl;
+            std::cout << Shader.getInfoDebugLog() << std::endl;
+        }
+        std::vector<unsigned int> SpirV;
+        spv::SpvBuildLogger logger;
+        glslang::SpvOptions spvOptions;
+        glslang::GlslangToSpv(*Program.getIntermediate(ShaderType), SpirV, &logger, &spvOptions);
+        glslang::OutputSpvBin(SpirV, SpirV_filename.c_str());   
+        std::cout<<"file " + filename + " compiled to " + SpirV_filename <<std::endl;
+        return SpirV_filename;
     }
-
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> buffer(fileSize);
-
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-
-    file.close();
-
-    return buffer;
+    else 
+    {
+        std::cout<<"file " + SpirV_filename + " already exists" <<std::endl;
+        return SpirV_filename;
+    }
 }
 
 std::string vkcomponent::GetFilePath(const std::string& str)
