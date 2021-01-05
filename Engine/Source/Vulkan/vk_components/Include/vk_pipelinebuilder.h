@@ -1,6 +1,5 @@
 #pragma once 
 
-#include "../../Include/vk_init.h"
 #include "../../Include/vk_types.h"
 
 #include <vector>

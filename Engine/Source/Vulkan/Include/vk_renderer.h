@@ -12,6 +12,7 @@
 
 #include "../vk_components/Include/vk_swapchain.h"
 #include "../vk_components/Include/vk_deletionqueue.h"
+#include "../vk_components/Include/vk_descriptors.h"
 
 
 
@@ -47,6 +48,8 @@ struct FrameData {
 
 	AllocatedBuffer cameraBuffer;
 	VkDescriptorSet globalDescriptor;
+
+	vkcomponent::DescriptorAllocator* dynamicDescriptorAllocator;
 
 	AllocatedBuffer objectBuffer;
 	VkDescriptorSet objectDescriptor;
@@ -98,14 +101,15 @@ public:
 	
 	VkRenderPass _renderPass;
 
-	
-
 	std::vector<VkFramebuffer> _framebuffers;
 	
 
     vkcomponent::DeletionQueue _mainDeletionQueue;
 	
 	VmaAllocator _allocator; //vma lib allocator
+
+	vkcomponent::DescriptorAllocator* _descriptorAllocator;
+	vkcomponent::DescriptorLayoutCache* _descriptorLayoutCache;
 
 	
 

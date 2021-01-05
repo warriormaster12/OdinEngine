@@ -9,6 +9,7 @@
 #include "vk_components/Include/vk_pipelinebuilder.h"
 #include "vk_components/Include/vk_shaderhandler.h"
 
+
 //bootstrap library
 #include "VkBootstrap.h"
 #define VMA_IMPLEMENTATION
@@ -789,23 +790,11 @@ size_t VulkanRenderer::pad_uniform_buffer_size(size_t originalSize)
 
 void VulkanRenderer::init_descriptors()
 {
+	_descriptorAllocator = new vkcomponent::DescriptorAllocator{};
+	_descriptorAllocator->init(_device);
 
-	//create a descriptor pool that will hold 10 uniform buffers
-	std::vector<VkDescriptorPoolSize> sizes =
-	{
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 }
-	};
-
-	VkDescriptorPoolCreateInfo pool_info = {};
-	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	pool_info.flags = 0;
-	pool_info.maxSets = 10;
-	pool_info.poolSizeCount = (uint32_t)sizes.size();
-	pool_info.pPoolSizes = sizes.data();
-	
-	vkCreateDescriptorPool(_device, &pool_info, nullptr, &_descriptorPool);	
+	_descriptorLayoutCache = new vkcomponent::DescriptorLayoutCache{};
+	_descriptorLayoutCache->init(_device);
 	
 	VkDescriptorSetLayoutBinding cameraBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT,0);
 	VkDescriptorSetLayoutBinding sceneBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
@@ -819,7 +808,7 @@ void VulkanRenderer::init_descriptors()
 	setinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	setinfo.pBindings = bindings;
 
-	vkCreateDescriptorSetLayout(_device, &setinfo, nullptr, &_globalSetLayout);
+	_globalSetLayout = _descriptorLayoutCache->create_descriptor_layout(&setinfo);
 
 	VkDescriptorSetLayoutBinding objectBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
@@ -830,37 +819,23 @@ void VulkanRenderer::init_descriptors()
 	set2info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	set2info.pBindings = &objectBind;
 
-	vkCreateDescriptorSetLayout(_device, &set2info, nullptr, &_objectSetLayout);
-
+	_objectSetLayout = _descriptorLayoutCache->create_descriptor_layout(&set2info);
 
 	const size_t sceneParamBufferSize = FRAME_OVERLAP * pad_uniform_buffer_size(sizeof(GPUSceneData));
-
 	_sceneParameterBuffer = create_buffer(sceneParamBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	for (int i = 0; i < FRAME_OVERLAP; i++)
 	{
+		_frames[i].dynamicDescriptorAllocator = new vkcomponent::DescriptorAllocator{};
+		_frames[i].dynamicDescriptorAllocator->init(_device);
 		_frames[i].cameraBuffer = create_buffer(sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 		const int MAX_OBJECTS = 10000;
 		_frames[i].objectBuffer = create_buffer(sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-		VkDescriptorSetAllocateInfo allocInfo = {};
-		allocInfo.pNext = nullptr;
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = _descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &_globalSetLayout;
+		_frames[i].dynamicDescriptorAllocator->allocate(&_frames[i].globalDescriptor, _globalSetLayout);
 
-		vkAllocateDescriptorSets(_device, &allocInfo, &_frames[i].globalDescriptor);
-
-		VkDescriptorSetAllocateInfo objectSetAlloc = {};
-		objectSetAlloc.pNext = nullptr;
-		objectSetAlloc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		objectSetAlloc.descriptorPool = _descriptorPool;
-		objectSetAlloc.descriptorSetCount = 1;
-		objectSetAlloc.pSetLayouts = &_objectSetLayout;
-
-		vkAllocateDescriptorSets(_device, &objectSetAlloc, &_frames[i].objectDescriptor);
+		_frames[i].dynamicDescriptorAllocator->allocate(&_frames[i].objectDescriptor, _objectSetLayout);
 
 		VkDescriptorBufferInfo cameraInfo;
 		cameraInfo.buffer = _frames[i].cameraBuffer._buffer;
@@ -895,9 +870,12 @@ void VulkanRenderer::init_descriptors()
 	}
 	_mainDeletionQueue.push_function([=]() {
 		vmaDestroyBuffer(_allocator, _sceneParameterBuffer._buffer, _sceneParameterBuffer._allocation);
+		for (auto& frame : _frames)
+		{
+			frame.dynamicDescriptorAllocator->cleanup();
+		}
 		vkDestroyDescriptorSetLayout(_device, _globalSetLayout, nullptr);
 		vkDestroyDescriptorSetLayout(_device, _objectSetLayout, nullptr);
-		vkDestroyDescriptorPool(_device, _descriptorPool, nullptr);
 	});
 }
 
