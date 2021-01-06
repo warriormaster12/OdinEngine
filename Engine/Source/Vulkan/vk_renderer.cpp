@@ -446,6 +446,12 @@ void VulkanRenderer::init_pipelines()
 	{
 		std::cout << "Error when building the mesh vertex shader module" << std::endl;
 	}
+	VkShaderModule texturedMeshShader;
+	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/textured_lit.frag").c_str(), &texturedMeshShader, _device))
+	{
+		std::cout << "Error when building the textured mesh shader" << std::endl;
+	}
+
 
 	
 	//build the stage-create-info for both vertex and fragment stages. This lets the pipeline know the shader modules per stage
@@ -532,12 +538,24 @@ void VulkanRenderer::init_pipelines()
 
 	create_material(meshPipeline, meshPipLayout, "defaultmesh");
 
+	//create pipeline for textured drawing
+	pipelineBuilder._shaderStages.clear();
+	pipelineBuilder._shaderStages.push_back(
+		vkinit::pipeline_shader_stage_create_info(VK_SHADER_STAGE_VERTEX_BIT, meshVertShader));
+
+	pipelineBuilder._shaderStages.push_back(
+		vkinit::pipeline_shader_stage_create_info(VK_SHADER_STAGE_FRAGMENT_BIT, texturedMeshShader));
+
+	VkPipeline texPipeline = pipelineBuilder.build_pipeline(_device, _renderPass);
+	create_material(texPipeline, meshPipLayout, "texturedmesh");
+
 	vkDestroyShaderModule(_device, meshVertShader, nullptr);
 	vkDestroyShaderModule(_device, colorMeshShader, nullptr);
+	vkDestroyShaderModule(_device, texturedMeshShader, nullptr);
 
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroyPipeline(_device, meshPipeline, nullptr);
-
+		vkDestroyPipeline(_device, texPipeline, nullptr);
 		vkDestroyPipelineLayout(_device, meshPipLayout, nullptr);
 	});
 }
@@ -572,6 +590,13 @@ void VulkanRenderer::load_meshes()
 
 	_meshes["monkey"] = monkeyMesh;
 	_meshes["triangle"] = triMesh;
+
+	Mesh lostEmpire{};
+	lostEmpire.load_from_obj("EngineAssets/Meshes/lost_empire.obj");
+	
+	upload_mesh(lostEmpire);
+	
+	_meshes["empire"] = lostEmpire;
 }
 
 
@@ -817,6 +842,13 @@ void VulkanRenderer::init_scene()
 			_renderables.push_back(tri);
 		}
 	}
+
+	RenderObject map;
+	map.mesh = get_mesh("empire");
+	map.material = get_material("texturedmesh");
+	map.transformMatrix = glm::translate(glm::vec3{ 5,-10,0 }); 
+
+	_renderables.push_back(map);
 }
 
 AllocatedBuffer VulkanRenderer::create_buffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage)
