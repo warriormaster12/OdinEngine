@@ -7,7 +7,9 @@
 
 namespace vkcomponent
 {
+    //loads a shader module from a spir-v file. Returns false if it errors
     bool load_shader_module(const char* filePath, VkShaderModule* outShaderModule, VkDevice& device);
+    
     std::string GetSuffix(const std::string& name);
     EShLanguage GetShaderStage(const std::string& stage);
     const std::string CompileGLSL(const std::string& filename);

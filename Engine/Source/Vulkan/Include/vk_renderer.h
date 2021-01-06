@@ -74,6 +74,17 @@ struct GPUObjectData {
 	glm::mat4 modelMatrix;
 };
 
+struct UploadContext {
+	VkFence _uploadFence;
+	VkCommandPool _commandPool;	
+};
+
+struct Texture {
+	AllocatedImage image;
+	VkImageView imageView;
+};
+
+
 constexpr unsigned int FRAME_OVERLAP = 2;
 
 class VulkanRenderer {
@@ -111,9 +122,6 @@ public:
 	vkcomponent::DescriptorAllocator* _descriptorAllocator;
 	vkcomponent::DescriptorLayoutCache* _descriptorLayoutCache;
 
-	
-
-	VkDescriptorPool _descriptorPool;
 
 	VkDescriptorSetLayout _globalSetLayout;
 	VkDescriptorSetLayout _objectSetLayout;
@@ -123,6 +131,9 @@ public:
 
 	vkcomponent::SwapChain _swapChainObj{_chosenGPU, _device, _allocator, _mainDeletionQueue};
 
+	//texture hashmap
+	std::unordered_map<std::string, Texture> _loadedTextures;
+	void load_images();
 	//initializes everything in the engine
 	void init();
 
@@ -143,7 +154,11 @@ public:
 
 	std::unordered_map<std::string, Material> _materials;
 	std::unordered_map<std::string, Mesh> _meshes;
+
+	UploadContext _uploadContext;
+
 	//functions
+	void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
 
 	//create material and add it to the map
 	Material* create_material(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
@@ -177,8 +192,6 @@ private:
 	void init_scene();
 
 	void init_descriptors();
-
-	//loads a shader module from a spir-v file. Returns false if it errors
 
 	void load_meshes();
 

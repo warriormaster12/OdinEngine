@@ -136,11 +136,11 @@ VkFramebufferCreateInfo vkinit::framebuffer_create_info(VkRenderPass _renderPass
     return info;
 }
 
- VkFenceCreateInfo vkinit::fence_create_info(VkFenceCreateFlags flag)
+ VkFenceCreateInfo vkinit::fence_create_info(VkFenceCreateFlags flags /*= 0*/)
  {
     VkFenceCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    info.flags = flag;
+    info.flags = flags;
 	info.pNext = nullptr;
 
     return info;

@@ -23,7 +23,7 @@ namespace vkinit {
 
     VkFramebufferCreateInfo framebuffer_create_info(VkRenderPass _renderPass, VkExtent2D _windowExtent);
 
-    VkFenceCreateInfo fence_create_info(VkFenceCreateFlags flag);
+    VkFenceCreateInfo fence_create_info(VkFenceCreateFlags flags = 0);
 
     VkSemaphoreCreateInfo semaphore_create_info();
 
