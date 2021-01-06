@@ -11,6 +11,7 @@ namespace vkcomponent
     class SwapChain
     {
     public:
+        SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator,DeletionQueue& refDeletionQueue);
         VkSwapchainKHR _swapchain; // from other articles
 
         // image format expected by the windowing system
@@ -30,6 +31,11 @@ namespace vkcomponent
 
         //the format for the depth image
         VkFormat _depthFormat;
-        void init_swapchain(VkPhysicalDevice _chosenGPU, VkDevice _device, VmaAllocator& _allocator,DeletionQueue& _refDeletionQueue);
+        void init_swapchain();
+    private: 
+        VkPhysicalDevice* _chosenGPU;
+        VkDevice* _device;
+        VmaAllocator* _allocator;
+        DeletionQueue* _refDeletionQueue;
     };
 }

@@ -1,9 +1,17 @@
 #include "Include/vk_swapchain.h"
 #include "VkBootstrap.h"
 
-void vkcomponent::SwapChain::init_swapchain(VkPhysicalDevice _chosenGPU, VkDevice _device,  VmaAllocator& _allocator,DeletionQueue& _refDeletionQueue)
+vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator,DeletionQueue& refDeletionQueue)
 {
-    vkb::SwapchainBuilder swapchainBuilder{_chosenGPU,_device,_surface };
+	_chosenGPU = &chosenGPU;
+	_device = &device;
+	_allocator = &allocator;
+	_refDeletionQueue = &refDeletionQueue;
+}
+
+void vkcomponent::SwapChain::init_swapchain()
+{
+    vkb::SwapchainBuilder swapchainBuilder{*_chosenGPU,*_device,_surface };
 
 	vkb::Swapchain vkbSwapchain = swapchainBuilder
 		.use_default_format_selection()
@@ -20,8 +28,8 @@ void vkcomponent::SwapChain::init_swapchain(VkPhysicalDevice _chosenGPU, VkDevic
 
 	_swapchainImageFormat = vkbSwapchain.image_format;
 
-	_refDeletionQueue.push_function([=]() {
-		vkDestroySwapchainKHR(_device, _swapchain, nullptr);
+	_refDeletionQueue->push_function([=]() {
+		vkDestroySwapchainKHR(*_device,_swapchain, nullptr);
 	});
 
 	//depth image size will match the window
@@ -43,17 +51,17 @@ void vkcomponent::SwapChain::init_swapchain(VkPhysicalDevice _chosenGPU, VkDevic
 	dimg_allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	//allocate and create the image
-	vmaCreateImage(_allocator, &dimg_info, &dimg_allocinfo, &_depthImage._image, &_depthImage._allocation, nullptr);
+	vmaCreateImage(*_allocator, &dimg_info, &dimg_allocinfo, &_depthImage._image, &_depthImage._allocation, nullptr);
 
 	//build a image-view for the depth image to use for rendering
 	VkImageViewCreateInfo dview_info = vkinit::imageview_create_info(_depthFormat, _depthImage._image, VK_IMAGE_ASPECT_DEPTH_BIT);;
 
-	VK_CHECK(vkCreateImageView(_device, &dview_info, nullptr, &_depthImageView));
+	VK_CHECK(vkCreateImageView(*_device, &dview_info, nullptr, &_depthImageView));
 
 	//add to deletion queues
-	_refDeletionQueue.push_function([=]() {
-		vkDestroyImageView(_device, _depthImageView, nullptr);
-		vmaDestroyImage(_allocator, _depthImage._image, _depthImage._allocation);
+	_refDeletionQueue->push_function([=]() {
+		vkDestroyImageView(*_device, _depthImageView, nullptr);
+		vmaDestroyImage(*_allocator, _depthImage._image, _depthImage._allocation);
 	});
 }
 

@@ -121,7 +121,7 @@ public:
 	GPUSceneData _sceneParameters;
 	AllocatedBuffer _sceneParameterBuffer;
 
-	vkcomponent::SwapChain _swapChainObj;
+	vkcomponent::SwapChain _swapChainObj{_chosenGPU, _device, _allocator, _mainDeletionQueue};
 
 	//initializes everything in the engine
 	void init();

@@ -34,7 +34,7 @@ void VulkanRenderer::init()
 
 	init_vulkan();
 
-	_swapChainObj.init_swapchain(_chosenGPU, _device, _allocator, _mainDeletionQueue);
+	_swapChainObj.init_swapchain();
 
 	init_default_renderpass();
 
