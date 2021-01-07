@@ -1,15 +1,11 @@
-#include "../Vulkan/Include/vk_renderer.h"
+#include "Include/Core.h"
 
 int main(int argc, char* argv[])
 {
-	VulkanRenderer renderer;
 
-	renderer.init();
-
-	renderer.run();
-
-	renderer.cleanup();
-
+	Core::coreInit();
+	Core::coreUpdate();
+	Core::coreCleanup();
 	return 0;
 }
 

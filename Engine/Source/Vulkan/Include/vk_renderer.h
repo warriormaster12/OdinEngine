@@ -90,8 +90,6 @@ constexpr unsigned int FRAME_OVERLAP = 2;
 
 class VulkanRenderer {
 public:
-
-	bool _isInitialized{ false };
 	int _frameNumber {0};
 	int _selectedShader{ 0 };
 

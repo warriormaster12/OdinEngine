@@ -56,27 +56,23 @@ void VulkanRenderer::init()
 	load_meshes();
 
 	init_scene();
-	//everything went fine
-	_isInitialized = true;
 }
 void VulkanRenderer::cleanup()
 {	
-	if (_isInitialized) {
 		
-		vkDeviceWaitIdle(_device);
-		
+	vkDeviceWaitIdle(_device);
+	
 
-		_mainDeletionQueue.flush();
+	_mainDeletionQueue.flush();
 
-		vkDestroySurfaceKHR(_instance, _swapChainObj._surface, nullptr);
+	vkDestroySurfaceKHR(_instance, _swapChainObj._surface, nullptr);
 
-		vmaDestroyAllocator(_allocator);
-		vkDestroyDevice(_device, nullptr);
-		vkb::destroy_debug_utils_messenger(_instance, _debug_messenger);
-		vkDestroyInstance(_instance, nullptr);
+	vmaDestroyAllocator(_allocator);
+	vkDestroyDevice(_device, nullptr);
+	vkb::destroy_debug_utils_messenger(_instance, _debug_messenger);
+	vkDestroyInstance(_instance, nullptr);
 
-		SDL_DestroyWindow(_window);
-	}
+	SDL_DestroyWindow(_window);
 }
 
 void VulkanRenderer::draw()
@@ -740,7 +736,7 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 
 	glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
 	//camera projection
-	glm::mat4 projection = glm::perspective(glm::radians(70.f), 1700.f / 900.f, 0.1f, 200.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)_swapChainObj._windowExtent.width / (float)_swapChainObj._windowExtent.height, 0.1f, 200.0f);
 	projection[1][1] *= -1;	
 
 	GPUCameraData camData;

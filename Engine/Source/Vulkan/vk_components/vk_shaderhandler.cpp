@@ -222,13 +222,13 @@ const std::string vkcomponent::CompileGLSL(const std::string& filename)
         spv::SpvBuildLogger logger;
         glslang::SpvOptions spvOptions;
         glslang::GlslangToSpv(*Program.getIntermediate(ShaderType), SpirV, &logger, &spvOptions);
-        glslang::OutputSpvBin(SpirV, SpirV_filename.c_str());   
-        std::cout<<"file " + filename + " compiled to " + SpirV_filename <<std::endl;
+        glslang::OutputSpvBin(SpirV, SpirV_filename.c_str());  
+        ENGINE_CORE_INFO("file " + filename + " compiled to " + SpirV_filename);
         return SpirV_filename;
     }
     else 
     {
-        GENGINE_TRACE("file " + SpirV_filename + " already exists");
+        ENGINE_CORE_INFO("file " + SpirV_filename + " already exists");
         return SpirV_filename;
     }
 }
