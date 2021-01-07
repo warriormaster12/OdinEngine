@@ -5,6 +5,7 @@
 #include <SDL_vulkan.h>
 
 
+
 struct Resolution
 {
     uint32_t width;

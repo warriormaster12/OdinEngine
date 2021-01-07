@@ -12,6 +12,8 @@
 #define VMA_IMPLEMENTATION
 #include "../third-party/Vma/vk_mem_alloc.h"
 
+#include "../Logger/Include/Logger.h"
+
 
 
 constexpr bool bUseValidationLayers = true;
@@ -39,6 +41,8 @@ void VulkanRenderer::init(WindowHandler& windowHandler)
 	load_meshes();
 
 	init_scene();
+
+	ENGINE_CORE_INFO("vulkan intialized");
 }
 void VulkanRenderer::cleanup()
 {	
@@ -54,6 +58,8 @@ void VulkanRenderer::cleanup()
 	vkDestroyDevice(_device, nullptr);
 	vkb::destroy_debug_utils_messenger(_instance, _debug_messenger);
 	vkDestroyInstance(_instance, nullptr);
+
+	ENGINE_CORE_INFO("vulkan destroyed");
 }
 
 void VulkanRenderer::draw()
@@ -216,9 +222,8 @@ void VulkanRenderer::init_vulkan()
 	
 
 	vkGetPhysicalDeviceProperties(_chosenGPU, &_gpuProperties);
-
-	std::cout << "The gpu has a minimum buffer alignement of " << _gpuProperties.limits.minUniformBufferOffsetAlignment << std::endl;
-
+	ENGINE_CORE_INFO(physicalDevice.properties.deviceName);
+	ENGINE_CORE_INFO("The gpu has a minimum buffer alignement of {0}", _gpuProperties.limits.minUniformBufferOffsetAlignment);
 }
 
 void VulkanRenderer::init_default_renderpass()

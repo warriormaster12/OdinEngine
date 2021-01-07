@@ -1,4 +1,5 @@
 #include "Include/WindowHandler.h"
+#include "../Logger/Include/Logger.h"
 
 void WindowHandler::createWindow(uint32_t width, uint32_t height)
 {
@@ -18,9 +19,12 @@ void WindowHandler::createWindow(uint32_t width, uint32_t height)
 		_resolution.height,
 		window_flags
 	);
+
+    ENGINE_CORE_INFO("window intialized");
 }
 
 void WindowHandler::destroyWindow()
 {
     SDL_DestroyWindow(_window);
+    ENGINE_CORE_INFO("window destroyed");
 }
