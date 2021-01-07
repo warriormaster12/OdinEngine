@@ -54,6 +54,10 @@ target_link_libraries(VulkanEngine PRIVATE glm)
 add_subdirectory(third-party/glslang EXCLUDE_FROM_ALL)
 target_link_libraries(VulkanEngine PRIVATE glslang SPIRV)
 
+#spdlog
+add_subdirectory(third-party/spdlog EXCLUDE_FROM_ALL)
+target_link_libraries(VulkanEngine PRIVATE spdlog SPIRV)
+
 file(COPY ${PROJECT_SOURCE_DIR}/.Shaders DESTINATION ${PROJECT_BINARY_DIR})
 file(COPY ${PROJECT_SOURCE_DIR}/EngineAssets DESTINATION ${PROJECT_BINARY_DIR})
 

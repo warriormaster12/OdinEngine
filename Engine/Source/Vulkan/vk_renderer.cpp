@@ -9,6 +9,7 @@
 #include "vk_components/Include/vk_pipelinebuilder.h"
 #include "vk_components/Include/vk_shaderhandler.h"
 #include "vk_components/Include/vk_textures.h"
+#include "../Logger/Include/Logger.h"
 
 
 //bootstrap library
@@ -19,6 +20,7 @@
 constexpr bool bUseValidationLayers = true;
 void VulkanRenderer::init()
 {
+	Logger::init();
 	// We initialize SDL and create a window with it. 
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -599,7 +601,7 @@ void VulkanRenderer::load_meshes()
 	monkeyMesh.load_from_obj("EngineAssets/Meshes/monkey_smooth.obj");
 	lostEmpire.load_from_obj("EngineAssets/Meshes/lost_empire.obj");
 
-	upload_mesh(triMesh);
+	//upload_mesh(triMesh);
 	upload_mesh(monkeyMesh);
 	upload_mesh(lostEmpire);
 
@@ -844,19 +846,19 @@ void VulkanRenderer::init_scene()
 
 	_renderables.push_back(map);
 
-	for (int x = -20; x <= 20; x++) {
-		for (int y = -20; y <= 20; y++) {
+	// for (int x = -20; x <= 20; x++) {
+	// 	for (int y = -20; y <= 20; y++) {
 
-			RenderObject tri;
-			tri.mesh = get_mesh("triangle");
-			tri.material = get_material("defaultmesh");
-			glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(x, 0, y));
-			glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(0.2, 0.2, 0.2));
-			tri.transformMatrix = translation * scale;
+	// 		RenderObject tri;
+	// 		tri.mesh = get_mesh("triangle");
+	// 		tri.material = get_material("defaultmesh");
+	// 		glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(x, 0, y));
+	// 		glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(0.2, 0.2, 0.2));
+	// 		tri.transformMatrix = translation * scale;
 
-			_renderables.push_back(tri);
-		}
-	}
+	// 		_renderables.push_back(tri);
+	// 	}
+	// }
 
 	//create a sampler for the texture
 	VkSamplerCreateInfo samplerInfo = vkinit::sampler_create_info(VK_FILTER_NEAREST);

@@ -1,4 +1,5 @@
 #include "Include/vk_shaderhandler.h"
+#include "../../Logger/Include/Logger.h"
 #include <iostream>
 #include <fstream>
 
@@ -227,7 +228,7 @@ const std::string vkcomponent::CompileGLSL(const std::string& filename)
     }
     else 
     {
-        std::cout<<"file " + SpirV_filename + " already exists" <<std::endl;
+        GENGINE_TRACE("file " + SpirV_filename + " already exists");
         return SpirV_filename;
     }
 }

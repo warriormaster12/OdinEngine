@@ -7,3 +7,6 @@
 [submodule "third-party/glslang"]
 	path = third-party/glslang
 	url = https://github.com/KhronosGroup/glslang.git
+[submodule "third-party/spdlog"]
+	path = third-party/spdlog
+	url = https://github.com/gabime/spdlog.git
