@@ -14,6 +14,7 @@
 #include "../vk_components/Include/vk_deletionqueue.h"
 #include "../vk_components/Include/vk_descriptors.h"
 
+#include "../../Window/Include/WindowHandler.h"
 
 
 
@@ -95,7 +96,7 @@ public:
 
 	
 
-	struct SDL_Window* _window{ nullptr };
+	
 
 	VkInstance _instance;
 	VkDebugUtilsMessengerEXT _debug_messenger;
@@ -135,7 +136,7 @@ public:
 	std::unordered_map<std::string, Texture> _loadedTextures;
 	void load_images();
 	//initializes everything in the engine
-	void init();
+	void init(WindowHandler& windowHandler);
 
 	//shuts down the engine
 	void cleanup();
@@ -196,6 +197,8 @@ private:
 	void load_meshes();
 
 	void upload_mesh(Mesh& mesh);
+
+	WindowHandler* _windowHandler;
 };
 
 

@@ -23,7 +23,7 @@ namespace vkcomponent
         //array of image-views from the swapchain
         std::vector<VkImageView> _swapchainImageViews;
 
-        VkExtent2D _windowExtent{ 1700 , 900 };
+        VkExtent2D _windowExtent{};
         VkSurfaceKHR _surface; // Vulkan window surface
 
         VkImageView _depthImageView;

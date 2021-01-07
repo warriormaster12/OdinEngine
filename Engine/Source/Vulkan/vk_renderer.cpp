@@ -1,15 +1,10 @@
 #include "Include/vk_renderer.h"
-
-#include <SDL.h>
-#include <SDL_vulkan.h>
-
 #include "Include/vk_types.h"
 #include "Include/vk_init.h"
 #include "vk_components/Include/vk_check.h"
 #include "vk_components/Include/vk_pipelinebuilder.h"
 #include "vk_components/Include/vk_shaderhandler.h"
 #include "vk_components/Include/vk_textures.h"
-#include "../Logger/Include/Logger.h"
 
 
 //bootstrap library
@@ -17,24 +12,12 @@
 #define VMA_IMPLEMENTATION
 #include "../third-party/Vma/vk_mem_alloc.h"
 
+
+
 constexpr bool bUseValidationLayers = true;
-void VulkanRenderer::init()
+void VulkanRenderer::init(WindowHandler& windowHandler)
 {
-	Logger::init();
-	// We initialize SDL and create a window with it. 
-	SDL_Init(SDL_INIT_VIDEO);
-
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
-	
-	_window = SDL_CreateWindow(
-		"Vulkan Engine",
-		SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED,
-		_swapChainObj._windowExtent.width,
-		_swapChainObj._windowExtent.height,
-		window_flags
-	);
-
+	_windowHandler = &windowHandler;
 	init_vulkan();
 
 	_swapChainObj.init_swapchain();
@@ -71,8 +54,6 @@ void VulkanRenderer::cleanup()
 	vkDestroyDevice(_device, nullptr);
 	vkb::destroy_debug_utils_messenger(_instance, _debug_messenger);
 	vkDestroyInstance(_instance, nullptr);
-
-	SDL_DestroyWindow(_window);
 }
 
 void VulkanRenderer::draw()
@@ -167,29 +148,7 @@ void VulkanRenderer::draw()
 
 void VulkanRenderer::run()
 {
-	SDL_Event e;
-	bool bQuit = false;
-
-	//main loop
-	while (!bQuit)
 	{
-		//Handle events on queue
-		while (SDL_PollEvent(&e) != 0)
-		{
-			//close the window when user alt-f4s or clicks the X button			
-			if (e.type == SDL_QUIT)
-			{
-				bQuit = true;
-			}
-			else if (e.type == SDL_KEYDOWN)
-			{
-				if (e.key.keysym.sym == SDLK_ESCAPE)
-				{
-					bQuit = true;
-				}
-			}
-		}
-
 		draw();
 	}
 }
@@ -221,8 +180,9 @@ void VulkanRenderer::init_vulkan()
 	//grab the instance 
 	_instance = vkb_inst.instance;
 	_debug_messenger = vkb_inst.debug_messenger;
-
-	SDL_Vulkan_CreateSurface(_window, _instance, &_swapChainObj._surface);
+	_swapChainObj._windowExtent.width = _windowHandler->_resolution.width;
+	_swapChainObj._windowExtent.height = _windowHandler->_resolution.height;
+	SDL_Vulkan_CreateSurface(_windowHandler->_window, _instance, &_swapChainObj._surface);
 
 	//use vkbootstrap to select a gpu. 
 	//We want a gpu that can write to the SDL surface and supports vulkan 1.2
