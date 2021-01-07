@@ -24,7 +24,7 @@ struct MeshPushConstants {
 
 
 struct Material {
-	VkDescriptorSet textureSet;
+	VkDescriptorSet textureSet{VK_NULL_HANDLE};
 	VkPipeline pipeline;
 	VkPipelineLayout pipelineLayout;
 };
@@ -124,9 +124,9 @@ public:
 	vkcomponent::DescriptorLayoutCache* _descriptorLayoutCache;
 
 
-	VkDescriptorSetLayout _globalSetLayout;
-	VkDescriptorSetLayout _objectSetLayout;
-	VkDescriptorSetLayout _singleTextureSetLayout;
+	VkDescriptorSetLayout _globalSetLayout{};
+	VkDescriptorSetLayout _objectSetLayout{};
+	VkDescriptorSetLayout _singleTextureSetLayout{};
 
 	GPUSceneData _sceneParameters;
 	AllocatedBuffer _sceneParameterBuffer;
