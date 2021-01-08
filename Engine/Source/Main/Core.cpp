@@ -3,13 +3,28 @@
 #include "../Window/Include/WindowHandler.h"
 #include "../Logger/Include/Logger.h"
 
+#include "../ECS/Component/TestComponent.h"
+#include "../ECS/System/Include/TestSystem.h"
+#include "../ECS/Include/Coordinator.h"
+
 bool _isInitialized{ false };
+Coordinator gCoordinator;
 VulkanRenderer renderer;
 WindowHandler _windowHandler;
 void Core::coreInit()
 {
     Logger::init();
-    _windowHandler.createWindow(1700, 900);
+	//Test of an entity system
+	gCoordinator.Init();
+	gCoordinator.RegisterComponent<Test>();
+	auto testSystem = gCoordinator.RegisterSystem<TestSystem>();
+	{
+		Signature signature;
+		gCoordinator.SetSystemSignature<TestSystem>(signature);
+	}
+	testSystem->Init();
+	
+    _windowHandler.createWindow(1920, 1080);
     renderer.init(_windowHandler);
     //everything went fine
     _isInitialized = true;

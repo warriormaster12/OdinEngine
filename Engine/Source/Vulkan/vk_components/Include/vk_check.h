@@ -1,4 +1,5 @@
 #pragma once 
+#include "../../../Logger/Include/Logger.h"
 
 namespace vkcomponent
 {
@@ -10,7 +11,7 @@ namespace vkcomponent
             VkResult err = x;                                           \
             if (err)                                                    \
             {                                                           \
-                std::cout <<"Detected Vulkan error: " << err << std::endl; \
+                Logger::GetCoreLogger()->error("Detected Vulkan error: {0}",err); \
                 abort();                                                \
             }                                                           \
         } while (0)
