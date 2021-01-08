@@ -401,18 +401,18 @@ void VulkanRenderer::init_pipelines()
 	//Program only compiles shaders if there's no .spv file available
 	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/default_lit.frag").c_str(), &colorMeshShader, _device))
 	{
-		std::cout << "Error when building the colored mesh shader" << std::endl;
+		ENGINE_CORE_ERROR("Error when building the colored mesh shader");
 	}
 	VkShaderModule texturedMeshShader;
 	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/textured_lit.frag").c_str(), &texturedMeshShader, _device))
 	{
-		std::cout << "Error when building the textured mesh shader" << std::endl;
+		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
 	}
 
 	VkShaderModule meshVertShader;
 	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, _device))
 	{
-		std::cout << "Error when building the mesh vertex shader module" << std::endl;
+		ENGINE_CORE_ERROR("Error when building the mesh vertex shader module");
 	}
 
 	

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "vk_types.h"
-#include "vk_mesh.h"
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -13,6 +12,7 @@
 #include "../vk_components/Include/vk_swapchain.h"
 #include "../vk_components/Include/vk_deletionqueue.h"
 #include "../vk_components/Include/vk_descriptors.h"
+#include "../vk_components/Include/vk_mesh.h"
 
 #include "../../Window/Include/WindowHandler.h"
 
@@ -97,7 +97,6 @@ public:
 	
 
 	
-
 	VkInstance _instance;
 	VkDebugUtilsMessengerEXT _debug_messenger;
 	VkPhysicalDevice _chosenGPU;

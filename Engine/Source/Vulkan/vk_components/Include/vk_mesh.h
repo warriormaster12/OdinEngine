@@ -1,10 +1,11 @@
 #pragma once
 
-#include "vk_types.h"
+#include "../../Include/vk_types.h"
 #include <vector>
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 #include <iostream>
+
 
 struct VertexInputDescription {
 
@@ -26,8 +27,10 @@ struct Vertex {
 
 struct Mesh {
 	std::vector<Vertex> _vertices;
+	
 
 	AllocatedBuffer _vertexBuffer;
+	
 	bool load_from_obj(const char* filename);
 };
 
