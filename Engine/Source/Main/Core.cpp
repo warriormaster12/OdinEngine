@@ -7,6 +7,7 @@
 #include "../ECS/System/Include/TestSystem.h"
 #include "../ECS/Include/Coordinator.h"
 
+
 bool _isInitialized{ false };
 Coordinator gCoordinator;
 VulkanRenderer renderer;

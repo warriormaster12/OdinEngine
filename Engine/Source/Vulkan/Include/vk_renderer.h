@@ -16,6 +16,8 @@
 
 #include "../../Window/Include/WindowHandler.h"
 
+#include "../../Camera/Include/camera.h"
+
 
 
 struct MeshPushConstants {
@@ -94,7 +96,6 @@ public:
 	int _frameNumber {0};
 	int _selectedShader{ 0 };
 
-	
 
 	
 	VkInstance _instance;
@@ -130,6 +131,7 @@ public:
 	AllocatedBuffer _sceneParameterBuffer;
 
 	vkcomponent::SwapChain _swapChainObj{_chosenGPU, _device, _allocator, _mainDeletionQueue};
+	Camera _camera{_swapChainObj};
 
 	//texture hashmap
 	std::unordered_map<std::string, Texture> _loadedTextures;

@@ -42,6 +42,8 @@ void VulkanRenderer::init(WindowHandler& windowHandler)
 
 	init_scene();
 
+	_camera.position = { 0.f,-6.f,-10.f };
+
 	ENGINE_CORE_INFO("vulkan intialized");
 }
 void VulkanRenderer::cleanup()
@@ -695,19 +697,11 @@ Mesh* VulkanRenderer::get_mesh(const std::string& name)
 
 void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int count)
 {
-	//make a model view matrix for rendering the object
-	//camera view
-	glm::vec3 camPos = { 0.f,-6.f,-10.f };
-
-	glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
-	//camera projection
-	glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)_swapChainObj._windowExtent.width / (float)_swapChainObj._windowExtent.height, 0.1f, 200.0f);
-	projection[1][1] *= -1;	
 
 	GPUCameraData camData;
-	camData.proj = projection;
-	camData.view = view;
-	camData.viewproj = projection * view;
+	camData.view = _camera.get_view_matrix();
+	camData.proj = _camera.get_projection_matrix(false);
+	camData.viewproj = camData.proj * camData.view ;
 
 	void* data;
 	vmaMapMemory(_allocator, get_current_frame().cameraBuffer._allocation, &data);
