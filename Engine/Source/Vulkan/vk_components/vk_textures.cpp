@@ -2,12 +2,14 @@
 
 #include "../Include/vk_init.h"
 
-#define STB_IMAGE_IMPLEMENTATION
+#include "../../Asset_builder/Include/asset_builder.h"
 #include "../../third-party/stb_image/stb_image.h"
 
 bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* file, AllocatedImage& outImage)
 {
 	int texWidth, texHeight, texChannels;
+
+    asset_builder::convert_image("EngineAssets/Textures/lost_empire-RGBA.png", "EngineAssets/Textures/lost_empire-RGBA");
 
 	stbi_uc* pixels = stbi_load(file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
