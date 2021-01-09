@@ -2,7 +2,10 @@
 
 #include <fstream>
 #include <iostream>
-using namespace assets;
+
+
+
+
 bool assets::save_binaryfile(const  char* path, const AssetFile& file)
 {
 	std::ofstream outfile;
@@ -71,6 +74,7 @@ assets::CompressionMode assets::parse_compression(const char* f)
 		return assets::CompressionMode::LZ4;
 	}
 	else {
-		return assets::CompressionMode::None;
+		return assets::CompressionMode::Unknown;
 	}
 }
+

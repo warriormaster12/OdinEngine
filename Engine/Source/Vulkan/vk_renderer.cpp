@@ -5,6 +5,7 @@
 #include "vk_components/Include/vk_pipelinebuilder.h"
 #include "vk_components/Include/vk_shaderhandler.h"
 #include "vk_components/Include/vk_textures.h"
+#include "../Asset_builder/Include/asset_builder.h"
 
 
 //bootstrap library
@@ -645,8 +646,8 @@ void VulkanRenderer::upload_mesh(Mesh& mesh)
 void VulkanRenderer::load_images()
 {
 	Texture lostEmpire;
-	
-	vkcomponent::load_image_from_file(*this, "EngineAssets/Textures/lost_empire-RGBA.png", lostEmpire.image);
+	asset_builder::convert_image("EngineAssets/Textures/lost_empire-RGBA.png", "EngineAssets/Textures/lost_empire-RGBA.bin");
+	vkcomponent::load_image_from_asset(*this, "EngineAssets/Textures/lost_empire-RGBA.bin", lostEmpire.image);
 	
 	VkImageViewCreateInfo imageinfo = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, lostEmpire.image._image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(_device, &imageinfo, nullptr, &lostEmpire.imageView);

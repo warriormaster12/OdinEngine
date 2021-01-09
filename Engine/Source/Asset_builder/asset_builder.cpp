@@ -39,7 +39,7 @@ bool asset_builder::convert_image(const fs::path& input, const fs::path& output)
 	texinfo.pixelsize[1] = texHeight;
 	texinfo.textureFormat = TextureFormat::RGBA8;	
 	texinfo.originalFile = input.string();
-	assets::AssetFile newImage = assets::pack_texture(&texinfo, pixels);	
+	AssetFile newImage = assets::pack_texture(&texinfo, pixels);	
 		
 
 	stbi_image_free(pixels);

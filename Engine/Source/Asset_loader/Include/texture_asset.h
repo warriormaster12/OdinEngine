@@ -22,5 +22,7 @@ namespace assets {
 
 	void unpack_texture(TextureInfo* info, const char* sourcebuffer, size_t sourceSize, char* destination);
 
-	AssetFile pack_texture(TextureInfo* info, void* pixelData);
+	assets::AssetFile pack_texture(TextureInfo* info, void* pixelData);
+
 }
+
