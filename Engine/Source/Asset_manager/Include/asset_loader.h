@@ -9,7 +9,7 @@
 namespace assets {
 
 	enum class CompressionMode : uint32_t {
-		Unknown,
+		Uncompressed,
 		LZ4
 	};
 	struct AssetFile {

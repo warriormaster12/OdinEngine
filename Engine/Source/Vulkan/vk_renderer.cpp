@@ -5,7 +5,7 @@
 #include "vk_components/Include/vk_pipelinebuilder.h"
 #include "vk_components/Include/vk_shaderhandler.h"
 #include "vk_components/Include/vk_textures.h"
-#include "../Asset_builder/Include/asset_builder.h"
+#include "../Asset_manager/Include/asset_builder.h"
 
 
 //bootstrap library

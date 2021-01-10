@@ -7,7 +7,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../third-party/stb_image/stb_image.h"
 
-#include "../Asset_loader/Include/texture_asset.h"
+#include "Include/texture_asset.h"
 
 #include <glm/glm.hpp>
 #include<glm/gtx/transform.hpp>

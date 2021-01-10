@@ -74,7 +74,7 @@ assets::CompressionMode assets::parse_compression(const char* f)
 		return assets::CompressionMode::LZ4;
 	}
 	else {
-		return assets::CompressionMode::Unknown;
+		return assets::CompressionMode::Uncompressed;
 	}
 }
 
