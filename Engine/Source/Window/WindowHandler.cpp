@@ -6,7 +6,7 @@ void WindowHandler::createWindow(uint32_t width, uint32_t height)
     // We initialize SDL and create a window with it. 
 	SDL_Init(SDL_INIT_VIDEO);
 
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_FULLSCREEN);
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
 
     _resolution.width = width;
     _resolution.height = height;

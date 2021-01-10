@@ -199,6 +199,8 @@ private:
 
 	void upload_mesh(Mesh& mesh);
 
+	void init_imgui();
+
 	WindowHandler* _windowHandler;
 };
 

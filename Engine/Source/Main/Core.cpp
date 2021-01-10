@@ -7,6 +7,10 @@
 #include "../ECS/System/Include/TestSystem.h"
 #include "../ECS/Include/Coordinator.h"
 
+#include "../third-party/imgui/Include/imgui.h"
+#include "../third-party/imgui/Include/imgui_impl_sdl.h"
+#include "../third-party/imgui/Include/imgui_impl_vulkan.h"
+
 
 bool _isInitialized{ false };
 Coordinator gCoordinator;
@@ -42,6 +46,7 @@ void Core::coreUpdate()
 		//Handle events on queue
 		while (SDL_PollEvent(&e) != 0)
 		{
+			ImGui_ImplSDL2_ProcessEvent(&e);
 			//close the window when user alt-f4s or clicks the X button			
 			if (e.type == SDL_QUIT)
 			{
@@ -55,6 +60,15 @@ void Core::coreUpdate()
 				}
 			}
 		}
+		//imgui new frame 
+        ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplSDL2_NewFrame(_windowHandler._window);
+
+		ImGui::NewFrame();        
+
+
+        //imgui commands
+        ImGui::ShowDemoWindow();
         renderer.run();
     }
 }
