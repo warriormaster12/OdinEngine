@@ -7,7 +7,7 @@
 #include "../ECS/System/Include/TestSystem.h"
 #include "../ECS/Include/Coordinator.h"
 
-#include "../third-party/imgui/Include/imgui.h"
+#include "../Editor/Include/EditorWindow.h"
 #include "../third-party/imgui/Include/imgui_impl_sdl.h"
 #include "../third-party/imgui/Include/imgui_impl_vulkan.h"
 
@@ -68,7 +68,8 @@ void Core::coreUpdate()
 
 
         //imgui commands
-        ImGui::ShowDemoWindow();
+		Editor::showMainWindow(_windowHandler._resolution);
+		ImGui::ShowDemoWindow();
         renderer.run();
     }
 }
