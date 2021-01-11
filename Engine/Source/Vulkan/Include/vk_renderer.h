@@ -177,6 +177,8 @@ public:
 	AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 
 	size_t pad_uniform_buffer_size(size_t originalSize);
+
+	WindowHandler* _windowHandler;
 private:
 
 	void init_vulkan();
@@ -199,9 +201,7 @@ private:
 
 	void upload_mesh(Mesh& mesh);
 
-	void init_imgui();
 
-	WindowHandler* _windowHandler;
 };
 
 

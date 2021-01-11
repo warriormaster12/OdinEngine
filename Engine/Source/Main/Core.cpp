@@ -8,8 +8,7 @@
 #include "../ECS/Include/Coordinator.h"
 
 #include "../Editor/Include/EditorWindow.h"
-#include "../third-party/imgui/Include/imgui_impl_sdl.h"
-#include "../third-party/imgui/Include/imgui_impl_vulkan.h"
+#include "../Editor/Include/Imgui_layer.h"
 
 
 bool _isInitialized{ false };
@@ -31,6 +30,7 @@ void Core::coreInit()
 	
     _windowHandler.createWindow(1920, 1080);
     renderer.init(_windowHandler);
+	imgui_layer::init_imgui_layer(renderer);
     //everything went fine
     _isInitialized = true;
 }
