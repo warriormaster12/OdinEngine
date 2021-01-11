@@ -18,16 +18,16 @@ void Editor::setupDockSpace()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
-    windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse 
-        | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
-        | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize 
+        | ImGuiWindowFlags_NoMove| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     
-    if (!ImGui::Begin("main window", &window_open, windowFlags))
-    {
-        // Early out if the window is collapsed, as an optimization.
-        ImGui::End();
-        return;
-    }
+    // if (!)
+    // {
+    //     // Early out if the window is collapsed, as an optimization.
+    //     ImGui::End();
+    //     return;
+    // }
+    ImGui::Begin("main window", &window_open, windowFlags);
     ImGui::PopStyleVar(2);
 
     //dockspace
