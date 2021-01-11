@@ -4,6 +4,8 @@
 #include "../../Window/Include/WindowHandler.h"
 #include <iostream>
 
+#include "GameViewport.h"
+
 class Editor
 {
 public:

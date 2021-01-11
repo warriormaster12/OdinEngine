@@ -1,4 +1,6 @@
 #include "Include/EditorWindow.h"
+#include "Include/GameViewport.h"
+
 
 unsigned int width, height;
 void Editor::showMainWindow(Resolution& _resolution)
@@ -8,6 +10,7 @@ void Editor::showMainWindow(Resolution& _resolution)
     height = _resolution.height;
     setupDockSpace();
     ImGui::ShowDemoWindow();
+    Viewport::ShowGameViewport();
 	ImGui::End();
 }
 
@@ -23,13 +26,7 @@ void Editor::setupDockSpace()
 
     windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize 
         | ImGuiWindowFlags_NoMove| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-    
-    // if (!)
-    // {
-    //     // Early out if the window is collapsed, as an optimization.
-    //     ImGui::End();
-    //     return;
-    // }
+
     ImGui::Begin("editor window", &window_open, windowFlags);
     ImGui::PopStyleVar(2);
 
