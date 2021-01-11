@@ -3,9 +3,12 @@
 unsigned int width, height;
 void Editor::showMainWindow(Resolution& _resolution)
 {
+    
     width = _resolution.width;
     height = _resolution.height;
     setupDockSpace();
+    ImGui::ShowDemoWindow();
+	ImGui::End();
 }
 
 void Editor::setupDockSpace()
@@ -27,7 +30,7 @@ void Editor::setupDockSpace()
     //     ImGui::End();
     //     return;
     // }
-    ImGui::Begin("main window", &window_open, windowFlags);
+    ImGui::Begin("editor window", &window_open, windowFlags);
     ImGui::PopStyleVar(2);
 
     //dockspace

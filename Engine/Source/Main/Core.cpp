@@ -69,8 +69,6 @@ void Core::coreUpdate()
 
         //imgui commands
 		Editor::showMainWindow(_windowHandler._resolution);
-		ImGui::ShowDemoWindow();
-		ImGui::End();
         renderer.run();
     }
 }
