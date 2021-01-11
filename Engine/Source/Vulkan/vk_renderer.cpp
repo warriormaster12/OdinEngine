@@ -7,6 +7,7 @@
 #include "vk_components/Include/vk_textures.h"
 #include "../Asset_manager/Include/asset_builder.h"
 #include "../third-party/imgui/Include/imgui_impl_vulkan.h"
+#include "../Editor/Include/Imgui_layer.h"
 
 
 
@@ -24,8 +25,8 @@ constexpr bool bUseValidationLayers = true;
 void VulkanRenderer::init(WindowHandler& windowHandler)
 {
 	_windowHandler = &windowHandler;
+	frameBufferResize();
 	init_vulkan();
-
 	_swapChainObj.init_swapchain();
 
 	init_default_renderpass();
@@ -49,13 +50,14 @@ void VulkanRenderer::init(WindowHandler& windowHandler)
 	_camera.position = { 0.f,-6.f,-10.f };
 
 	ENGINE_CORE_INFO("vulkan intialized");
+
 }
 void VulkanRenderer::cleanup()
 {	
 		
 	vkDeviceWaitIdle(_device);
 	
-
+	_swapDeletionQueue.flush();
 	_mainDeletionQueue.flush();
 
 	vkDestroySurfaceKHR(_instance, _swapChainObj._surface, nullptr);
@@ -66,6 +68,18 @@ void VulkanRenderer::cleanup()
 	vkDestroyInstance(_instance, nullptr);
 
 	ENGINE_CORE_INFO("vulkan destroyed");
+}
+
+void VulkanRenderer::frameBufferResize()
+{
+	
+	ENGINE_CORE_ERROR("true");
+	frameBufferResized = true;
+
+	SDL_Vulkan_GetDrawableSize(_windowHandler->_window, &content_width, &content_height);
+	_swapChainObj._windowExtent.width = content_width;
+	_swapChainObj._windowExtent.height = content_height;
+	
 }
 
 void VulkanRenderer::draw()
@@ -79,7 +93,13 @@ void VulkanRenderer::draw()
 
 	//request image from the swapchain
 	uint32_t swapchainImageIndex;
-	VK_CHECK(vkAcquireNextImageKHR(_device, _swapChainObj._swapchain, 1000000000, get_current_frame()._presentSemaphore, nullptr, &swapchainImageIndex));
+	VkResult result = vkAcquireNextImageKHR(_device, _swapChainObj._swapchain, 1000000000, get_current_frame()._presentSemaphore, nullptr, &swapchainImageIndex);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            recreate_swapchain();
+            return;
+	} else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		throw std::runtime_error("failed to acquire swap chain image!");
+	}
 
 	//naming it cmd for shorter writing
 	VkCommandBuffer cmd = get_current_frame()._mainCommandBuffer;
@@ -151,7 +171,15 @@ void VulkanRenderer::draw()
 
 	presentInfo.pImageIndices = &swapchainImageIndex;
 
-	VK_CHECK(vkQueuePresentKHR(_graphicsQueue, &presentInfo));
+	result = vkQueuePresentKHR(_graphicsQueue, &presentInfo);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frameBufferResized) {
+		frameBufferResized = false;
+		recreate_swapchain();
+	} else if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to present swap chain image!");
+	}
+
 
 	//increase the number of frames drawn
 	_frameNumber++;
@@ -176,6 +204,7 @@ FrameData& VulkanRenderer::get_last_frame()
 	return _frames[(_frameNumber -1) % 2];
 }
 
+
 void VulkanRenderer::init_vulkan()
 {
 	vkb::InstanceBuilder builder;
@@ -192,9 +221,9 @@ void VulkanRenderer::init_vulkan()
 	//grab the instance 
 	_instance = vkb_inst.instance;
 	_debug_messenger = vkb_inst.debug_messenger;
-	_swapChainObj._windowExtent.width = _windowHandler->_resolution.width;
-	_swapChainObj._windowExtent.height = _windowHandler->_resolution.height;
+
 	SDL_Vulkan_CreateSurface(_windowHandler->_window, _instance, &_swapChainObj._surface);
+	
 
 	//use vkbootstrap to select a gpu. 
 	//We want a gpu that can write to the SDL surface and supports vulkan 1.2
@@ -230,6 +259,29 @@ void VulkanRenderer::init_vulkan()
 	vkGetPhysicalDeviceProperties(_chosenGPU, &_gpuProperties);
 	ENGINE_CORE_INFO(physicalDevice.properties.deviceName);
 	ENGINE_CORE_INFO("The gpu has a minimum buffer alignement of {0}", _gpuProperties.limits.minUniformBufferOffsetAlignment);
+}
+
+void VulkanRenderer::recreate_swapchain()
+{	
+	vkDeviceWaitIdle(_device);
+	_swapDeletionQueue.flush();
+	_swapChainObj.destroySwapChain();
+	_swapChainObj.init_swapchain();
+
+	init_default_renderpass();
+
+	init_framebuffers();
+
+	init_commands();
+
+	init_descriptors();
+
+	init_pipelines();
+
+	init_scene();
+	
+	imgui_layer::init_imgui_layer(*this);
+	
 }
 
 void VulkanRenderer::init_default_renderpass()
@@ -302,7 +354,9 @@ void VulkanRenderer::init_default_renderpass()
 	render_pass_info.pDependencies = &dependency;
 	
 	VK_CHECK(vkCreateRenderPass(_device, &render_pass_info, nullptr, &_renderPass));
-
+	_swapDeletionQueue.push_function([=]() {
+		vkDestroyRenderPass(_device, _renderPass, nullptr);
+	});
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroyRenderPass(_device, _renderPass, nullptr);
 	});
@@ -312,7 +366,7 @@ void VulkanRenderer::init_framebuffers()
 {
 	//create the framebuffers for the swapchain images. This will connect the render-pass to the images for rendering
 	VkFramebufferCreateInfo fb_info = vkinit::framebuffer_create_info(_renderPass, _swapChainObj._windowExtent);
-
+	
 	const uint32_t swapchain_imagecount = _swapChainObj._swapchainImages.size();
 	_framebuffers = std::vector<VkFramebuffer>(swapchain_imagecount);
 
@@ -325,7 +379,10 @@ void VulkanRenderer::init_framebuffers()
 		fb_info.pAttachments = attachments;
 		fb_info.attachmentCount = 2;
 		VK_CHECK(vkCreateFramebuffer(_device, &fb_info, nullptr, &_framebuffers[i]));
-
+		_swapDeletionQueue.push_function([=]() {
+			vkDestroyFramebuffer(_device, _framebuffers[i], nullptr);
+			vkDestroyImageView(_device, _swapChainObj._swapchainImageViews[i], nullptr);
+		});
 		_mainDeletionQueue.push_function([=]() {
 			vkDestroyFramebuffer(_device, _framebuffers[i], nullptr);
 			vkDestroyImageView(_device, _swapChainObj._swapchainImageViews[i], nullptr);
@@ -348,16 +405,20 @@ void VulkanRenderer::init_commands()
 		VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::command_buffer_allocate_info(_frames[i]._commandPool, 1);
 
 		VK_CHECK(vkAllocateCommandBuffers(_device, &cmdAllocInfo, &_frames[i]._mainCommandBuffer));
-
 		_mainDeletionQueue.push_function([=]() {
 			vkDestroyCommandPool(_device, _frames[i]._commandPool, nullptr);
+		});
+		_swapDeletionQueue.push_function([=]() {
+			vkFreeCommandBuffers(_device, _frames[i]._commandPool, 1, &_frames[i]._mainCommandBuffer);
 		});
 	}
 	VkCommandPoolCreateInfo uploadCommandPoolInfo = vkinit::command_pool_create_info(_graphicsQueueFamily);
 	//create pool for upload context
 	VK_CHECK(vkCreateCommandPool(_device, &uploadCommandPoolInfo, nullptr, &_uploadContext._commandPool));
-
 	_mainDeletionQueue.push_function([=]() {
+		vkDestroyCommandPool(_device, _uploadContext._commandPool, nullptr);
+	});
+	_swapDeletionQueue.push_function([=]() {
 		vkDestroyCommandPool(_device, _uploadContext._commandPool, nullptr);
 	});
 }
@@ -390,10 +451,12 @@ void VulkanRenderer::init_sync_structures()
 			vkDestroySemaphore(_device, _frames[i]._presentSemaphore, nullptr);
 			vkDestroySemaphore(_device, _frames[i]._renderSemaphore, nullptr);
 			});
+		
 	}
 	 VkFenceCreateInfo uploadFenceCreateInfo = vkinit::fence_create_info();
 
 	VK_CHECK(vkCreateFence(_device, &uploadFenceCreateInfo, nullptr, &_uploadContext._uploadFence));
+
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroyFence(_device, _uploadContext._uploadFence, nullptr);
 	});
@@ -534,6 +597,12 @@ void VulkanRenderer::init_pipelines()
 	vkDestroyShaderModule(_device, texturedMeshShader, nullptr);
 
 	_mainDeletionQueue.push_function([=]() {
+		vkDestroyPipeline(_device, meshPipeline, nullptr);
+		vkDestroyPipeline(_device, texPipeline, nullptr);
+		vkDestroyPipelineLayout(_device, meshPipLayout, nullptr);
+		vkDestroyPipelineLayout(_device, texturedPipeLayout, nullptr);
+	});
+	_swapDeletionQueue.push_function([=]() {
 		vkDestroyPipeline(_device, meshPipeline, nullptr);
 		vkDestroyPipeline(_device, texPipeline, nullptr);
 		vkDestroyPipelineLayout(_device, meshPipLayout, nullptr);
@@ -970,8 +1039,22 @@ void VulkanRenderer::init_descriptors()
 			vmaDestroyBuffer(_allocator, _frames[i].objectBuffer._buffer, _frames[i].objectBuffer._allocation);
 			vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].cameraBuffer._allocation);
 		});
+		_swapDeletionQueue.push_function([=]()
+		{
+			vmaDestroyBuffer(_allocator, _frames[i].objectBuffer._buffer, _frames[i].objectBuffer._allocation);
+			vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].cameraBuffer._allocation);
+		});
 	}
 	_mainDeletionQueue.push_function([=]() {
+		vmaDestroyBuffer(_allocator, _sceneParameterBuffer._buffer, _sceneParameterBuffer._allocation);
+		for (auto& frame : _frames)
+		{
+			frame.dynamicDescriptorAllocator->cleanup();
+		}
+		_descriptorAllocator->cleanup();
+		_descriptorLayoutCache->cleanup();
+	});
+	_swapDeletionQueue.push_function([=]() {
 		vmaDestroyBuffer(_allocator, _sceneParameterBuffer._buffer, _sceneParameterBuffer._allocation);
 		for (auto& frame : _frames)
 		{

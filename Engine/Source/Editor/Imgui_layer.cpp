@@ -112,4 +112,8 @@ void imgui_layer::init_imgui_layer(VulkanRenderer& renderer)
 		vkDestroyDescriptorPool(renderer._device, imguiPool, nullptr);
 		ImGui_ImplVulkan_Shutdown();
 		});
+	renderer._swapDeletionQueue.push_function([=]() {
+
+		vkDestroyDescriptorPool(renderer._device, imguiPool, nullptr);
+		});
 }

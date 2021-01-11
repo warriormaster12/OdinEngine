@@ -59,6 +59,10 @@ void Core::coreUpdate()
 					bQuit = true;
 				}
 			}
+			else if (e.type == SDL_WINDOW_RESIZABLE)
+			{
+				renderer.frameBufferResize();
+			}
 		}
 		//imgui new frame 
         ImGui_ImplVulkan_NewFrame();

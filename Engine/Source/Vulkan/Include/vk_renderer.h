@@ -116,6 +116,7 @@ public:
 	
 
     vkcomponent::DeletionQueue _mainDeletionQueue;
+	vkcomponent::DeletionQueue _swapDeletionQueue;
 	
 	VmaAllocator _allocator; //vma lib allocator
 
@@ -130,7 +131,7 @@ public:
 	GPUSceneData _sceneParameters;
 	AllocatedBuffer _sceneParameterBuffer;
 
-	vkcomponent::SwapChain _swapChainObj{_chosenGPU, _device, _allocator, _mainDeletionQueue};
+	vkcomponent::SwapChain _swapChainObj{_chosenGPU, _device, _allocator};
 	Camera _camera{_swapChainObj};
 
 	//texture hashmap
@@ -179,6 +180,11 @@ public:
 	size_t pad_uniform_buffer_size(size_t originalSize);
 
 	WindowHandler* _windowHandler;
+
+	bool frameBufferResized = false;
+
+	void frameBufferResize();
+	
 private:
 
 	void init_vulkan();
@@ -201,6 +207,10 @@ private:
 
 	void upload_mesh(Mesh& mesh);
 
+	void recreate_swapchain();
+
+	int content_width;
+	int content_height;
 
 };
 
