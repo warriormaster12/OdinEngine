@@ -59,7 +59,7 @@ void Core::coreUpdate()
 					bQuit = true;
 				}
 			}
-			else if (e.type == SDL_WINDOW_RESIZABLE)
+			else if (e.type == SDL_WINDOWEVENT_RESIZED && _isInitialized)
 			{
 				renderer.frameBufferResize();
 			}

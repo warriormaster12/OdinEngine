@@ -1,11 +1,12 @@
 #include "Include/vk_swapchain.h"
 #include "VkBootstrap.h"
 
-vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator)
+vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, DeletionQueue& refDeletionQueue)
 {
 	_chosenGPU = &chosenGPU;
 	_device = &device;
 	_allocator = &allocator;
+	_DeletionQueue = &refDeletionQueue;
 }
 
 void vkcomponent::SwapChain::init_swapchain()
@@ -52,13 +53,19 @@ void vkcomponent::SwapChain::init_swapchain()
 
 	VK_CHECK(vkCreateImageView(*_device, &dview_info, nullptr, &_depthImageView));
 
+	_DeletionQueue->push_function([=]()
+	{
+		vkDestroyImageView(*_device, _depthImageView, nullptr);
+		vmaDestroyImage(*_allocator, _depthImage._image, _depthImage._allocation);
+		for (int i = 0; i < _swapchainImageViews.size(); i++)
+		{
+			vkDestroyImageView(*_device, _swapchainImageViews[i], nullptr);
+		}
+
+		vkDestroySwapchainKHR(*_device,_swapchain, nullptr);
+	});
+
 }
 
-void vkcomponent::SwapChain::destroySwapChain()
-{
-	vkDestroyImageView(*_device, _depthImageView, nullptr);
-	vmaDestroyImage(*_allocator, _depthImage._image, _depthImage._allocation);
 
-	vkDestroySwapchainKHR(*_device,_swapchain, nullptr);
-}
 

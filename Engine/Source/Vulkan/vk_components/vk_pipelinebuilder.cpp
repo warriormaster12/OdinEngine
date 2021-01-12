@@ -1,5 +1,7 @@
 #include "Include/vk_pipelinebuilder.h"
 #include <iostream>
+#include <array>
+
 
 namespace vkcomponent
 {
@@ -29,6 +31,13 @@ namespace vkcomponent
 
         //build the actual pipeline
         //we now use all of the info structs we have been writing into into this one to create the pipeline
+        std::array <VkDynamicState, 2> dStates = {VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR}; 
+        VkPipelineDynamicStateCreateInfo dStateInfo = {};
+        dStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dStateInfo.dynamicStateCount = dStates.size();
+        dStateInfo.pDynamicStates = dStates.data();
+        
+        
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipelineInfo.pNext = nullptr;
@@ -46,6 +55,7 @@ namespace vkcomponent
         pipelineInfo.renderPass = pass;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+        pipelineInfo.pDynamicState = &dStateInfo;
 
         //its easy to error out on create graphics pipeline, so we handle it a bit better than the common VK_CHECK case
         VkPipeline newPipeline;

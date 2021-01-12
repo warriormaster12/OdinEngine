@@ -131,7 +131,7 @@ public:
 	GPUSceneData _sceneParameters;
 	AllocatedBuffer _sceneParameterBuffer;
 
-	vkcomponent::SwapChain _swapChainObj{_chosenGPU, _device, _allocator};
+	vkcomponent::SwapChain _swapChainObj{_chosenGPU, _device, _allocator, _swapDeletionQueue};
 	Camera _camera{_swapChainObj};
 
 	//texture hashmap

@@ -19,13 +19,15 @@
 
 #include "../Logger/Include/Logger.h"
 
-
+vkcomponent::PipelineBuilder pipelineBuilder;
 
 constexpr bool bUseValidationLayers = true;
 void VulkanRenderer::init(WindowHandler& windowHandler)
 {
 	_windowHandler = &windowHandler;
-	frameBufferResize();
+	SDL_GetWindowSize(_windowHandler->_window, &content_width, &content_height);
+	_swapChainObj._windowExtent.width = content_width;
+	_swapChainObj._windowExtent.height = content_height;
 	init_vulkan();
 	_swapChainObj.init_swapchain();
 
@@ -72,13 +74,14 @@ void VulkanRenderer::cleanup()
 
 void VulkanRenderer::frameBufferResize()
 {
-	
-	ENGINE_CORE_ERROR("true");
-	frameBufferResized = true;
-
-	SDL_Vulkan_GetDrawableSize(_windowHandler->_window, &content_width, &content_height);
-	_swapChainObj._windowExtent.width = content_width;
-	_swapChainObj._windowExtent.height = content_height;
+	if(SDL_WINDOWEVENT_RESIZED)
+	{
+		ENGINE_CORE_ERROR("true");
+		frameBufferResized = true;
+		// SDL_GetWindowSize(_windowHandler->_window, &content_width, &content_height);
+		// _swapChainObj._windowExtent.width = content_width;
+		// _swapChainObj._windowExtent.height = content_height;
+	}
 	
 }
 
@@ -265,7 +268,6 @@ void VulkanRenderer::recreate_swapchain()
 {	
 	vkDeviceWaitIdle(_device);
 	_swapDeletionQueue.flush();
-	_swapChainObj.destroySwapChain();
 	_swapChainObj.init_swapchain();
 
 	init_default_renderpass();
@@ -275,8 +277,6 @@ void VulkanRenderer::recreate_swapchain()
 	init_commands();
 
 	init_descriptors();
-
-	init_pipelines();
 
 	init_scene();
 	
@@ -357,9 +357,6 @@ void VulkanRenderer::init_default_renderpass()
 	_swapDeletionQueue.push_function([=]() {
 		vkDestroyRenderPass(_device, _renderPass, nullptr);
 	});
-	_mainDeletionQueue.push_function([=]() {
-		vkDestroyRenderPass(_device, _renderPass, nullptr);
-	});
 }
 
 void VulkanRenderer::init_framebuffers()
@@ -381,11 +378,6 @@ void VulkanRenderer::init_framebuffers()
 		VK_CHECK(vkCreateFramebuffer(_device, &fb_info, nullptr, &_framebuffers[i]));
 		_swapDeletionQueue.push_function([=]() {
 			vkDestroyFramebuffer(_device, _framebuffers[i], nullptr);
-			vkDestroyImageView(_device, _swapChainObj._swapchainImageViews[i], nullptr);
-		});
-		_mainDeletionQueue.push_function([=]() {
-			vkDestroyFramebuffer(_device, _framebuffers[i], nullptr);
-			vkDestroyImageView(_device, _swapChainObj._swapchainImageViews[i], nullptr);
 		});
 	}
 }
@@ -418,9 +410,9 @@ void VulkanRenderer::init_commands()
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroyCommandPool(_device, _uploadContext._commandPool, nullptr);
 	});
-	_swapDeletionQueue.push_function([=]() {
-		vkDestroyCommandPool(_device, _uploadContext._commandPool, nullptr);
-	});
+	// _swapDeletionQueue.push_function([=]() {
+	// 	vkDestroyCommandPool(_device, _uploadContext._commandPool, nullptr);
+	// });
 }
 
 void VulkanRenderer::init_sync_structures()
@@ -486,7 +478,6 @@ void VulkanRenderer::init_pipelines()
 
 	
 	//build the stage-create-info for both vertex and fragment stages. This lets the pipeline know the shader modules per stage
-	vkcomponent::PipelineBuilder pipelineBuilder;
 
 	pipelineBuilder._shaderStages.push_back(
 		vkinit::pipeline_shader_stage_create_info(VK_SHADER_STAGE_VERTEX_BIT, meshVertShader));
@@ -597,12 +588,6 @@ void VulkanRenderer::init_pipelines()
 	vkDestroyShaderModule(_device, texturedMeshShader, nullptr);
 
 	_mainDeletionQueue.push_function([=]() {
-		vkDestroyPipeline(_device, meshPipeline, nullptr);
-		vkDestroyPipeline(_device, texPipeline, nullptr);
-		vkDestroyPipelineLayout(_device, meshPipLayout, nullptr);
-		vkDestroyPipelineLayout(_device, texturedPipeLayout, nullptr);
-	});
-	_swapDeletionQueue.push_function([=]() {
 		vkDestroyPipeline(_device, meshPipeline, nullptr);
 		vkDestroyPipeline(_device, texPipeline, nullptr);
 		vkDestroyPipelineLayout(_device, meshPipLayout, nullptr);
@@ -852,6 +837,8 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 			lastMesh = object.mesh;
 		}
 		//we can now draw
+		vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder._scissor);
+		vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder._viewport);
 		vkCmdDraw(cmd, object.mesh->_vertices.size(), 1,0 , i);
 	}
 }
@@ -1034,11 +1021,6 @@ void VulkanRenderer::init_descriptors()
 		VkWriteDescriptorSet setWrites[] = { cameraWrite,sceneWrite,objectWrite };
 
 		vkUpdateDescriptorSets(_device, 3, setWrites, 0, nullptr);
-		_mainDeletionQueue.push_function([=]()
-		{
-			vmaDestroyBuffer(_allocator, _frames[i].objectBuffer._buffer, _frames[i].objectBuffer._allocation);
-			vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].cameraBuffer._allocation);
-		});
 		_swapDeletionQueue.push_function([=]()
 		{
 			vmaDestroyBuffer(_allocator, _frames[i].objectBuffer._buffer, _frames[i].objectBuffer._allocation);
@@ -1054,15 +1036,7 @@ void VulkanRenderer::init_descriptors()
 		_descriptorAllocator->cleanup();
 		_descriptorLayoutCache->cleanup();
 	});
-	_swapDeletionQueue.push_function([=]() {
-		vmaDestroyBuffer(_allocator, _sceneParameterBuffer._buffer, _sceneParameterBuffer._allocation);
-		for (auto& frame : _frames)
-		{
-			frame.dynamicDescriptorAllocator->cleanup();
-		}
-		_descriptorAllocator->cleanup();
-		_descriptorLayoutCache->cleanup();
-	});
+	
 }
 
 
