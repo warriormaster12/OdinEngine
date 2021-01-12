@@ -5,6 +5,8 @@
 #include "vk_deletionqueue.h"
 #include "vk_check.h"
 #include <iostream>
+#include <SDL.h>
+#include <SDL_vulkan.h>
 
 namespace vkcomponent
 {
@@ -23,7 +25,7 @@ namespace vkcomponent
         //array of image-views from the swapchain
         std::vector<VkImageView> _swapchainImageViews;
 
-        VkExtent2D _windowExtent{};
+        VkExtent2D _actualExtent{};
         VkSurfaceKHR _surface; // Vulkan window surface
 
         VkImageView _depthImageView;
@@ -31,7 +33,7 @@ namespace vkcomponent
 
         //the format for the depth image
         VkFormat _depthFormat;
-        void init_swapchain();
+        void init_swapchain(SDL_Window* window);
     private: 
         VkPhysicalDevice* _chosenGPU;
         VkDevice* _device;

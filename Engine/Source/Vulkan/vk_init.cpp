@@ -1,4 +1,5 @@
 #include "Include/vk_init.h"
+#include <iostream>
 
 VkCommandPoolCreateInfo vkinit::command_pool_create_info(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags /*= 0*/)
 {
@@ -122,12 +123,12 @@ VkPipelineLayoutCreateInfo vkinit::pipeline_layout_create_info() {
     return info;
 }
 
-VkFramebufferCreateInfo vkinit::framebuffer_create_info(VkRenderPass _renderPass, VkExtent2D _windowExtent)
+VkFramebufferCreateInfo vkinit::framebuffer_create_info(VkRenderPass& _renderPass, VkExtent2D& _windowExtent)
 {
     VkFramebufferCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	info.pNext = nullptr;
-
+    
 	info.renderPass = _renderPass;
 	info.attachmentCount = 1;
 	info.width = _windowExtent.width;

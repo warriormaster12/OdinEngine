@@ -208,10 +208,6 @@ private:
 	void upload_mesh(Mesh& mesh);
 
 	void recreate_swapchain();
-
-	int content_width;
-	int content_height;
-
 };
 
 

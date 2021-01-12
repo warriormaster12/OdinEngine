@@ -109,9 +109,6 @@ void imgui_layer::init_imgui_layer(VulkanRenderer& renderer)
 	//add the destroy the imgui created structures
 	renderer._mainDeletionQueue.push_function([=]() {
 		ImGui_ImplVulkan_Shutdown();
-		});
-	renderer._swapDeletionQueue.push_function([=]() {
-
 		vkDestroyDescriptorPool(renderer._device, imguiPool, nullptr);
 		});
 }

@@ -9,15 +9,17 @@ vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device,
 	_DeletionQueue = &refDeletionQueue;
 }
 
-void vkcomponent::SwapChain::init_swapchain()
+void vkcomponent::SwapChain::init_swapchain(SDL_Window* window)
 {
+	int width;
+	int height;
+	SDL_Vulkan_GetDrawableSize(window, &width, &height);
     vkb::SwapchainBuilder swapchainBuilder{*_chosenGPU,*_device,_surface };
-
 	vkb::Swapchain vkbSwapchain = swapchainBuilder
 		.use_default_format_selection()
 		//use vsync present mode
 		.set_desired_present_mode(VK_PRESENT_MODE_IMMEDIATE_KHR)
-		.set_desired_extent(_windowExtent.width, _windowExtent.height)
+		.set_desired_extent(static_cast<uint32_t>(width), static_cast<uint32_t>(height))
 		.build()
 		.value();
 
@@ -25,12 +27,14 @@ void vkcomponent::SwapChain::init_swapchain()
 	_swapchain = vkbSwapchain.swapchain;
 	_swapchainImages = vkbSwapchain.get_images().value();
 	_swapchainImageViews = vkbSwapchain.get_image_views().value();
-
 	_swapchainImageFormat = vkbSwapchain.image_format;
+
+	//we get actual resolution of the displayed content
+	_actualExtent = vkbSwapchain.extent;
 	//depth image size will match the window
 	VkExtent3D depthImageExtent = {
-		_windowExtent.width,
-		_windowExtent.height,
+		_actualExtent.width,
+		_actualExtent.height,
 		1
 	};
 

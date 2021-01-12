@@ -59,7 +59,7 @@ void Core::coreUpdate()
 					bQuit = true;
 				}
 			}
-			else if (e.type == SDL_WINDOWEVENT_RESIZED && _isInitialized)
+			else if (e.type == SDL_WINDOWEVENT_RESIZED)
 			{
 				renderer.frameBufferResize();
 			}
@@ -73,7 +73,7 @@ void Core::coreUpdate()
 
         //imgui commands
 		Editor::showMainWindow(_windowHandler._resolution);
-        renderer.run();
+		renderer.run();
     }
 }
 

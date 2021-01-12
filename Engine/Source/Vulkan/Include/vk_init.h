@@ -21,7 +21,7 @@ namespace vkinit {
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info();
 
-    VkFramebufferCreateInfo framebuffer_create_info(VkRenderPass _renderPass, VkExtent2D _windowExtent);
+    VkFramebufferCreateInfo framebuffer_create_info(VkRenderPass& _renderPass, VkExtent2D& _windowExtent);
 
     VkFenceCreateInfo fence_create_info(VkFenceCreateFlags flags = 0);
 

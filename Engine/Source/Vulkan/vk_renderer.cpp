@@ -25,11 +25,8 @@ constexpr bool bUseValidationLayers = true;
 void VulkanRenderer::init(WindowHandler& windowHandler)
 {
 	_windowHandler = &windowHandler;
-	SDL_GetWindowSize(_windowHandler->_window, &content_width, &content_height);
-	_swapChainObj._windowExtent.width = content_width;
-	_swapChainObj._windowExtent.height = content_height;
 	init_vulkan();
-	_swapChainObj.init_swapchain();
+	_swapChainObj.init_swapchain(_windowHandler->_window);
 
 	init_default_renderpass();
 
@@ -52,7 +49,6 @@ void VulkanRenderer::init(WindowHandler& windowHandler)
 	_camera.position = { 0.f,-6.f,-10.f };
 
 	ENGINE_CORE_INFO("vulkan intialized");
-
 }
 void VulkanRenderer::cleanup()
 {	
@@ -74,15 +70,7 @@ void VulkanRenderer::cleanup()
 
 void VulkanRenderer::frameBufferResize()
 {
-	if(SDL_WINDOWEVENT_RESIZED)
-	{
-		ENGINE_CORE_ERROR("true");
-		frameBufferResized = true;
-		// SDL_GetWindowSize(_windowHandler->_window, &content_width, &content_height);
-		// _swapChainObj._windowExtent.width = content_width;
-		// _swapChainObj._windowExtent.height = content_height;
-	}
-	
+	frameBufferResized = true;
 }
 
 void VulkanRenderer::draw()
@@ -123,7 +111,7 @@ void VulkanRenderer::draw()
 
 	//start the main renderpass. 
 	//We will use the clear color from above, and the framebuffer of the index the swapchain gave us
-	VkRenderPassBeginInfo rpInfo = vkinit::renderpass_begin_info(_renderPass, _swapChainObj._windowExtent, _framebuffers[swapchainImageIndex]);
+	VkRenderPassBeginInfo rpInfo = vkinit::renderpass_begin_info(_renderPass, _swapChainObj._actualExtent, _framebuffers[swapchainImageIndex]);
 
 	//connect clear values
 	rpInfo.clearValueCount = 2;
@@ -176,7 +164,7 @@ void VulkanRenderer::draw()
 
 	result = vkQueuePresentKHR(_graphicsQueue, &presentInfo);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frameBufferResized) {
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frameBufferResized == true) {
 		frameBufferResized = false;
 		recreate_swapchain();
 	} else if (result != VK_SUCCESS) {
@@ -268,20 +256,9 @@ void VulkanRenderer::recreate_swapchain()
 {	
 	vkDeviceWaitIdle(_device);
 	_swapDeletionQueue.flush();
-	_swapChainObj.init_swapchain();
+	_swapChainObj.init_swapchain(_windowHandler->_window);
 
-	init_default_renderpass();
-
-	init_framebuffers();
-
-	init_commands();
-
-	init_descriptors();
-
-	init_scene();
-	
-	imgui_layer::init_imgui_layer(*this);
-	
+	init_framebuffers();	
 }
 
 void VulkanRenderer::init_default_renderpass()
@@ -354,27 +331,24 @@ void VulkanRenderer::init_default_renderpass()
 	render_pass_info.pDependencies = &dependency;
 	
 	VK_CHECK(vkCreateRenderPass(_device, &render_pass_info, nullptr, &_renderPass));
-	_swapDeletionQueue.push_function([=]() {
+	_mainDeletionQueue.push_function([=]() {
 		vkDestroyRenderPass(_device, _renderPass, nullptr);
 	});
 }
 
 void VulkanRenderer::init_framebuffers()
 {
-	//create the framebuffers for the swapchain images. This will connect the render-pass to the images for rendering
-	VkFramebufferCreateInfo fb_info = vkinit::framebuffer_create_info(_renderPass, _swapChainObj._windowExtent);
-	
-	const uint32_t swapchain_imagecount = _swapChainObj._swapchainImages.size();
+	const uint32_t swapchain_imagecount = _swapChainObj._swapchainImageViews.size();
 	_framebuffers = std::vector<VkFramebuffer>(swapchain_imagecount);
 
 	for (int i = 0; i < swapchain_imagecount; i++) {
+		//create the framebuffers for the swapchain images. This will connect the render-pass to the images for rendering
+		VkFramebufferCreateInfo fb_info = vkinit::framebuffer_create_info(_renderPass, _swapChainObj._actualExtent);
+		std::array <VkImageView, 2> attachments = {_swapChainObj._swapchainImageViews[i], _swapChainObj._depthImageView};
 
-		VkImageView attachments[2];
-		attachments[0] = _swapChainObj._swapchainImageViews[i];
-		attachments[1] = _swapChainObj._depthImageView;
 
-		fb_info.pAttachments = attachments;
-		fb_info.attachmentCount = 2;
+		fb_info.attachmentCount = attachments.size();
+		fb_info.pAttachments = attachments.data();
 		VK_CHECK(vkCreateFramebuffer(_device, &fb_info, nullptr, &_framebuffers[i]));
 		_swapDeletionQueue.push_function([=]() {
 			vkDestroyFramebuffer(_device, _framebuffers[i], nullptr);
@@ -400,9 +374,6 @@ void VulkanRenderer::init_commands()
 		_mainDeletionQueue.push_function([=]() {
 			vkDestroyCommandPool(_device, _frames[i]._commandPool, nullptr);
 		});
-		_swapDeletionQueue.push_function([=]() {
-			vkFreeCommandBuffers(_device, _frames[i]._commandPool, 1, &_frames[i]._mainCommandBuffer);
-		});
 	}
 	VkCommandPoolCreateInfo uploadCommandPoolInfo = vkinit::command_pool_create_info(_graphicsQueueFamily);
 	//create pool for upload context
@@ -410,9 +381,6 @@ void VulkanRenderer::init_commands()
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroyCommandPool(_device, _uploadContext._commandPool, nullptr);
 	});
-	// _swapDeletionQueue.push_function([=]() {
-	// 	vkDestroyCommandPool(_device, _uploadContext._commandPool, nullptr);
-	// });
 }
 
 void VulkanRenderer::init_sync_structures()
@@ -533,13 +501,13 @@ void VulkanRenderer::init_pipelines()
 	//build viewport and scissor from the swapchain extents
 	pipelineBuilder._viewport.x = 0.0f;
 	pipelineBuilder._viewport.y = 0.0f;
-	pipelineBuilder._viewport.width = (float)_swapChainObj._windowExtent.width;
-	pipelineBuilder._viewport.height = (float)_swapChainObj._windowExtent.height;
+	pipelineBuilder._viewport.width = (float)_swapChainObj._actualExtent.width;
+	pipelineBuilder._viewport.height = (float)_swapChainObj._actualExtent.height;
 	pipelineBuilder._viewport.minDepth = 0.0f;
 	pipelineBuilder._viewport.maxDepth = 1.0f;
 
 	pipelineBuilder._scissor.offset = { 0, 0 };
-	pipelineBuilder._scissor.extent = _swapChainObj._windowExtent;
+	pipelineBuilder._scissor.extent = _swapChainObj._actualExtent;
 
 	//configure the rasterizer to draw filled triangles
 	pipelineBuilder._rasterizer = vkinit::rasterization_state_create_info(VK_POLYGON_MODE_FILL);
@@ -1021,7 +989,7 @@ void VulkanRenderer::init_descriptors()
 		VkWriteDescriptorSet setWrites[] = { cameraWrite,sceneWrite,objectWrite };
 
 		vkUpdateDescriptorSets(_device, 3, setWrites, 0, nullptr);
-		_swapDeletionQueue.push_function([=]()
+		_mainDeletionQueue.push_function([=]()
 		{
 			vmaDestroyBuffer(_allocator, _frames[i].objectBuffer._buffer, _frames[i].objectBuffer._allocation);
 			vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].cameraBuffer._allocation);
