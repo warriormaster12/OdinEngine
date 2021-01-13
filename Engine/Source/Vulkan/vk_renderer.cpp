@@ -259,6 +259,11 @@ void VulkanRenderer::recreate_swapchain()
 	_swapChainObj.init_swapchain(_windowHandler->_window);
 
 	init_framebuffers();	
+
+	//update parts of the pipeline that change dynamically
+	pipelineBuilder._viewport.width = (float)_swapChainObj._actualExtent.width;
+	pipelineBuilder._viewport.height = (float)_swapChainObj._actualExtent.height;
+	pipelineBuilder._scissor.extent = _swapChainObj._actualExtent;
 }
 
 void VulkanRenderer::init_default_renderpass()
@@ -775,6 +780,8 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 		if (object.material != lastMaterial) {
 
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipeline);
+			vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder._viewport);
+			vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder._scissor);
 			lastMaterial = object.material;
 
 			uint32_t uniform_offset = pad_uniform_buffer_size(sizeof(GPUSceneData)) * frameIndex;
@@ -805,8 +812,6 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 			lastMesh = object.mesh;
 		}
 		//we can now draw
-		vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder._scissor);
-		vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder._viewport);
 		vkCmdDraw(cmd, object.mesh->_vertices.size(), 1,0 , i);
 	}
 }

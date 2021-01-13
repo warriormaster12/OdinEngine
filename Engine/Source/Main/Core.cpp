@@ -28,7 +28,7 @@ void Core::coreInit()
 	}
 	testSystem->Init();
 	
-    _windowHandler.createWindow(1920, 1080);
+    _windowHandler.createWindow(1280, 720);
     renderer.init(_windowHandler);
 	imgui_layer::init_imgui_layer(renderer);
     //everything went fine
@@ -72,7 +72,7 @@ void Core::coreUpdate()
 
 
         //imgui commands
-		Editor::showMainWindow(_windowHandler._resolution);
+		//Editor::showMainWindow(_windowHandler._resolution);
 		renderer.run();
     }
 }
