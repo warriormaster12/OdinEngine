@@ -3,14 +3,14 @@
 
 
 unsigned int width, height;
-void Editor::showMainWindow(VkExtent2D& _contentExtent)
+void Editor::showMainWindow(VulkanRenderer& renderer)
 {
     
-    width = _contentExtent.width;
-    height = _contentExtent.height;
+    width = renderer._swapChainObj._actualExtent.width;
+    height = renderer._swapChainObj._actualExtent.height;
     setupDockSpace();
     ImGui::ShowDemoWindow();
-    Viewport::ShowGameViewport();
+    Viewport::ShowGameViewport(renderer);
 	ImGui::End();
 }
 
