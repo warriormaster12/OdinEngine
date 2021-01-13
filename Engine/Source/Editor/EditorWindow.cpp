@@ -3,11 +3,11 @@
 
 
 unsigned int width, height;
-void Editor::showMainWindow(Resolution& _resolution)
+void Editor::showMainWindow(VkExtent2D& _contentExtent)
 {
     
-    width = _resolution.width;
-    height = _resolution.height;
+    width = _contentExtent.width;
+    height = _contentExtent.height;
     setupDockSpace();
     ImGui::ShowDemoWindow();
     Viewport::ShowGameViewport();

@@ -72,7 +72,7 @@ void Core::coreUpdate()
 
 
         //imgui commands
-		//Editor::showMainWindow(_windowHandler._resolution);
+		Editor::showMainWindow(renderer._swapChainObj._actualExtent);
 		renderer.run();
     }
 }
