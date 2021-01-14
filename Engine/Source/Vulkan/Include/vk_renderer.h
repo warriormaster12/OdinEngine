@@ -97,7 +97,7 @@ public:
 	int _selectedShader{ 0 };
 
 
-	
+	VkDescriptorSet temptextureSet{VK_NULL_HANDLE};
 	VkInstance _instance;
 	VkDebugUtilsMessengerEXT _debug_messenger;
 	VkPhysicalDevice _chosenGPU;
