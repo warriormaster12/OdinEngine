@@ -178,10 +178,7 @@ void VulkanRenderer::draw()
 
 void VulkanRenderer::run()
 {
-	{
-		ImGui::Render();
-		draw();
-	}
+	draw();
 }
 
 FrameData& VulkanRenderer::get_current_frame()

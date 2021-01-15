@@ -64,15 +64,7 @@ void Core::coreUpdate()
 				renderer.frameBufferResize();
 			}
 		}
-		//imgui new frame 
-        ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplSDL2_NewFrame(_windowHandler._window);
-
-		ImGui::NewFrame();        
-
-
-        //imgui commands
-		Editor::showMainWindow(renderer);
+		imgui_layer::update_ui();
 		renderer.run();
     }
 }

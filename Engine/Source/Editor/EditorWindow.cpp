@@ -5,13 +5,12 @@
 unsigned int width, height;
 void Editor::showMainWindow(VulkanRenderer& renderer)
 {
-    
     width = renderer._swapChainObj._actualExtent.width;
     height = renderer._swapChainObj._actualExtent.height;
     setupDockSpace();
     ImGui::ShowDemoWindow();
     Viewport::ShowGameViewport(renderer);
-	ImGui::End();
+    ImGui::End();
 }
 
 void Editor::setupDockSpace()
