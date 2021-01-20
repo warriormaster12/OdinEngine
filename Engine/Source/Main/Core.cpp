@@ -39,14 +39,24 @@ void Core::coreUpdate()
 {
     SDL_Event e;
 	bool bQuit = false;
-
+	auto start = std::chrono::system_clock::now();
+	auto end = std::chrono::system_clock::now();
 	//main loop
 	while (!bQuit)
 	{
+		end = std::chrono::system_clock::now();
+		std::chrono::duration<float> elapsed_seconds = end - start;
+		auto deltatime = elapsed_seconds.count() * 1000.f;
+
+		start = std::chrono::system_clock::now();
+
+	
 		//Handle events on queue
 		while (SDL_PollEvent(&e) != 0)
 		{
+
 			ImGui_ImplSDL2_ProcessEvent(&e);
+			renderer._camera.process_input_event(&e);
 			//close the window when user alt-f4s or clicks the X button			
 			if (e.type == SDL_QUIT)
 			{
@@ -65,6 +75,7 @@ void Core::coreUpdate()
 			}
 		}
 		imgui_layer::update_ui();
+		renderer._camera.update_camera(deltatime);
 		renderer.run();
     }
 }

@@ -110,7 +110,7 @@ glm::mat4 Camera::get_view_matrix()
 
 	glm::mat4 cam_rot = (get_rotation_matrix());
 
-	glm::mat4 view = glm::translate(glm::mat4{ 1 }, camPos);
+	glm::mat4 view = glm::translate(glm::mat4{ 1 }, camPos) * cam_rot;
 
 	//we need to invert the camera matrix
 	//view = glm::inverse(view);

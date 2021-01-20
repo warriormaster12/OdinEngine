@@ -46,7 +46,7 @@ void VulkanRenderer::init(WindowHandler& windowHandler)
 
 	init_scene();
 
-	_camera.position = { 0.f,-6.f,-10.f };
+	_camera.position = { 0.f,-2.f,-10.f };
 
 	ENGINE_CORE_INFO("vulkan intialized");
 }
@@ -570,20 +570,54 @@ void VulkanRenderer::init_pipelines()
 
 void VulkanRenderer::load_meshes()
 {
-	Mesh triMesh{};
+	Mesh cubeMesh{};
 	//make the array 3 vertices long
-	triMesh._vertices.resize(3);
+	cubeMesh._vertices.resize(105);
 
 	//vertex positions
-	triMesh._vertices[0].position = { 1.f,1.f, 0.0f };
-	triMesh._vertices[1].position = { -1.f,1.f, 0.0f };
-	triMesh._vertices[2].position = { 0.f,-1.f, 0.0f };
+	cubeMesh._vertices[0].position = {  -0.5f, -0.5f, -0.5f};
+	cubeMesh._vertices[1].position = {  0.5f, -0.5f, -0.5f};
+	cubeMesh._vertices[2].position = {  0.5f,  0.5f, -0.5f};
+	cubeMesh._vertices[3].position = {  0.5f,  0.5f, -0.5f};
+	cubeMesh._vertices[4].position = { -0.5f,  0.5f, -0.5f};
+	cubeMesh._vertices[5].position = {  -0.5f, -0.5f, -0.5f};
 
-	//vertex colors, all green
-	triMesh._vertices[0].color = { 0.f,1.f, 0.0f }; //pure green
-	triMesh._vertices[1].color = { 0.f,1.f, 0.0f }; //pure green
-	triMesh._vertices[2].color = { 0.f,1.f, 0.0f }; //pure green
-	//we dont care about the vertex normals
+	cubeMesh._vertices[6].position = {-0.5f, -0.5f,  0.5f};  
+	cubeMesh._vertices[7].position = {0.5f, -0.5f,  0.5f};
+	cubeMesh._vertices[8].position = {0.5f,  0.5f,  0.5f};
+	cubeMesh._vertices[9].position = {0.5f,  0.5f,  0.5f};
+	cubeMesh._vertices[10].position = {-0.5f,  0.5f,  0.5f};
+	cubeMesh._vertices[11].position = {-0.5f, -0.5f,  0.5f};
+
+	cubeMesh._vertices[12].position = {-0.5f,  0.5f,  0.5f};
+	cubeMesh._vertices[13].position = {-0.5f,  0.5f, -0.5f};
+	cubeMesh._vertices[14].position = {-0.5f, -0.5f, -0.5f};
+	cubeMesh._vertices[15].position = {-0.5f, -0.5f, -0.5f};
+	cubeMesh._vertices[16].position = {-0.5f, -0.5f,  0.5f};
+	cubeMesh._vertices[17].position = {-0.5f,  0.5f,  0.5f};
+
+	cubeMesh._vertices[18].position = {0.5f,  0.5f,  0.5f};
+	cubeMesh._vertices[19].position = {0.5f,  0.5f, -0.5f};
+	cubeMesh._vertices[20].position = {0.5f, -0.5f, -0.5f};
+	cubeMesh._vertices[21].position = {0.5f, -0.5f, -0.5f};
+	cubeMesh._vertices[22].position = {0.5f, -0.5f,  0.5f};
+	cubeMesh._vertices[23].position = {0.5f,  0.5f,  0.5f};
+
+	cubeMesh._vertices[24].position = {-0.5f, -0.5f, -0.5f};
+	cubeMesh._vertices[25].position = {0.5f, -0.5f, -0.5f};
+	cubeMesh._vertices[26].position = {0.5f, -0.5f,  0.5f};
+	cubeMesh._vertices[27].position = {0.5f, -0.5f,  0.5f};
+	cubeMesh._vertices[28].position = {-0.5f, -0.5f,  0.5f};
+	cubeMesh._vertices[29].position = {-0.5f, -0.5f, -0.5f};
+
+	cubeMesh._vertices[30].position = {-0.5f,  0.5f, -0.5f};
+	cubeMesh._vertices[31].position = {0.5f,  0.5f, -0.5f};
+	cubeMesh._vertices[32].position = {0.5f,  0.5f,  0.5f};
+	cubeMesh._vertices[33].position = {0.5f,  0.5f,  0.5f};
+	cubeMesh._vertices[34].position = {-0.5f,  0.5f,  0.5f};
+	cubeMesh._vertices[35].position = {-0.5f,  0.5f, -0.5f};
+	
+
 
 	//load the monkey
 	Mesh monkeyMesh{};
@@ -594,9 +628,10 @@ void VulkanRenderer::load_meshes()
 	//upload_mesh(triMesh);
 	upload_mesh(monkeyMesh);
 	upload_mesh(lostEmpire);
+	upload_mesh(cubeMesh);
 
 	_meshes["monkey"] = monkeyMesh;
-	_meshes["triangle"] = triMesh;	
+	_meshes["skyBox"] = cubeMesh;	
 	_meshes["empire"] = lostEmpire;
 }
 
@@ -737,16 +772,16 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 
 	vmaUnmapMemory(_allocator, get_current_frame().cameraBuffer._allocation);
 
-	float framed = (_frameNumber / 120.f);
 	_sceneParameters.lightData.camPos = glm::vec4(glm::vec3(_camera.position), 0.0f);
-	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(0.5f, 0.0f, 0.0f),0.0f);
-	_sceneParameters.matData.metallic = glm::vec4(0.9f);
-	_sceneParameters.matData.roughness = glm::vec4(0.001f);
-	_sceneParameters.matData.ao = glm::vec4(1.0f);
-
 	_sceneParameters.lightData.lightPositions = glm::vec4(glm::vec3(0.0f,  1.0f, 1.0f),0.0f);
 	
-	_sceneParameters.lightData.lightColors = glm::vec4(glm::vec3(300.0f),0.0f);
+	_sceneParameters.lightData.lightColors = glm::vec4(glm::vec3(3.0f),0.0f);
+
+
+	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(0.5f, 0.0f, 0.0f),0.0f);
+	_sceneParameters.matData.metallic = glm::vec4(glm::vec3(0.001f),0.0f);
+	_sceneParameters.matData.roughness = glm::vec4(glm::vec3(0.99f),0.0f);
+	_sceneParameters.matData.ao = glm::vec4(glm::vec3(1.0f),0.0f);
 
 	
 
@@ -838,10 +873,17 @@ void VulkanRenderer::init_scene()
 	RenderObject map;
 	map.mesh = get_mesh("empire");
 	map.material = get_material("texturedmesh");
-	map.transformMatrix = glm::translate(glm::vec3{ 5,-10,0 }); 
+	map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
 
 	_renderables.push_back(map);
-
+	
+	RenderObject skyBox;
+	skyBox.mesh = get_mesh("skyBox");
+	skyBox.material = get_material("defaultmesh");
+	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
+	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
+	skyBox.transformMatrix = translation * scale;
+	_renderables.push_back(skyBox);
 	// for (int x = -20; x <= 20; x++) {
 	// 	for (int y = -20; y <= 20; y++) {
 
