@@ -102,8 +102,7 @@ void VulkanRenderer::draw()
 
 	//make a clear-color from frame number. This will flash with a 120 frame period.
 	VkClearValue clearValue;
-	float flash = abs(sin(_frameNumber / 120.f));
-	clearValue.color = { { 0.0f, 0.0f, flash, 1.0f } };
+	clearValue.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 
 	//clear depth at 1
 	VkClearValue depthClear;
@@ -123,7 +122,7 @@ void VulkanRenderer::draw()
 	vkCmdBeginRenderPass(cmd, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	draw_objects(cmd, _renderables.data(), _renderables.size());	
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+	//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
 	//finalize the render pass
 	vkCmdEndRenderPass(cmd);
 	//finalize the command buffer (we can no longer add commands, but it can now be executed)
@@ -739,9 +738,20 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 	vmaUnmapMemory(_allocator, get_current_frame().cameraBuffer._allocation);
 
 	float framed = (_frameNumber / 120.f);
+	_sceneParameters.lightData.camPos = glm::vec4(glm::vec3(_camera.position), 0.0f);
+	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(0.5f, 0.0f, 0.0f),0.0f);
+	_sceneParameters.matData.metallic = glm::vec4(0.9f);
+	_sceneParameters.matData.roughness = glm::vec4(0.2f);
+	_sceneParameters.matData.ao = glm::vec4(1.0f);
 
-	_sceneParameters.ambientColor = { sin(framed),0,cos(framed),1 };
+	_sceneParameters.lightData.lightPositions = glm::vec4(glm::vec3(0.0f,  1.0f, 1.0f),0.0f);
+	
+	_sceneParameters.lightData.lightColors = glm::vec4(glm::vec3(300.0f),0.0f);
 
+	
+
+
+	
 	char* sceneData;
 	vmaMapMemory(_allocator, _sceneParameterBuffer._allocation , (void**)&sceneData);
 
@@ -825,12 +835,12 @@ void VulkanRenderer::init_scene()
 
 	_renderables.push_back(monkey);
 
-	RenderObject map;
-	map.mesh = get_mesh("empire");
-	map.material = get_material("texturedmesh");
-	map.transformMatrix = glm::translate(glm::vec3{ 5,-10,0 }); 
+	// RenderObject map;
+	// map.mesh = get_mesh("empire");
+	// map.material = get_material("texturedmesh");
+	// map.transformMatrix = glm::translate(glm::vec3{ 5,-10,0 }); 
 
-	_renderables.push_back(map);
+	// _renderables.push_back(map);
 
 	// for (int x = -20; x <= 20; x++) {
 	// 	for (int y = -20; y <= 20; y++) {

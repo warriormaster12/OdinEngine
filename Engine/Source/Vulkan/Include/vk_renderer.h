@@ -65,13 +65,25 @@ struct GPUCameraData{
 	glm::mat4 viewproj;
 };
 
+struct MaterialData 
+{
+	glm::vec4 albedo; // vec3
+	glm::vec4 metallic; // float
+	glm::vec4 roughness; // float
+	glm::vec4 ao; // float
+};
+
+struct Light
+{
+	glm::vec4 lightPositions; // vec3
+	glm::vec4 lightColors; // vec3
+
+	glm::vec4 camPos; // vec3
+};
 
 struct GPUSceneData {
-	glm::vec4 fogColor; // w is for exponent
-	glm::vec4 fogDistances; //x for min, y for max, zw unused.
-	glm::vec4 ambientColor;
-	glm::vec4 sunlightDirection; //w for sun power
-	glm::vec4 sunlightColor;
+	Light lightData;
+	MaterialData matData;
 };
 
 struct GPUObjectData {

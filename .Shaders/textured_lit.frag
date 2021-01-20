@@ -4,8 +4,11 @@
 //shader input
 layout (location = 0) in vec3 inColor;
 layout (location = 1) in vec2 texCoord;
+layout (location = 2) in vec3 WorldPos;
+layout (location = 3) in vec3 Normal;
 //output write
 layout (location = 0) out vec4 outFragColor;
+
 
 layout(set = 0, binding = 1) uniform  SceneData{   
     vec4 fogColor; // w is for exponent

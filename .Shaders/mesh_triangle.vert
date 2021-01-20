@@ -6,6 +6,8 @@ layout (location = 3) in vec2 vTexCoord;
 
 layout (location = 0) out vec3 outColor;
 layout (location = 1) out vec2 texCoord;
+layout (location = 2) out vec3 WorldPos;
+layout (location = 3) out vec3 Normal;
 
 layout(set = 0, binding = 0) uniform  CameraBuffer{   
     mat4 view;
@@ -32,10 +34,11 @@ layout( push_constant ) uniform constants
 
 void main() 
 {	
-	mat4 modelMatrix = objectBuffer.objects[gl_InstanceIndex].model;
-	mat4 transformMatrix = (cameraData.viewproj * modelMatrix);
-	gl_Position = transformMatrix * vec4(vPosition, 1.0f);
+	WorldPos = vec3(objectBuffer.objects[gl_InstanceIndex].model * vec4(vPosition, 1.0f));
+	Normal = mat3(objectBuffer.objects[gl_InstanceIndex].model) * vNormal;
 	outColor = vColor;
 	texCoord = vTexCoord;
+
+	gl_Position = cameraData.viewproj * vec4(WorldPos, 1.0f);
 }
 
