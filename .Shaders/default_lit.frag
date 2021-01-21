@@ -9,6 +9,13 @@ layout (location = 3) in vec3 Normal;
 //output write
 layout (location = 0) out vec4 outFragColor;
 
+layout(set = 0, binding = 0) uniform  CameraBuffer{   
+    mat4 view;
+    mat4 proj;
+	mat4 viewproj;
+	vec4 camPos; // vec3
+} cameraData;
+
 struct MaterialData 
 {
 	vec4 albedo; // vec3
@@ -19,10 +26,8 @@ struct MaterialData
 
 struct Light
 {
-	vec4 lightPositions; // vec3
-	vec4 lightColors; // vec3
-
-	vec4 camPos; // vec3
+	vec4 lightPositions[2]; // vec3
+	vec4 lightColors[2]; // vec3
 };
 
 layout(set = 0, binding = 1) uniform  SceneData{   
@@ -76,7 +81,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 void main()
 {		
     vec3 N = normalize(Normal);
-    vec3 V = normalize(vec3(sceneData.lightData.camPos) - WorldPos);
+    vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
@@ -86,40 +91,41 @@ void main()
     // reflectance equation
     vec3 Lo = vec3(0.0);
 
-    // calculate per-light radiance
-    vec3 L = normalize(vec3(sceneData.lightData.lightPositions) - WorldPos);
-    vec3 H = normalize(V + L);
-    float distance = length(vec3(sceneData.lightData.lightPositions) - WorldPos);
-    float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = vec3(sceneData.lightData.lightColors) * attenuation;
+    for(int i = 0; i < 2; ++i) 
+    {
+        // calculate per-light radiance
+        vec3 L = normalize(vec3(sceneData.lightData.lightPositions[i]) - WorldPos);
+        vec3 H = normalize(V + L);
+        float distance = length(vec3(sceneData.lightData.lightPositions[i]) - WorldPos);
+        float attenuation = 1.0 / (distance * distance);
+        vec3 radiance = vec3(sceneData.lightData.lightColors[i]) * attenuation;
 
-    // Cook-Torrance BRDF
-    float NDF = DistributionGGX(N, H, float(sceneData.matData.roughness));   
-    float G   = GeometrySmith(N, V, L, float(sceneData.matData.roughness));      
-    vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+        // Cook-Torrance BRDF
+        float NDF = DistributionGGX(N, H, float(sceneData.matData.roughness));   
+        float G   = GeometrySmith(N, V, L, float(sceneData.matData.roughness));      
+        vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+            
+        vec3 nominator    = NDF * G * F; 
+        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+        vec3 specular = nominator / max(denominator, 0.001); // prevent divide by zero for NdotV=0.0 or NdotL=0.0
         
-    vec3 nominator    = NDF * G * F; 
-    float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-    vec3 specular = nominator / max(denominator, 0.001); // prevent divide by zero for NdotV=0.0 or NdotL=0.0
-    
-    // kS is equal to Fresnel
-    vec3 kS = F;
-    // for energy conservation, the diffuse and specular light can't
-    // be above 1.0 (unless the surface emits light); to preserve this
-    // relationship the diffuse component (kD) should equal 1.0 - kS.
-    vec3 kD = vec3(1.0) - kS;
-    // multiply kD by the inverse metalness such that only non-metals 
-    // have diffuse lighting, or a linear blend if partly metal (pure metals
-    // have no diffuse light).
-    kD *= 1.0 - float(sceneData.matData.metallic);	  
+        // kS is equal to Fresnel
+        vec3 kS = F;
+        // for energy conservation, the diffuse and specular light can't
+        // be above 1.0 (unless the surface emits light); to preserve this
+        // relationship the diffuse component (kD) should equal 1.0 - kS.
+        vec3 kD = vec3(1.0) - kS;
+        // multiply kD by the inverse metalness such that only non-metals 
+        // have diffuse lighting, or a linear blend if partly metal (pure metals
+        // have no diffuse light).
+        kD *= 1.0 - float(sceneData.matData.metallic);	  
 
-    // scale light by NdotL
-    float NdotL = max(dot(N, L), 0.0);        
+        // scale light by NdotL
+        float NdotL = max(dot(N, L), 0.0);        
 
-    // add to outgoing radiance Lo
-    Lo += (kD * vec3(sceneData.matData.albedo) / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
-     
-    
+        // add to outgoing radiance Lo
+        Lo += (kD * vec3(sceneData.matData.albedo) / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+    }
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
     vec3 ambient = vec3(0.03) * vec3(sceneData.matData.albedo) * float(sceneData.matData.ao);

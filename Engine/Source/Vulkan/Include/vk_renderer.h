@@ -63,6 +63,8 @@ struct GPUCameraData{
 	glm::mat4 view;
 	glm::mat4 proj;
 	glm::mat4 viewproj;
+
+	glm::vec4 camPos; // vec3
 };
 
 struct MaterialData 
@@ -75,10 +77,8 @@ struct MaterialData
 
 struct Light
 {
-	glm::vec4 lightPositions; // vec3
-	glm::vec4 lightColors; // vec3
-
-	glm::vec4 camPos; // vec3
+	glm::vec4 lightPositions[2]; // vec3
+	glm::vec4 lightColors[2]; // vec3
 };
 
 struct GPUSceneData {

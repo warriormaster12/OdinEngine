@@ -764,6 +764,7 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 	camData.view = _camera.get_view_matrix();
 	camData.proj = _camera.get_projection_matrix(false);
 	camData.viewproj = camData.proj * camData.view ;
+	camData.camPos = glm::vec4(glm::vec3(_camera.position), 0.0f);
 
 	void* data;
 	vmaMapMemory(_allocator, get_current_frame().cameraBuffer._allocation, &data);
@@ -772,15 +773,17 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 
 	vmaUnmapMemory(_allocator, get_current_frame().cameraBuffer._allocation);
 
-	_sceneParameters.lightData.camPos = glm::vec4(glm::vec3(_camera.position), 0.0f);
-	_sceneParameters.lightData.lightPositions = glm::vec4(glm::vec3(0.0f,  1.0f, 1.0f),0.0f);
+	_sceneParameters.lightData.lightPositions[0] = glm::vec4(glm::vec3(0.0f,  1.0f, 2.0f),0.0f);
 	
-	_sceneParameters.lightData.lightColors = glm::vec4(glm::vec3(3.0f),0.0f);
+	_sceneParameters.lightData.lightColors[0] = glm::vec4(glm::vec3(1.0f),0.0f);
+	_sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  -1.0f, -2.0f),0.0f);
+	
+	_sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(3.0f),0.0f);
 
 
 	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(0.5f, 0.0f, 0.0f),0.0f);
-	_sceneParameters.matData.metallic = glm::vec4(glm::vec3(0.001f),0.0f);
-	_sceneParameters.matData.roughness = glm::vec4(glm::vec3(0.99f),0.0f);
+	_sceneParameters.matData.metallic = glm::vec4(glm::vec3(0.90f),0.0f);
+	_sceneParameters.matData.roughness = glm::vec4(glm::vec3(0.1f),0.0f);
 	_sceneParameters.matData.ao = glm::vec4(glm::vec3(1.0f),0.0f);
 
 	
@@ -967,7 +970,7 @@ void VulkanRenderer::init_descriptors()
 	_descriptorLayoutCache = new vkcomponent::DescriptorLayoutCache{};
 	_descriptorLayoutCache->init(_device);
 	
-	VkDescriptorSetLayoutBinding cameraBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT,0);
+	VkDescriptorSetLayoutBinding cameraBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0);
 	VkDescriptorSetLayoutBinding sceneBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	
 	VkDescriptorSetLayoutBinding bindings[] = { cameraBind,sceneBind };
