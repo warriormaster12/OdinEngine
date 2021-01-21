@@ -76,8 +76,8 @@ void Camera::process_input_event(SDL_Event* ev)
 	else if (ev->type == SDL_MOUSEMOTION) {
 		if (!bLocked)
 		{
-			pitch -= ev->motion.yrel * 0.003f;
-			yaw -= ev->motion.xrel * 0.003f;
+			pitch += ev->motion.yrel * 0.003f;
+			yaw += ev->motion.xrel * 0.003f;
 		}
 	}
 
@@ -87,7 +87,7 @@ void Camera::process_input_event(SDL_Event* ev)
 void Camera::update_camera(float deltaSeconds)
 {
 	const float cam_vel = 0.001f + bSprint * 0.01;
-	glm::vec3 forward = { 0,0,cam_vel };
+	glm::vec3 forward = { 0,0,-cam_vel };
 	glm::vec3 right = { cam_vel,0,0 };
 	glm::vec3 up = { 0,cam_vel,0 };
 

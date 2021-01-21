@@ -46,7 +46,7 @@ void VulkanRenderer::init(WindowHandler& windowHandler)
 
 	init_scene();
 
-	_camera.position = { 0.f,-2.f,-10.f };
+	_camera.position = { 0.f,0.f,10.f };
 
 	ENGINE_CORE_INFO("vulkan intialized");
 }
@@ -551,6 +551,7 @@ void VulkanRenderer::init_pipelines()
 	pipelineBuilder._pipelineLayout = texturedPipeLayout;
 	VkPipeline texPipeline = pipelineBuilder.build_pipeline(_device, _renderPass);
 	create_material(texPipeline, texturedPipeLayout, "texturedmesh");
+	create_material(texPipeline, texturedPipeLayout, "texturedmesh2");
 
 	vkDestroyShaderModule(_device, meshVertShader, nullptr);
 	vkDestroyShaderModule(_device, colorMeshShader, nullptr);
@@ -622,17 +623,21 @@ void VulkanRenderer::load_meshes()
 	//load the monkey
 	Mesh monkeyMesh{};
 	Mesh lostEmpire{};
+	Mesh viking_room{};
 	monkeyMesh.load_from_obj("EngineAssets/Meshes/monkey_smooth.obj");
 	lostEmpire.load_from_obj("EngineAssets/Meshes/lost_empire.obj");
+	viking_room.load_from_obj("EngineAssets/Meshes/viking_room.obj");
 
 	//upload_mesh(triMesh);
 	upload_mesh(monkeyMesh);
 	upload_mesh(lostEmpire);
 	upload_mesh(cubeMesh);
+	upload_mesh(viking_room);
 
 	_meshes["monkey"] = monkeyMesh;
 	_meshes["skyBox"] = cubeMesh;	
 	_meshes["empire"] = lostEmpire;
+	_meshes["viking_room"] = viking_room;
 }
 
 
@@ -707,6 +712,7 @@ void VulkanRenderer::upload_mesh(Mesh& mesh)
 void VulkanRenderer::load_images()
 {
 	Texture lostEmpire;
+	Texture vikingRoom;
 	asset_builder::convert_image("EngineAssets/Textures/lost_empire-RGBA.png", "EngineAssets/Textures/lost_empire-RGBA.bin");
 	vkcomponent::load_image_from_asset(*this, "EngineAssets/Textures/lost_empire-RGBA.bin", lostEmpire.image);
 	
@@ -715,8 +721,17 @@ void VulkanRenderer::load_images()
 
 	_loadedTextures["empire_diffuse"] = lostEmpire;
 
+	asset_builder::convert_image("EngineAssets/Textures/viking_room.png", "EngineAssets/Textures/viking_room.bin");
+	vkcomponent::load_image_from_asset(*this, "EngineAssets/Textures/viking_room.bin", vikingRoom.image);
+	
+	VkImageViewCreateInfo imageinfo2 = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, vikingRoom.image._image, VK_IMAGE_ASPECT_COLOR_BIT);
+	vkCreateImageView(_device, &imageinfo2, nullptr, &vikingRoom.imageView);
+
+	_loadedTextures["vikingroom_diffuse"] = vikingRoom;
+
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroyImageView(_device, lostEmpire.imageView, nullptr);
+		vkDestroyImageView(_device, vikingRoom.imageView, nullptr);
 	});
 
 }
@@ -781,9 +796,9 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 	_sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(3.0f),0.0f);
 
 
-	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(0.5f,0.0f,0.0f),0.0f);
+	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(1.0f,0.10f,0.0f),0.0f);
 	_sceneParameters.matData.metallic = glm::vec4(glm::vec3(1.0f),0.0f);
-	_sceneParameters.matData.roughness = glm::vec4(glm::vec3(0.35f),0.0f);
+	_sceneParameters.matData.roughness = glm::vec4(glm::vec3(0.25f),0.0f);
 	_sceneParameters.matData.ao = glm::vec4(glm::vec3(1.0f),0.0f);
 
 	
@@ -879,6 +894,13 @@ void VulkanRenderer::init_scene()
 	map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
 
 	_renderables.push_back(map);
+
+	RenderObject viking_room;
+	viking_room.mesh = get_mesh("viking_room");
+	viking_room.material = get_material("texturedmesh2");
+	viking_room.transformMatrix = glm::translate(glm::vec3{ 0,0,2.0f }); 
+
+	_renderables.push_back(viking_room);
 	
 	RenderObject skyBox;
 	skyBox.mesh = get_mesh("skyBox");
@@ -887,28 +909,24 @@ void VulkanRenderer::init_scene()
 	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
 	skyBox.transformMatrix = translation * scale;
 	_renderables.push_back(skyBox);
-	// for (int x = -20; x <= 20; x++) {
-	// 	for (int y = -20; y <= 20; y++) {
-
-	// 		RenderObject tri;
-	// 		tri.mesh = get_mesh("triangle");
-	// 		tri.material = get_material("defaultmesh");
-	// 		glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(x, 0, y));
-	// 		glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(0.2, 0.2, 0.2));
-	// 		tri.transformMatrix = translation * scale;
-
-	// 		_renderables.push_back(tri);
-	// 	}
-	// }
-
+	
 	//create a sampler for the texture
 	VkSamplerCreateInfo samplerInfo = vkinit::sampler_create_info(VK_FILTER_NEAREST);
 
 	VkSampler blockySampler;
 	vkCreateSampler(_device, &samplerInfo, nullptr, &blockySampler);
 
+	//create a sampler for the texture
+	VkSamplerCreateInfo samplerInfo2 = vkinit::sampler_create_info(VK_FILTER_NEAREST);
+
+	VkSampler blockySampler2;
+	vkCreateSampler(_device, &samplerInfo2, nullptr, &blockySampler2);
+
 	Material* texturedMat =	get_material("texturedmesh");
 	_descriptorAllocator->allocate(&texturedMat->textureSet, _singleTextureSetLayout);
+
+	Material* texturedMat2 = get_material("texturedmesh2");
+	_descriptorAllocator->allocate(&texturedMat2->textureSet, _singleTextureSetLayout);
 
 	//write to the descriptor set so that it points to our empire_diffuse texture
 	VkDescriptorImageInfo imageBufferInfo;
@@ -916,11 +934,19 @@ void VulkanRenderer::init_scene()
 	imageBufferInfo.imageView = _loadedTextures["empire_diffuse"].imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
+	VkDescriptorImageInfo imageBufferInfo2;
+	imageBufferInfo2.sampler = blockySampler2;
+	imageBufferInfo2.imageView = _loadedTextures["vikingroom_diffuse"].imageView;
+	imageBufferInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
 	VkWriteDescriptorSet texture1 = vkinit::write_descriptor_image(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMat->textureSet, &imageBufferInfo, 0);
+	VkWriteDescriptorSet texture2 = vkinit::write_descriptor_image(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMat2->textureSet, &imageBufferInfo2, 0);
 	vkUpdateDescriptorSets(_device, 1, &texture1, 0, nullptr);	
+	vkUpdateDescriptorSets(_device, 1, &texture2, 0, nullptr);	
 
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroySampler(_device, blockySampler, nullptr);
+		vkDestroySampler(_device, blockySampler2, nullptr);
 	});
 }
 
