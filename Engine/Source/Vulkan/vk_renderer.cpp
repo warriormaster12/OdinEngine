@@ -781,9 +781,9 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 	_sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(3.0f),0.0f);
 
 
-	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(0.5f, 0.0f, 0.0f),0.0f);
-	_sceneParameters.matData.metallic = glm::vec4(glm::vec3(0.90f),0.0f);
-	_sceneParameters.matData.roughness = glm::vec4(glm::vec3(0.1f),0.0f);
+	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(0.5f,0.0f,0.0f),0.0f);
+	_sceneParameters.matData.metallic = glm::vec4(glm::vec3(1.0f),0.0f);
+	_sceneParameters.matData.roughness = glm::vec4(glm::vec3(0.35f),0.0f);
 	_sceneParameters.matData.ao = glm::vec4(glm::vec3(1.0f),0.0f);
 
 	
