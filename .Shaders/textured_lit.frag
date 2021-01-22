@@ -82,14 +82,19 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 // ----------------------------------------------------------------------------
 void main()
 {
-	vec3 albedo = pow(texture(albedoMap, texCoord).rgb, vec3(2.2));
+	vec4 albedo = pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
+    albedo = albedo * sceneData.matData.albedo;
+    if (albedo.a < 1.0f)
+    {
+        discard;
+    }
     vec3 N = normalize(Normal);
     vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, albedo, float(sceneData.matData.metallic));
+    F0 = mix(F0, vec3(albedo), float(sceneData.matData.metallic));
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
@@ -126,12 +131,12 @@ void main()
         float NdotL = max(dot(N, L), 0.0);        
 
         // add to outgoing radiance Lo
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        Lo += (kD * vec3(albedo) / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
     }
     
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    vec3 ambient = vec3(0.03) * albedo * float(sceneData.matData.ao);
+    vec3 ambient = vec3(0.03) * vec3(albedo) * float(sceneData.matData.ao);
 
     vec3 color = ambient + Lo;
 
@@ -140,5 +145,5 @@ void main()
     // gamma correct
     color = pow(color, vec3(1.0/2.2)); 
 
-    outFragColor = vec4(color, 1.0);
+    outFragColor = vec4(color, albedo.a);
 }

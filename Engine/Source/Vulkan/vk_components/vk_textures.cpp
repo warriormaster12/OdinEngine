@@ -192,6 +192,7 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
         range.levelCount = 1;
         range.baseArrayLayer = 0;
         range.layerCount = 1;
+		
 
         VkImageMemoryBarrier imageBarrier_toTransfer = {};
         imageBarrier_toTransfer.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
