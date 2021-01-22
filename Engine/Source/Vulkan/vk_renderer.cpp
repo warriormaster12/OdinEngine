@@ -722,7 +722,8 @@ void VulkanRenderer::load_images()
 	_loadedTextures["empire_diffuse"] = lostEmpire;
 
 	asset_builder::convert_image("EngineAssets/Textures/viking_room.png", "EngineAssets/Textures/viking_room.bin");
-	vkcomponent::load_image_from_asset(*this, "EngineAssets/Textures/viking_room.bin", vikingRoom.image);
+	//vkcomponent::load_image_from_asset(*this, "EngineAssets/Textures/viking_room.bin", vikingRoom.image);
+	vkcomponent::load_empty(*this, vikingRoom.image);
 	
 	VkImageViewCreateInfo imageinfo2 = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, vikingRoom.image._image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(_device, &imageinfo2, nullptr, &vikingRoom.imageView);
