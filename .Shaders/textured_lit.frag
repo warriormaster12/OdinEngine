@@ -82,12 +82,25 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 // ----------------------------------------------------------------------------
 void main()
 {
-	vec4 albedo = pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
-    albedo = albedo * sceneData.matData.albedo;
-    if (albedo.a < 1.0f)
+	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
+
+    // this is for objects that have a texture loaded
+    if (albedo.a < 0.1 && albedo.r != 0.0f || albedo.g != 0.0f || albedo.b != 0.0f)
     {
-        discard;
+        albedo = albedo * sceneData.matData.albedo;
+        if (albedo.a < 0.1)
+        {
+            discard;
+        }
+
     }
+
+    // this is for objects that have an empty texture
+    else if (albedo.a < 0.1f && albedo.r == 0.0f || albedo.g == 0.0f || albedo.b == 0.0f)
+    {
+        albedo = albedo + sceneData.matData.albedo;
+    }
+    
     vec3 N = normalize(Normal);
     vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
 
@@ -145,5 +158,5 @@ void main()
     // gamma correct
     color = pow(color, vec3(1.0/2.2)); 
 
-    outFragColor = vec4(color, albedo.a);
+    outFragColor = vec4(color, 1.0f);
 }
