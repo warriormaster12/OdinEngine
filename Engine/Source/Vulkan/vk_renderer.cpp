@@ -427,14 +427,8 @@ void VulkanRenderer::init_sync_structures()
 
 void VulkanRenderer::init_pipelines()
 {
-	VkShaderModule colorMeshShader;
-	//Program only compiles shaders if there's no .spv file available
-	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/default_lit.frag").c_str(), &colorMeshShader, _device))
-	{
-		ENGINE_CORE_ERROR("Error when building the colored mesh shader");
-	}
 	VkShaderModule texturedMeshShader;
-	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/textured_lit.frag").c_str(), &texturedMeshShader, _device))
+	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, _device))
 	{
 		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
 	}
@@ -447,13 +441,10 @@ void VulkanRenderer::init_pipelines()
 
 	
 	//build the stage-create-info for both vertex and fragment stages. This lets the pipeline know the shader modules per stage
-
 	pipelineBuilder._shaderStages.push_back(
 		vkinit::pipeline_shader_stage_create_info(VK_SHADER_STAGE_VERTEX_BIT, meshVertShader));
-
 	pipelineBuilder._shaderStages.push_back(
-		vkinit::pipeline_shader_stage_create_info(VK_SHADER_STAGE_FRAGMENT_BIT, colorMeshShader));
-
+		vkinit::pipeline_shader_stage_create_info(VK_SHADER_STAGE_FRAGMENT_BIT, texturedMeshShader));
 
 	//we start from just the default empty pipeline layout info
 	VkPipelineLayoutCreateInfo mesh_pipeline_layout_info = vkinit::pipeline_layout_create_info();
@@ -470,14 +461,6 @@ void VulkanRenderer::init_pipelines()
 	mesh_pipeline_layout_info.pPushConstantRanges = &push_constant;
 	mesh_pipeline_layout_info.pushConstantRangeCount = 1;
 
-	VkDescriptorSetLayout setLayouts[] = { _globalSetLayout, _objectSetLayout };
-
-	mesh_pipeline_layout_info.setLayoutCount = 2;
-	mesh_pipeline_layout_info.pSetLayouts = setLayouts;
-
-	VkPipelineLayout meshPipLayout;
-	VK_CHECK(vkCreatePipelineLayout(_device, &mesh_pipeline_layout_info, nullptr, &meshPipLayout));
-
 	//we start from  the normal mesh layout
 	VkPipelineLayoutCreateInfo textured_pipeline_layout_info = mesh_pipeline_layout_info;
 		
@@ -490,7 +473,7 @@ void VulkanRenderer::init_pipelines()
 	VK_CHECK(vkCreatePipelineLayout(_device, &textured_pipeline_layout_info, nullptr, &texturedPipeLayout));
 
 	//hook the push constants layout
-	pipelineBuilder._pipelineLayout = meshPipLayout;
+	pipelineBuilder._pipelineLayout = texturedPipeLayout;
 
 	//vertex input controls how to read vertices from vertex buffers. We arent using it yet
 	pipelineBuilder._vertexInputInfo = vkinit::vertex_input_state_create_info();
@@ -536,31 +519,16 @@ void VulkanRenderer::init_pipelines()
 
 	
 	//build the mesh triangle pipeline
-	VkPipeline meshPipeline = pipelineBuilder.build_pipeline(_device, _renderPass);
-
-	create_material(meshPipeline, meshPipLayout, "defaultmesh");
-
-	//create pipeline for textured drawing
-	pipelineBuilder._shaderStages.clear();
-	pipelineBuilder._shaderStages.push_back(
-		vkinit::pipeline_shader_stage_create_info(VK_SHADER_STAGE_VERTEX_BIT, meshVertShader));
-
-	pipelineBuilder._shaderStages.push_back(
-		vkinit::pipeline_shader_stage_create_info(VK_SHADER_STAGE_FRAGMENT_BIT, texturedMeshShader));
-
 	pipelineBuilder._pipelineLayout = texturedPipeLayout;
 	VkPipeline texPipeline = pipelineBuilder.build_pipeline(_device, _renderPass);
 	create_material(texPipeline, texturedPipeLayout, "texturedmesh");
 	create_material(texPipeline, texturedPipeLayout, "texturedmesh2");
 
 	vkDestroyShaderModule(_device, meshVertShader, nullptr);
-	vkDestroyShaderModule(_device, colorMeshShader, nullptr);
 	vkDestroyShaderModule(_device, texturedMeshShader, nullptr);
 
 	_mainDeletionQueue.push_function([=]() {
-		vkDestroyPipeline(_device, meshPipeline, nullptr);
 		vkDestroyPipeline(_device, texPipeline, nullptr);
-		vkDestroyPipelineLayout(_device, meshPipLayout, nullptr);
 		vkDestroyPipelineLayout(_device, texturedPipeLayout, nullptr);
 	});
 }
@@ -886,7 +854,7 @@ void VulkanRenderer::init_scene()
 {
 	RenderObject monkey;
 	monkey.mesh = get_mesh("monkey");
-	monkey.material = get_material("defaultmesh");
+	monkey.material = get_material("texturedmesh2");
 	monkey.transformMatrix = glm::mat4{ 1.0f };
 
 	_renderables.push_back(monkey);
@@ -907,7 +875,7 @@ void VulkanRenderer::init_scene()
 	
 	RenderObject skyBox;
 	skyBox.mesh = get_mesh("skyBox");
-	skyBox.material = get_material("defaultmesh");
+	skyBox.material = get_material("texturedmesh2");
 	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
 	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
 	skyBox.transformMatrix = translation * scale;
