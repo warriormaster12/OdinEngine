@@ -843,6 +843,8 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipeline);
 			vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder._viewport);
 			vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder._scissor);
+			float blendConstant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+			vkCmdSetBlendConstants(cmd, blendConstant);
 			lastMaterial = object.material;
 
 			uint32_t uniform_offset = pad_uniform_buffer_size(sizeof(GPUSceneData)) * frameIndex;

@@ -49,7 +49,6 @@ void Core::coreUpdate()
 		auto deltatime = elapsed_seconds.count() * 1000.f;
 
 		start = std::chrono::system_clock::now();
-
 	
 		//Handle events on queue
 		while (SDL_PollEvent(&e) != 0)

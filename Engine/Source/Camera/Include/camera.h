@@ -22,6 +22,8 @@ public:
 	float yaw{ 0 }; //left-right rotation
 
     float FOV = 70;
+	float zNear = 0.1f;
+	float zFar = 100.0f;
 
 	bool bSprint = false;
 	bool bLocked;

@@ -122,12 +122,12 @@ glm::mat4 Camera::get_projection_matrix(bool bReverse /*= true*/)
 {
 	if (bReverse)
 	{
-		glm::mat4 pro = glm::perspective(glm::radians(FOV), (float)_swapChain->_actualExtent.width / (float)_swapChain->_actualExtent.height, 5000.0f, 0.1f);
+		glm::mat4 pro = glm::perspective(glm::radians(FOV), (float)_swapChain->_actualExtent.width / (float)_swapChain->_actualExtent.height, zFar, zNear);
 		pro[1][1] *= -1;
 		return pro;
 	}
 	else {
-		glm::mat4 pro = glm::perspective(glm::radians(FOV), (float)_swapChain->_actualExtent.width / (float)_swapChain->_actualExtent.height, 0.1f, 5000.0f);
+		glm::mat4 pro = glm::perspective(glm::radians(FOV), (float)_swapChain->_actualExtent.width / (float)_swapChain->_actualExtent.height, zNear, zFar);
 		pro[1][1] *= -1;
 		return pro;
 	}

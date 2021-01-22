@@ -31,7 +31,7 @@ namespace vkcomponent
 
         //build the actual pipeline
         //we now use all of the info structs we have been writing into into this one to create the pipeline
-        std::array <VkDynamicState, 2> dStates = {VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR}; 
+        std::array <VkDynamicState, 3> dStates = {VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS}; 
         VkPipelineDynamicStateCreateInfo dStateInfo = {};
         dStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dStateInfo.dynamicStateCount = dStates.size();
