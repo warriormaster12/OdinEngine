@@ -20,7 +20,7 @@ layout(set = 0, binding = 0) uniform  CameraBuffer{
 
 struct MaterialData 
 {
-	vec4 albedo; // vec3
+	vec4 albedo; // vec4
 	vec4 metallic; // float
 	vec4 roughness; // float
 	vec4 ao; // float
@@ -34,8 +34,12 @@ struct Light
 
 layout(set = 0, binding = 1) uniform  SceneData{   
 	Light lightData;
-	MaterialData matData;
+	
 } sceneData;
+
+layout(set = 1, binding = 1) readonly buffer ObjectFragBuffer{
+    MaterialData matData;
+} objFragBuffer;
 
 
 const float PI = 3.14159265359;
@@ -87,7 +91,7 @@ void main()
     // this is for objects that have a texture loaded
     if (albedo.r != 0.0f || albedo.g != 0.0f || albedo.b != 0.0f)
     {
-        albedo = albedo * sceneData.matData.albedo;
+        albedo = albedo * objFragBuffer.matData.albedo;
         if (albedo.a < 0.1)
         {
             discard;
@@ -98,7 +102,7 @@ void main()
     // this is for objects that have an empty texture
     else if (albedo.rgba == vec4(0.0f))
     {
-        albedo = albedo + sceneData.matData.albedo;
+        albedo = albedo + objFragBuffer.matData.albedo;
     }
     
     vec3 N = normalize(Normal);
@@ -107,7 +111,7 @@ void main()
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, vec3(albedo), float(sceneData.matData.metallic));
+    F0 = mix(F0, vec3(albedo), float(objFragBuffer.matData.metallic));
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
@@ -121,8 +125,8 @@ void main()
         vec3 radiance = vec3(sceneData.lightData.lightColors[i]) * attenuation;
 
         // Cook-Torrance BRDF
-        float NDF = DistributionGGX(N, H, float(sceneData.matData.roughness));   
-        float G   = GeometrySmith(N, V, L, float(sceneData.matData.roughness));      
+        float NDF = DistributionGGX(N, H, float(objFragBuffer.matData.roughness));   
+        float G   = GeometrySmith(N, V, L, float(objFragBuffer.matData.roughness));      
         vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
             
         vec3 nominator    = NDF * G * F; 
@@ -138,7 +142,7 @@ void main()
         // multiply kD by the inverse metalness such that only non-metals 
         // have diffuse lighting, or a linear blend if partly metal (pure metals
         // have no diffuse light).
-        kD *= 1.0 - float(sceneData.matData.metallic);	  
+        kD *= 1.0 - float(objFragBuffer.matData.metallic);	  
 
         // scale light by NdotL
         float NdotL = max(dot(N, L), 0.0);        
@@ -149,7 +153,7 @@ void main()
     
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    vec3 ambient = vec3(0.03) * vec3(albedo) * float(sceneData.matData.ao);
+    vec3 ambient = vec3(0.03) * vec3(albedo) * float(objFragBuffer.matData.ao);
 
     vec3 color = ambient + Lo;
 

@@ -713,6 +713,7 @@ Material* VulkanRenderer::create_material(VkPipeline pipeline, VkPipelineLayout 
 	mat.pipeline = pipeline;
 	mat.pipelineLayout = layout;
 	_materials[name] = mat;
+	_material_list.push_back(name);
 	return &_materials[name];
 }
 
@@ -765,11 +766,6 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 	_sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(3.0f),0.0f);
 
 
-	_sceneParameters.matData.albedo = glm::vec4(glm::vec3(1.0f),1.0f);
-	_sceneParameters.matData.metallic = glm::vec4(glm::vec3(1.0f),0.0f);
-	_sceneParameters.matData.roughness = glm::vec4(glm::vec3(0.25f),0.0f);
-	_sceneParameters.matData.ao = glm::vec4(glm::vec3(1.0f),0.0f);
-
 	
 
 
@@ -798,6 +794,18 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 	}
 	
 	vmaUnmapMemory(_allocator, get_current_frame().objectBuffer._allocation);
+
+	void* objectFragData;
+	vmaMapMemory(_allocator, get_current_frame().objectFragBuffer._allocation, &objectFragData);
+	GPUObjectFragData* objectFragSSBO = (GPUObjectFragData*)objectFragData;
+	for (int i = 0; i < _material_list.size(); i++)
+	{
+		objectFragSSBO->matData.albedo = get_material(_material_list[i])->albedo;
+		objectFragSSBO->matData.metallic = glm::vec4(glm::vec3(get_material(_material_list[i])->metallic),0.0f);
+		objectFragSSBO->matData.roughness = glm::vec4(glm::vec3(get_material(_material_list[i])->roughness),0.0f);
+		objectFragSSBO->matData.ao = glm::vec4(glm::vec3(get_material(_material_list[i])->ao),0.0f);
+	}
+	vmaUnmapMemory(_allocator, get_current_frame().objectFragBuffer._allocation);
 
 	Mesh* lastMesh = nullptr;
 	Material* lastMaterial = nullptr;
@@ -852,6 +860,10 @@ void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int c
 
 void VulkanRenderer::init_scene()
 {
+	get_material("texturedmesh2")->albedo = glm::vec4(1.0f);
+	get_material("texturedmesh2")->metallic = 1.0f;
+	get_material("texturedmesh2")->roughness = 0.25f;
+	get_material("texturedmesh2")->ao = 1.0f;
 	RenderObject monkey;
 	monkey.mesh = get_mesh("monkey");
 	monkey.material = get_material("texturedmesh2");
@@ -982,13 +994,16 @@ void VulkanRenderer::init_descriptors()
 	_globalSetLayout = _descriptorLayoutCache->create_descriptor_layout(&setinfo);
 
 	VkDescriptorSetLayoutBinding objectBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
+	VkDescriptorSetLayoutBinding objectFragBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+
+	VkDescriptorSetLayoutBinding objectBindings[] = { objectBind,objectFragBind };
 
 	VkDescriptorSetLayoutCreateInfo set2info = {};
-	set2info.bindingCount = 1;
+	set2info.bindingCount = 2;
 	set2info.flags = 0;
 	set2info.pNext = nullptr;
 	set2info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	set2info.pBindings = &objectBind;
+	set2info.pBindings = objectBindings;
 
 	_objectSetLayout = _descriptorLayoutCache->create_descriptor_layout(&set2info);
 
@@ -1014,6 +1029,7 @@ void VulkanRenderer::init_descriptors()
 
 		const int MAX_OBJECTS = 10000;
 		_frames[i].objectBuffer = create_buffer(sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		_frames[i].objectFragBuffer = create_buffer(sizeof(GPUObjectFragData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 		_frames[i].dynamicDescriptorAllocator->allocate(&_frames[i].globalDescriptor, _globalSetLayout);
 
@@ -1034,18 +1050,26 @@ void VulkanRenderer::init_descriptors()
 		objectBufferInfo.offset = 0;
 		objectBufferInfo.range = sizeof(GPUObjectData) * MAX_OBJECTS;
 
+		VkDescriptorBufferInfo objectFragBufferInfo;
+		objectFragBufferInfo.buffer = _frames[i].objectFragBuffer._buffer;
+		objectFragBufferInfo.offset = 0;
+		objectFragBufferInfo.range = sizeof(GPUObjectFragData) * MAX_OBJECTS;
+
+
 
 		VkWriteDescriptorSet cameraWrite = vkinit::write_descriptor_buffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _frames[i].globalDescriptor,&cameraInfo,0);
 		
 		VkWriteDescriptorSet sceneWrite = vkinit::write_descriptor_buffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _frames[i].globalDescriptor, &sceneInfo, 1);
 
 		VkWriteDescriptorSet objectWrite = vkinit::write_descriptor_buffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, _frames[i].objectDescriptor, &objectBufferInfo, 0);
+		VkWriteDescriptorSet objectFragWrite = vkinit::write_descriptor_buffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, _frames[i].objectDescriptor, &objectFragBufferInfo, 1);
 
-		VkWriteDescriptorSet setWrites[] = { cameraWrite,sceneWrite,objectWrite };
+		VkWriteDescriptorSet setWrites[] = { cameraWrite,sceneWrite,objectWrite, objectFragWrite };
 
-		vkUpdateDescriptorSets(_device, 3, setWrites, 0, nullptr);
+		vkUpdateDescriptorSets(_device, 4, setWrites, 0, nullptr);
 		_mainDeletionQueue.push_function([=]()
 		{
+			vmaDestroyBuffer(_allocator, _frames[i].objectFragBuffer._buffer, _frames[i].objectFragBuffer._allocation);
 			vmaDestroyBuffer(_allocator, _frames[i].objectBuffer._buffer, _frames[i].objectBuffer._allocation);
 			vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].cameraBuffer._allocation);
 		});

@@ -30,6 +30,11 @@ struct Material {
 	VkDescriptorSet textureSet{VK_NULL_HANDLE};
 	VkPipeline pipeline;
 	VkPipelineLayout pipelineLayout;
+
+	glm::vec4 albedo; // vec4
+	float metallic; // float
+	float roughness; // float
+	float ao; // float
 };
 
 struct RenderObject {
@@ -56,6 +61,7 @@ struct FrameData {
 	vkcomponent::DescriptorAllocator* dynamicDescriptorAllocator;
 
 	AllocatedBuffer objectBuffer;
+	AllocatedBuffer objectFragBuffer;
 	VkDescriptorSet objectDescriptor;
 };
 
@@ -69,7 +75,7 @@ struct GPUCameraData{
 
 struct MaterialData 
 {
-	glm::vec4 albedo; // vec3
+	glm::vec4 albedo; // vec4
 	glm::vec4 metallic; // float
 	glm::vec4 roughness; // float
 	glm::vec4 ao; // float
@@ -83,11 +89,14 @@ struct Light
 
 struct GPUSceneData {
 	Light lightData;
-	MaterialData matData;
 };
 
 struct GPUObjectData {
 	glm::mat4 modelMatrix;
+};
+
+struct GPUObjectFragData {
+	MaterialData matData;
 };
 
 struct UploadContext {
@@ -168,6 +177,7 @@ public:
 	std::vector<RenderObject> _renderables;
 
 	std::unordered_map<std::string, Material> _materials;
+	std::vector<std::string> _material_list; 
 	std::unordered_map<std::string, Mesh> _meshes;
 
 	UploadContext _uploadContext;
