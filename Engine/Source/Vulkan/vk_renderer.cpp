@@ -899,30 +899,8 @@ void VulkanRenderer::init_scene()
 	VkSampler blockySampler;
 	vkCreateSampler(_device, &samplerInfo, nullptr, &blockySampler);
 
-	std::vector<Material*> texturedMaterials =	{get_material("texturedmesh"), get_material("texturedmesh2")};
-	
-	for(int i=0; i < texturedMaterials.size(); i++)
-	{
-		_descriptorAllocator->allocate(&texturedMaterials[i]->textureSet, _singleTextureSetLayout);
-	}
-	//write to the descriptor set so that it points to our empire_diffuse texture
-	VkDescriptorImageInfo imageBufferInfo;
-	imageBufferInfo.sampler = blockySampler;
-	imageBufferInfo.imageView = _loadedTextures["empire_diffuse"].imageView;
-	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-	VkDescriptorImageInfo imageBufferInfo2;
-	imageBufferInfo2.sampler = blockySampler;
-	imageBufferInfo2.imageView = _loadedTextures["vikingroom_diffuse"].imageView;
-	imageBufferInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	std::vector<VkDescriptorImageInfo> imageBuffers = {imageBufferInfo, imageBufferInfo2};
-	std::vector<VkWriteDescriptorSet> textures;
-
-	for(int i = 0; i < imageBuffers.size(); i++)
-	{
-		textures.push_back(vkinit::write_descriptor_image(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterials[i]->textureSet, &imageBuffers[i], 0));
-	}
-	vkUpdateDescriptorSets(_device, textures.size(), textures.data(), 0, nullptr);
+	create_texture("texturedmesh", "empire_diffuse", blockySampler);
+	create_texture("texturedmesh2", "vikingroom_diffuse", blockySampler);
 
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroySampler(_device, blockySampler, nullptr);
@@ -1113,4 +1091,21 @@ void VulkanRenderer::immediate_submit(std::function<void(VkCommandBuffer cmd)>&&
 
     //clear the command pool. This will free the command buffer too
 	vkResetCommandPool(_device, _uploadContext._commandPool, 0);
+}
+
+void VulkanRenderer::create_texture(std::string material_name, std::string texture_name, VkSampler& sampler_ref, uint32_t binding /*= 0*/)
+{
+	Material* texturedMaterial = get_material(material_name);
+
+	_descriptorAllocator->allocate(&texturedMaterial->textureSet, _singleTextureSetLayout);
+
+	//write to the descriptor set so that it points to our empire_diffuse texture
+	VkDescriptorImageInfo imageBufferInfo;
+	imageBufferInfo.sampler = sampler_ref;
+	imageBufferInfo.imageView = _loadedTextures[texture_name].imageView;
+	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	VkWriteDescriptorSet outputTexture = vkinit::write_descriptor_image(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->textureSet, &imageBufferInfo, binding);
+
+	vkUpdateDescriptorSets(_device, 1, &outputTexture, 0, nullptr);
 }

@@ -230,6 +230,8 @@ private:
 	void upload_mesh(Mesh& mesh);
 
 	void recreate_swapchain();
+
+	void create_texture(std::string material_name, std::string texture_name, VkSampler& sampler_ref, uint32_t binding = 0);
 };
 
 
