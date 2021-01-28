@@ -334,6 +334,18 @@ VkWriteDescriptorSet vkinit::write_descriptor_image(VkDescriptorType type, VkDes
 	return write;
 }
 
+VkDescriptorSetLayoutCreateInfo vkinit::descriptor_layout_info(std::vector<VkDescriptorSetLayoutBinding>& bindings)
+{
+    VkDescriptorSetLayoutCreateInfo setinfo = {};
+	setinfo.bindingCount = bindings.size();
+	setinfo.flags = 0;
+	setinfo.pNext = nullptr;
+	setinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	setinfo.pBindings = bindings.data();
+
+    return setinfo;
+}
+
 
 
 

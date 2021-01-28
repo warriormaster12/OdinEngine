@@ -956,41 +956,21 @@ void VulkanRenderer::init_descriptors()
 	VkDescriptorSetLayoutBinding cameraBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0);
 	VkDescriptorSetLayoutBinding sceneBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	
-	VkDescriptorSetLayoutBinding bindings[] = { cameraBind,sceneBind };
-
-	VkDescriptorSetLayoutCreateInfo setinfo = {};
-	setinfo.bindingCount = 2;
-	setinfo.flags = 0;
-	setinfo.pNext = nullptr;
-	setinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	setinfo.pBindings = bindings;
-
-	_globalSetLayout = _descriptorLayoutCache->create_descriptor_layout(&setinfo);
+	std::vector<VkDescriptorSetLayoutBinding> bindings = { cameraBind,sceneBind };
+	VkDescriptorSetLayoutCreateInfo _set1 = vkinit::descriptor_layout_info(bindings);
+	_globalSetLayout = _descriptorLayoutCache->create_descriptor_layout(&_set1);
 
 	VkDescriptorSetLayoutBinding objectBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
 	VkDescriptorSetLayoutBinding objectFragBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
-	VkDescriptorSetLayoutBinding objectBindings[] = { objectBind,objectFragBind };
+	std::vector<VkDescriptorSetLayoutBinding> objectBindings = { objectBind,objectFragBind };
+	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::descriptor_layout_info(objectBindings);
+	_objectSetLayout = _descriptorLayoutCache->create_descriptor_layout(&_set2);
 
-	VkDescriptorSetLayoutCreateInfo set2info = {};
-	set2info.bindingCount = 2;
-	set2info.flags = 0;
-	set2info.pNext = nullptr;
-	set2info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	set2info.pBindings = objectBindings;
-
-	_objectSetLayout = _descriptorLayoutCache->create_descriptor_layout(&set2info);
-
-	VkDescriptorSetLayoutBinding textureBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-
-	VkDescriptorSetLayoutCreateInfo set3info = {};
-	set3info.bindingCount = 1;
-	set3info.flags = 0;
-	set3info.pNext = nullptr;
-	set3info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	set3info.pBindings = &textureBind;
-
-	_singleTextureSetLayout = _descriptorLayoutCache->create_descriptor_layout(&set3info);
+	VkDescriptorSetLayoutBinding diffuseTextureBind = vkinit::descriptorset_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {diffuseTextureBind};
+	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::descriptor_layout_info(textureBindings);
+	_singleTextureSetLayout = _descriptorLayoutCache->create_descriptor_layout(&_set3);
 
 	const size_t sceneParamBufferSize = FRAME_OVERLAP * pad_uniform_buffer_size(sizeof(GPUSceneData));
 	_sceneParameterBuffer = create_buffer(sceneParamBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -1038,9 +1018,9 @@ void VulkanRenderer::init_descriptors()
 		VkWriteDescriptorSet objectWrite = vkinit::write_descriptor_buffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, _frames[i].objectDescriptor, &objectBufferInfo, 0);
 		VkWriteDescriptorSet objectFragWrite = vkinit::write_descriptor_buffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, _frames[i].objectDescriptor, &objectFragBufferInfo, 1);
 
-		VkWriteDescriptorSet setWrites[] = { cameraWrite,sceneWrite,objectWrite, objectFragWrite };
+		std::vector <VkWriteDescriptorSet> setWrites = { cameraWrite,sceneWrite,objectWrite, objectFragWrite };
 
-		vkUpdateDescriptorSets(_device, 4, setWrites, 0, nullptr);
+		vkUpdateDescriptorSets(_device, setWrites.size(), setWrites.data(), 0, nullptr);
 		_mainDeletionQueue.push_function([=]()
 		{
 			vmaDestroyBuffer(_allocator, _frames[i].objectFragBuffer._buffer, _frames[i].objectFragBuffer._allocation);
