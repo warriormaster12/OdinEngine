@@ -1,5 +1,5 @@
 #include "Include/Core.h"
-#include "../Vulkan/Include/vk_renderer.h"
+#include "../RendererCore/Include/renderer_core.h"
 #include "../Window/Include/WindowHandler.h"
 #include "../Logger/Include/Logger.h"
 
@@ -13,8 +13,6 @@
 
 bool _isInitialized{ false };
 Coordinator gCoordinator;
-VulkanRenderer renderer;
-WindowHandler _windowHandler;
 void Core::coreInit()
 {
     Logger::init();
@@ -28,9 +26,8 @@ void Core::coreInit()
 	}
 	testSystem->Init();
 	
-    _windowHandler.createWindow(1920, 1080);
-    renderer.init(_windowHandler);
-	imgui_layer::init_imgui_layer(renderer);
+	RendererCore::init_renderer();
+	//imgui_layer::init_imgui_layer(renderer);
     //everything went fine
     _isInitialized = true;
 }
@@ -39,23 +36,16 @@ void Core::coreUpdate()
 {
     SDL_Event e;
 	bool bQuit = false;
-	auto start = std::chrono::system_clock::now();
-	auto end = std::chrono::system_clock::now();
+	
 	//main loop
 	while (!bQuit)
 	{
-		end = std::chrono::system_clock::now();
-		std::chrono::duration<float> elapsed_seconds = end - start;
-		auto deltatime = elapsed_seconds.count() * 1000.f;
-
-		start = std::chrono::system_clock::now();
 	
 		//Handle events on queue
 		while (SDL_PollEvent(&e) != 0)
 		{
 
-			ImGui_ImplSDL2_ProcessEvent(&e);
-			renderer._camera.process_input_event(&e);
+			//ImGui_ImplSDL2_ProcessEvent(&e);
 			//close the window when user alt-f4s or clicks the X button			
 			if (e.type == SDL_QUIT)
 			{
@@ -68,14 +58,11 @@ void Core::coreUpdate()
 					bQuit = true;
 				}
 			}
-			else if (e.type == SDL_WINDOWEVENT_RESIZED)
-			{
-				renderer.frameBufferResize();
-			}
+
+			RendererCore::renderer_events(e);
 		}
-		imgui_layer::update_ui();
-		renderer._camera.update_camera(deltatime);
-		renderer.run();
+		//imgui_layer::update_ui();
+		RendererCore::update_renderer();
     }
 }
 
@@ -83,7 +70,6 @@ void Core::coreCleanup()
 {
     if (_isInitialized)
     {
-        renderer.cleanup();
-        _windowHandler.destroyWindow();
+		RendererCore::cleanup_renderer();
     }
 }
