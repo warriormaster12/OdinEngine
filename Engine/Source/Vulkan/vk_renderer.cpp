@@ -899,18 +899,12 @@ void VulkanRenderer::init_scene()
 	VkSampler blockySampler;
 	vkCreateSampler(_device, &samplerInfo, nullptr, &blockySampler);
 
-	//create a sampler for the texture
-	VkSamplerCreateInfo samplerInfo2 = vkinit::sampler_create_info(VK_FILTER_NEAREST);
-
-	VkSampler blockySampler2;
-	vkCreateSampler(_device, &samplerInfo2, nullptr, &blockySampler2);
-
-	Material* texturedMat =	get_material("texturedmesh");
-	_descriptorAllocator->allocate(&texturedMat->textureSet, _singleTextureSetLayout);
-
-	Material* texturedMat2 = get_material("texturedmesh2");
-	_descriptorAllocator->allocate(&texturedMat2->textureSet, _singleTextureSetLayout);
-
+	std::vector<Material*> texturedMaterials =	{get_material("texturedmesh"), get_material("texturedmesh2")};
+	
+	for(int i=0; i < texturedMaterials.size(); i++)
+	{
+		_descriptorAllocator->allocate(&texturedMaterials[i]->textureSet, _singleTextureSetLayout);
+	}
 	//write to the descriptor set so that it points to our empire_diffuse texture
 	VkDescriptorImageInfo imageBufferInfo;
 	imageBufferInfo.sampler = blockySampler;
@@ -918,18 +912,20 @@ void VulkanRenderer::init_scene()
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkDescriptorImageInfo imageBufferInfo2;
-	imageBufferInfo2.sampler = blockySampler2;
+	imageBufferInfo2.sampler = blockySampler;
 	imageBufferInfo2.imageView = _loadedTextures["vikingroom_diffuse"].imageView;
 	imageBufferInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	std::vector<VkDescriptorImageInfo> imageBuffers = {imageBufferInfo, imageBufferInfo2};
+	std::vector<VkWriteDescriptorSet> textures;
 
-	VkWriteDescriptorSet texture1 = vkinit::write_descriptor_image(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMat->textureSet, &imageBufferInfo, 0);
-	VkWriteDescriptorSet texture2 = vkinit::write_descriptor_image(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMat2->textureSet, &imageBufferInfo2, 0);
-	vkUpdateDescriptorSets(_device, 1, &texture1, 0, nullptr);	
-	vkUpdateDescriptorSets(_device, 1, &texture2, 0, nullptr);	
+	for(int i = 0; i < imageBuffers.size(); i++)
+	{
+		textures.push_back(vkinit::write_descriptor_image(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterials[i]->textureSet, &imageBuffers[i], 0));
+	}
+	vkUpdateDescriptorSets(_device, textures.size(), textures.data(), 0, nullptr);
 
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroySampler(_device, blockySampler, nullptr);
-		vkDestroySampler(_device, blockySampler2, nullptr);
 	});
 }
 
