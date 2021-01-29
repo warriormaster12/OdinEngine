@@ -19,7 +19,12 @@ void RendererCore::update_renderer()
     start = std::chrono::system_clock::now();
    
     vk_renderer._camera.update_camera(deltatime);
-	vk_renderer.run();
+    vk_renderer.begin_draw();
+
+    vk_renderer.draw_objects(vk_renderer._renderables.data(), vk_renderer._renderables.size());	
+	//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+
+	vk_renderer.end_draw();
 }
 
 void RendererCore::renderer_events(SDL_Event& ev)

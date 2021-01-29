@@ -157,18 +157,17 @@ public:
 
 	//texture hashmap
 	std::unordered_map<std::string, Texture> _loadedTextures;
-	void load_images();
+	void load_image(std::string texture_name, std::string texture_path);
 	//initializes everything in the engine
 	void init(WindowHandler& windowHandler);
 
 	//shuts down the engine
 	void cleanup();
 
-	//draw loop
-	void draw();
 
 	//run main loop
-	void run();
+	void begin_draw();
+	void end_draw();
 	
 	FrameData& get_current_frame();
 	FrameData& get_last_frame();
@@ -195,7 +194,7 @@ public:
 	Mesh* get_mesh(const std::string& name);
 
 	//our draw function
-	void draw_objects(VkCommandBuffer cmd, RenderObject* first, int count);
+	void draw_objects(RenderObject* first, int count);
 
 	AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 

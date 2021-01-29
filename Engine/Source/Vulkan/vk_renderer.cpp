@@ -20,6 +20,9 @@
 #include "../Logger/Include/Logger.h"
 
 vkcomponent::PipelineBuilder pipelineBuilder;
+VkCommandBuffer cmd;
+uint32_t swapchainImageIndex;
+VkResult _drawResult;
 
 constexpr bool bUseValidationLayers = true;
 void VulkanRenderer::init(WindowHandler& windowHandler)
@@ -40,7 +43,8 @@ void VulkanRenderer::init(WindowHandler& windowHandler)
 
 	init_pipelines();
 
-	load_images();	
+	//loading empty image first in case if we want to use it for any object later
+	load_image("empty", "");
 
 	load_meshes();
 
@@ -73,7 +77,7 @@ void VulkanRenderer::frameBufferResize()
 	frameBufferResized = true;
 }
 
-void VulkanRenderer::draw()
+void VulkanRenderer::begin_draw()
 {
 	//wait until the gpu has finished rendering the last frame. Timeout of 1 second
 	VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true, 1000000000));
@@ -83,17 +87,16 @@ void VulkanRenderer::draw()
 	VK_CHECK(vkResetCommandBuffer(get_current_frame()._mainCommandBuffer, 0));
 
 	//request image from the swapchain
-	uint32_t swapchainImageIndex;
-	VkResult result = vkAcquireNextImageKHR(_device, _swapChainObj._swapchain, 1000000000, get_current_frame()._presentSemaphore, nullptr, &swapchainImageIndex);
-	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+	_drawResult = vkAcquireNextImageKHR(_device, _swapChainObj._swapchain, 1000000000, get_current_frame()._presentSemaphore, nullptr, &swapchainImageIndex);
+	if (_drawResult == VK_ERROR_OUT_OF_DATE_KHR) {
             recreate_swapchain();
             return;
-	} else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+	} else if (_drawResult != VK_SUCCESS && _drawResult != VK_SUBOPTIMAL_KHR) {
 		throw std::runtime_error("failed to acquire swap chain image!");
 	}
 
 	//naming it cmd for shorter writing
-	VkCommandBuffer cmd = get_current_frame()._mainCommandBuffer;
+	cmd = get_current_frame()._mainCommandBuffer;
 
 	//begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
 	VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -121,8 +124,9 @@ void VulkanRenderer::draw()
 	
 	vkCmdBeginRenderPass(cmd, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	draw_objects(cmd, _renderables.data(), _renderables.size());	
-	//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+}
+void VulkanRenderer::end_draw()
+{
 	//finalize the render pass
 	vkCmdEndRenderPass(cmd);
 	//finalize the command buffer (we can no longer add commands, but it can now be executed)
@@ -161,23 +165,18 @@ void VulkanRenderer::draw()
 
 	presentInfo.pImageIndices = &swapchainImageIndex;
 
-	result = vkQueuePresentKHR(_graphicsQueue, &presentInfo);
+	_drawResult = vkQueuePresentKHR(_graphicsQueue, &presentInfo);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frameBufferResized == true) {
+	if (_drawResult == VK_ERROR_OUT_OF_DATE_KHR || _drawResult == VK_SUBOPTIMAL_KHR || frameBufferResized == true) {
 		frameBufferResized = false;
 		recreate_swapchain();
-	} else if (result != VK_SUCCESS) {
+	} else if (_drawResult != VK_SUCCESS) {
 		throw std::runtime_error("failed to present swap chain image!");
 	}
 
 
 	//increase the number of frames drawn
 	_frameNumber++;
-}
-
-void VulkanRenderer::run()
-{
-	draw();
 }
 
 FrameData& VulkanRenderer::get_current_frame()
@@ -677,30 +676,28 @@ void VulkanRenderer::upload_mesh(Mesh& mesh)
 	vmaDestroyBuffer(_allocator, stagingBuffer._buffer, stagingBuffer._allocation);
 }
 
-void VulkanRenderer::load_images()
+void VulkanRenderer::load_image(std::string texture_name, std::string texture_path)
 {
-	Texture lostEmpire;
-	Texture vikingRoom;
-	asset_builder::convert_image("EngineAssets/Textures/lost_empire-RGBA.png", "EngineAssets/Textures/lost_empire-RGBA.bin");
-	vkcomponent::load_image_from_asset(*this, "EngineAssets/Textures/lost_empire-RGBA.bin", lostEmpire.image);
+	Texture inputTextures;
+	const std::filesystem::path path = texture_path;
+	const std::filesystem::path bin_path = texture_path + ".bin";
+	if(texture_name != "empty")
+	{
+		asset_builder::convert_image(path,bin_path);
+		vkcomponent::load_image_from_asset(*this, (texture_path + ".bin").c_str(), inputTextures.image);
+	}
+	else
+	{
+		vkcomponent::load_empty(*this, inputTextures.image);
+	}
 	
-	VkImageViewCreateInfo imageinfo = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, lostEmpire.image._image, VK_IMAGE_ASPECT_COLOR_BIT);
-	vkCreateImageView(_device, &imageinfo, nullptr, &lostEmpire.imageView);
+	VkImageViewCreateInfo imageinfo = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image._image, VK_IMAGE_ASPECT_COLOR_BIT);
+	vkCreateImageView(_device, &imageinfo, nullptr, &inputTextures.imageView);
 
-	_loadedTextures["empire_diffuse"] = lostEmpire;
-
-	asset_builder::convert_image("EngineAssets/Textures/viking_room.png", "EngineAssets/Textures/viking_room.bin");
-	//vkcomponent::load_image_from_asset(*this, "EngineAssets/Textures/viking_room.bin", vikingRoom.image);
-	vkcomponent::load_empty(*this, vikingRoom.image);
-	
-	VkImageViewCreateInfo imageinfo2 = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, vikingRoom.image._image, VK_IMAGE_ASPECT_COLOR_BIT);
-	vkCreateImageView(_device, &imageinfo2, nullptr, &vikingRoom.imageView);
-
-	_loadedTextures["vikingroom_diffuse"] = vikingRoom;
+	_loadedTextures[texture_name] = inputTextures;
 
 	_mainDeletionQueue.push_function([=]() {
-		vkDestroyImageView(_device, lostEmpire.imageView, nullptr);
-		vkDestroyImageView(_device, vikingRoom.imageView, nullptr);
+		vkDestroyImageView(_device, inputTextures.imageView, nullptr);
 	});
 
 }
@@ -742,7 +739,7 @@ Mesh* VulkanRenderer::get_mesh(const std::string& name)
 }
 
 
-void VulkanRenderer::draw_objects(VkCommandBuffer cmd,RenderObject* first, int count)
+void VulkanRenderer::draw_objects(RenderObject* first, int count)
 {
 
 	GPUCameraData camData;
@@ -899,8 +896,10 @@ void VulkanRenderer::init_scene()
 	VkSampler blockySampler;
 	vkCreateSampler(_device, &samplerInfo, nullptr, &blockySampler);
 
+	load_image("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
 	create_texture("texturedmesh", "empire_diffuse", blockySampler);
-	create_texture("texturedmesh2", "vikingroom_diffuse", blockySampler);
+	//load_image("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
+	create_texture("texturedmesh2", "empty", blockySampler);
 
 	_mainDeletionQueue.push_function([=]() {
 		vkDestroySampler(_device, blockySampler, nullptr);
