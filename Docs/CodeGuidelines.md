@@ -2,20 +2,25 @@
 this file establishes rules on how to write code for the project. This is a good set of rules to know if you want to contribute to the project. 
 
 ## Variables
-### public 
 ```
-float _deltaTime;
-```
-### private and local 
-```
+float deltaTime;
+
 bool isWalking;
 
 VkCommandBuffer cmd; 
 ```
+### Pointers
+```
+void* p_examplePointer;
+```
+### References
+```
+float& r_exampleRef;
+```
 
 ## Functions 
 ```
-void init_scene();
+void InitScene();
 ```
 
 ## Classes
@@ -23,12 +28,12 @@ void init_scene();
 class Player 
 {
 public:
-   float _positionX;
-   float _positionY;
+   float positionX;
+   float positionY;
 
-   void public_function_example(function arguments);
+   void PublicFunctionExample(function arguments);
 private:
-   void example_function();
+   void ExampleFunction();
    bool isDead;
 };
 ``` 
