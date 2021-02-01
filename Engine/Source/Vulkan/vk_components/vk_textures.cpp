@@ -21,15 +21,15 @@ bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* fil
 	VkFormat image_format = VK_FORMAT_R8G8B8A8_SRGB;
 
     //allocate temporary buffer for holding texture data to upload
-	AllocatedBuffer stagingBuffer = renderer.create_buffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+	AllocatedBuffer stagingBuffer = renderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
     //copy data to buffer
 	void* data;
-	vmaMapMemory(renderer._allocator, stagingBuffer._allocation, &data);
+	vmaMapMemory(renderer.allocator, stagingBuffer.allocation, &data);
 
 	memcpy(data, pixel_ptr, static_cast<size_t>(imageSize));
 
-	vmaUnmapMemory(renderer._allocator, stagingBuffer._allocation);
+	vmaUnmapMemory(renderer.allocator, stagingBuffer.allocation);
     //we no longer need the loaded data, so we can free the pixels as they are now in the staging buffer
 	stbi_image_free(pixels);
 
@@ -38,7 +38,7 @@ bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* fil
 	imageExtent.height = static_cast<uint32_t>(texHeight);
 	imageExtent.depth = 1;
 	
-	VkImageCreateInfo dimg_info = vkinit::image_create_info(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
+	VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
 	AllocatedImage newImage;	
 	
@@ -46,9 +46,9 @@ bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* fil
 	dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
 	//allocate and create the image
-	vmaCreateImage(renderer._allocator, &dimg_info, &dimg_allocinfo, &newImage._image, &newImage._allocation, nullptr);
+	vmaCreateImage(renderer.allocator, &dimg_info, &dimg_allocinfo, &newImage.image, &newImage.allocation, nullptr);
 
-    renderer.immediate_submit([&](VkCommandBuffer cmd) {
+    renderer.ImmediateSubmit([&](VkCommandBuffer cmd) {
         VkImageSubresourceRange range;
         range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         range.baseMipLevel = 0;
@@ -61,7 +61,7 @@ bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* fil
 
         imageBarrier_toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         imageBarrier_toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        imageBarrier_toTransfer.image = newImage._image;
+        imageBarrier_toTransfer.image = newImage.image;
         imageBarrier_toTransfer.subresourceRange = range;
 
         imageBarrier_toTransfer.srcAccessMask = 0;
@@ -82,7 +82,7 @@ bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* fil
         copyRegion.imageExtent = imageExtent;
 
         //copy the buffer into the image
-        vkCmdCopyBufferToImage(cmd, stagingBuffer._buffer, newImage._image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
         VkImageMemoryBarrier imageBarrier_toReadable = imageBarrier_toTransfer;
 
@@ -95,12 +95,12 @@ bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* fil
         //barrier the image into the shader readable layout
         vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier_toReadable);
     });
-    renderer._mainDeletionQueue.push_function([=]() {
+    renderer.mainDeletionQueue.push_function([=]() {
 	
-		vmaDestroyImage(renderer._allocator, newImage._image, newImage._allocation);
+		vmaDestroyImage(renderer.allocator, newImage.image, newImage.allocation);
 	});
 
-	vmaDestroyBuffer(renderer._allocator, stagingBuffer._buffer, stagingBuffer._allocation);
+	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 
 	ENGINE_CORE_ERROR("Texture loaded succesfully {0}", file);
 
@@ -131,18 +131,18 @@ bool vkcomponent::load_image_from_asset(VulkanRenderer& renderer, const char* fi
 		return false;
 	}
 
-	AllocatedBuffer stagingBuffer = renderer.create_buffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+	AllocatedBuffer stagingBuffer = renderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
 	void* data;
-	vmaMapMemory(renderer._allocator, stagingBuffer._allocation, &data);
+	vmaMapMemory(renderer.allocator, stagingBuffer.allocation, &data);
 
 	assets::unpack_texture(&textureInfo, file.binaryBlob.data(), file.binaryBlob.size(), (char*)data);	
 
-	vmaUnmapMemory(renderer._allocator, stagingBuffer._allocation);	
+	vmaUnmapMemory(renderer.allocator, stagingBuffer.allocation);	
 
 	outImage = upload_image(textureInfo.pixelsize[0], textureInfo.pixelsize[1], image_format, renderer, stagingBuffer);
 
-	vmaDestroyBuffer(renderer._allocator, stagingBuffer._buffer, stagingBuffer._allocation);
+	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 	
 	return true;
 }
@@ -159,15 +159,15 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
 	VkFormat image_format = VK_FORMAT_R8G8B8A8_SRGB;
 
     //allocate temporary buffer for holding texture data to upload
-	AllocatedBuffer stagingBuffer = renderer.create_buffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+	AllocatedBuffer stagingBuffer = renderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
     //copy data to buffer
 	void* data;
-	vmaMapMemory(renderer._allocator, stagingBuffer._allocation, &data);
+	vmaMapMemory(renderer.allocator, stagingBuffer.allocation, &data);
 
 	memcpy(data, pixel_ptr, static_cast<size_t>(imageSize));
 
-	vmaUnmapMemory(renderer._allocator, stagingBuffer._allocation);
+	vmaUnmapMemory(renderer.allocator, stagingBuffer.allocation);
     //we no longer need the loaded data, so we can free the pixels as they are now in the staging buffer
 
     VkExtent3D imageExtent;
@@ -175,7 +175,7 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
 	imageExtent.height = static_cast<uint32_t>(texHeight);
 	imageExtent.depth = 1;
 	
-	VkImageCreateInfo dimg_info = vkinit::image_create_info(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
+	VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
 	AllocatedImage newImage;	
 	
@@ -183,9 +183,9 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
 	dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
 	//allocate and create the image
-	vmaCreateImage(renderer._allocator, &dimg_info, &dimg_allocinfo, &newImage._image, &newImage._allocation, nullptr);
+	vmaCreateImage(renderer.allocator, &dimg_info, &dimg_allocinfo, &newImage.image, &newImage.allocation, nullptr);
 
-    renderer.immediate_submit([&](VkCommandBuffer cmd) {
+    renderer.ImmediateSubmit([&](VkCommandBuffer cmd) {
         VkImageSubresourceRange range;
         range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         range.baseMipLevel = 0;
@@ -199,7 +199,7 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
 
         imageBarrier_toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         imageBarrier_toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        imageBarrier_toTransfer.image = newImage._image;
+        imageBarrier_toTransfer.image = newImage.image;
         imageBarrier_toTransfer.subresourceRange = range;
 
         imageBarrier_toTransfer.srcAccessMask = 0;
@@ -220,7 +220,7 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
         copyRegion.imageExtent = imageExtent;
 
         //copy the buffer into the image
-        vkCmdCopyBufferToImage(cmd, stagingBuffer._buffer, newImage._image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
         VkImageMemoryBarrier imageBarrier_toReadable = imageBarrier_toTransfer;
 
@@ -233,12 +233,12 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
         //barrier the image into the shader readable layout
         vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier_toReadable);
     });
-    renderer._mainDeletionQueue.push_function([=]() {
+    renderer.mainDeletionQueue.push_function([=]() {
 	
-		vmaDestroyImage(renderer._allocator, newImage._image, newImage._allocation);
+		vmaDestroyImage(renderer.allocator, newImage.image, newImage.allocation);
 	});
 
-	vmaDestroyBuffer(renderer._allocator, stagingBuffer._buffer, stagingBuffer._allocation);
+	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 
 	outImage = newImage;
     return true;
@@ -251,7 +251,7 @@ AllocatedImage vkcomponent::upload_image(int texWidth, int texHeight, VkFormat i
 	imageExtent.height = static_cast<uint32_t>(texHeight);
 	imageExtent.depth = 1;
 
-	VkImageCreateInfo dimg_info = vkinit::image_create_info(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
+	VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
 	AllocatedImage newImage;
 
@@ -259,10 +259,10 @@ AllocatedImage vkcomponent::upload_image(int texWidth, int texHeight, VkFormat i
 	dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
 	//allocate and create the image
-	vmaCreateImage(renderer._allocator, &dimg_info, &dimg_allocinfo, &newImage._image, &newImage._allocation, nullptr);
+	vmaCreateImage(renderer.allocator, &dimg_info, &dimg_allocinfo, &newImage.image, &newImage.allocation, nullptr);
 
 	//transition image to transfer-receiver	
-	renderer.immediate_submit([&](VkCommandBuffer cmd) {
+	renderer.ImmediateSubmit([&](VkCommandBuffer cmd) {
 		VkImageSubresourceRange range;
 		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		range.baseMipLevel = 0;
@@ -275,7 +275,7 @@ AllocatedImage vkcomponent::upload_image(int texWidth, int texHeight, VkFormat i
 
 		imageBarrier_toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageBarrier_toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageBarrier_toTransfer.image = newImage._image;
+		imageBarrier_toTransfer.image = newImage.image;
 		imageBarrier_toTransfer.subresourceRange = range;
 
 		imageBarrier_toTransfer.srcAccessMask = 0;
@@ -296,7 +296,7 @@ AllocatedImage vkcomponent::upload_image(int texWidth, int texHeight, VkFormat i
 		copyRegion.imageExtent = imageExtent;
 
 		//copy the buffer into the image
-		vkCmdCopyBufferToImage(cmd, stagingBuffer._buffer, newImage._image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+		vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 		VkImageMemoryBarrier imageBarrier_toReadable = imageBarrier_toTransfer;
 
@@ -312,14 +312,14 @@ AllocatedImage vkcomponent::upload_image(int texWidth, int texHeight, VkFormat i
 
 
 	//build a default imageview
-	VkImageViewCreateInfo view_info = vkinit::imageview_create_info(image_format, newImage._image, VK_IMAGE_ASPECT_COLOR_BIT);
+	VkImageViewCreateInfo view_info = vkinit::ImageViewCreateInfo(image_format, newImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
 
-	vkCreateImageView(renderer._device, &view_info, nullptr, &newImage._defaultView);
+	vkCreateImageView(renderer.device, &view_info, nullptr, &newImage.defaultView);
 
 
-	renderer._mainDeletionQueue.push_function([=, &renderer]() {
-		vkDestroyImageView(renderer._device,newImage._defaultView, nullptr);
-		vmaDestroyImage(renderer._allocator, newImage._image, newImage._allocation);
+	renderer.mainDeletionQueue.push_function([=, &renderer]() {
+		vkDestroyImageView(renderer.device,newImage.defaultView, nullptr);
+		vmaDestroyImage(renderer.allocator, newImage.image, newImage.allocation);
 	});
 
 	

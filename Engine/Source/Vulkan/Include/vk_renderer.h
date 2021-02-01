@@ -38,27 +38,27 @@ struct Material {
 };
 
 struct RenderObject {
-	Mesh* mesh;
+	Mesh* p_mesh;
 
-	Material* material;
+	Material* p_material;
 
 	glm::mat4 transformMatrix;
 };
 
 
 struct FrameData {
-	VkSemaphore _presentSemaphore, _renderSemaphore;
-	VkFence _renderFence;
+	VkSemaphore presentSemaphore, renderSemaphore;
+	VkFence renderFence;
 
-	vkcomponent::DeletionQueue _frameDeletionQueue;
+	vkcomponent::DeletionQueue frameDeletionQueue;
 
-	VkCommandPool _commandPool;
-	VkCommandBuffer _mainCommandBuffer;
+	VkCommandPool commandPool;
+	VkCommandBuffer mainCommandBuffer;
 
 	AllocatedBuffer cameraBuffer;
 	VkDescriptorSet globalDescriptor;
 
-	vkcomponent::DescriptorAllocator* dynamicDescriptorAllocator;
+	vkcomponent::DescriptorAllocator* p_dynamicDescriptorAllocator;
 
 	AllocatedBuffer objectBuffer;
 	AllocatedBuffer objectFragBuffer;
@@ -100,8 +100,8 @@ struct GPUObjectFragData {
 };
 
 struct UploadContext {
-	VkFence _uploadFence;
-	VkCommandPool _commandPool;	
+	VkFence uploadFence;
+	VkCommandPool commandPool;	
 };
 
 struct Texture {
@@ -114,123 +114,123 @@ constexpr unsigned int FRAME_OVERLAP = 2;
 
 class VulkanRenderer {
 public:
-	int _frameNumber {0};
-	int _selectedShader{ 0 };
+	int frameNumber {0};
+	int selectedShader{ 0 };
 
 
-	VkDescriptorSet temptextureSet{VK_NULL_HANDLE};
-	VkInstance _instance;
-	VkDebugUtilsMessengerEXT _debug_messenger;
-	VkPhysicalDevice _chosenGPU;
-	VkDevice _device;
+	VkDescriptorSet tempTextureSet{VK_NULL_HANDLE};
+	VkInstance instance;
+	VkDebugUtilsMessengerEXT debugMessenger;
+	VkPhysicalDevice chosenGPU;
+	VkDevice device;
 
-	VkPhysicalDeviceProperties _gpuProperties;
+	VkPhysicalDeviceProperties gpuProperties;
 
-	FrameData _frames[FRAME_OVERLAP];
+	FrameData frames[FRAME_OVERLAP];
 	
-	VkQueue _graphicsQueue;
-	uint32_t _graphicsQueueFamily;
+	VkQueue graphicsQueue;
+	uint32_t graphicsQueueFamily;
 	
-	VkRenderPass _renderPass;
+	VkRenderPass renderPass;
 
-	std::vector<VkFramebuffer> _framebuffers;
+	std::vector<VkFramebuffer> framebuffers;
 	
 
-    vkcomponent::DeletionQueue _mainDeletionQueue;
-	vkcomponent::DeletionQueue _swapDeletionQueue;
+    vkcomponent::DeletionQueue mainDeletionQueue;
+	vkcomponent::DeletionQueue swapDeletionQueue;
 	
-	VmaAllocator _allocator; //vma lib allocator
+	VmaAllocator allocator; //vma lib allocator
 
-	vkcomponent::DescriptorAllocator* _descriptorAllocator;
-	vkcomponent::DescriptorLayoutCache* _descriptorLayoutCache;
+	vkcomponent::DescriptorAllocator* p_descriptorAllocator;
+	vkcomponent::DescriptorLayoutCache* p_descriptorLayoutCache;
 
 
-	VkDescriptorSetLayout _globalSetLayout{};
-	VkDescriptorSetLayout _objectSetLayout{};
-	VkDescriptorSetLayout _singleTextureSetLayout{};
+	VkDescriptorSetLayout globalSetLayout{};
+	VkDescriptorSetLayout objectSetLayout{};
+	VkDescriptorSetLayout singleTextureSetLayout{};
 
-	GPUSceneData _sceneParameters;
-	AllocatedBuffer _sceneParameterBuffer;
+	GPUSceneData sceneParameters;
+	AllocatedBuffer sceneParameterBuffer;
 
-	vkcomponent::SwapChain _swapChainObj{_chosenGPU, _device, _allocator, _swapDeletionQueue};
-	Camera _camera{_swapChainObj};
+	vkcomponent::SwapChain swapChainObj{chosenGPU, device, allocator, swapDeletionQueue};
+	Camera camera{swapChainObj};
 
 	//texture hashmap
 	std::unordered_map<std::string, Texture> _loadedTextures;
-	void load_image(std::string texture_name, std::string texture_path);
+	void LoadImage(std::string texture_name, std::string texture_path);
 	//initializes everything in the engine
-	void init(WindowHandler& windowHandler);
+	void Init(WindowHandler& windowHandler);
 
 	//shuts down the engine
-	void cleanup();
+	void CleanUp();
 
 
 	//run main loop
-	void begin_draw();
-	void end_draw();
+	void BeginDraw();
+	void EndDraw();
 	
-	FrameData& get_current_frame();
-	FrameData& get_last_frame();
+	FrameData& GetCurrentFrame();
+	FrameData& GetLastFrame();
 
 	//default array of renderable objects
-	std::vector<RenderObject> _renderables;
+	std::vector<RenderObject> renderables;
 
-	std::unordered_map<std::string, Material> _materials;
-	std::vector<std::string> _material_list; 
-	std::unordered_map<std::string, Mesh> _meshes;
+	std::unordered_map<std::string, Material> materials;
+	std::vector<std::string> materialList; 
+	std::unordered_map<std::string, Mesh> meshes;
 
-	UploadContext _uploadContext;
+	UploadContext uploadContext;
 
 	//functions
-	void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
+	void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 
 	//create material and add it to the map
-	Material* create_material(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
+	Material* CreateMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
 
 	//returns nullptr if it cant be found
-	Material* get_material(const std::string& name);
+	Material* GetMaterial(const std::string& name);
 
 	//returns nullptr if it cant be found
-	Mesh* get_mesh(const std::string& name);
+	Mesh* GetMesh(const std::string& name);
 
 	//our draw function
-	void draw_objects(RenderObject* first, int count);
+	void DrawObjects(RenderObject* p_objects, int count);
 
-	AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+	AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 
-	size_t pad_uniform_buffer_size(size_t originalSize);
+	size_t PadUniformBufferSize(size_t originalSize);
 
-	WindowHandler* _windowHandler;
+	WindowHandler* p_windowHandler;
 
 	bool frameBufferResized = false;
 
-	void frameBufferResize();
+	void FrameBufferResize();
 	
 private:
 
-	void init_vulkan();
+	void InitVulkan();
 
-	void init_default_renderpass();
+	void InitDefaultRenderpass();
 
-	void init_framebuffers();
+	void InitFramebuffers();
 
-	void init_commands();
+	void InitCommands();
 
-	void init_sync_structures();
+	void InitSyncStructures();
 
-	void init_pipelines();
+	void InitPipelines();
 
-	void init_scene();
+	void InitScene();
 
-	void init_descriptors();
+	void InitDescriptors();
 
-	void load_meshes();
+	void LoadMeshes();
 
-	void upload_mesh(Mesh& mesh);
+	void UploadMesh(Mesh& mesh);
 
-	void recreate_swapchain();
+	void RecreateSwapchain();
 
-	void create_texture(std::string material_name, std::string texture_name, VkSampler& sampler_ref, uint32_t binding = 0);
+	void CreateTexture(std::string materialName, std::string textureName, VkSampler& sampler, uint32_t binding = 0);
 };
 
 

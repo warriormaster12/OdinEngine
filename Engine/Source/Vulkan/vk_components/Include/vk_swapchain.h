@@ -13,31 +13,31 @@ namespace vkcomponent
     class SwapChain
     {
     public:
-        SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, DeletionQueue& refDeletionQueue);
-        VkSwapchainKHR _swapchain; // from other articles
+        SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, DeletionQueue& deletionQueue);
+        VkSwapchainKHR swapchain; // from other articles
 
         // image format expected by the windowing system
-        VkFormat _swapchainImageFormat; 	
+        VkFormat swapchainImageFormat; 	
         
         //array of images from the swapchain
-        std::vector<VkImage> _swapchainImages;
+        std::vector<VkImage> swapchainImages;
 
         //array of image-views from the swapchain
-        std::vector<VkImageView> _swapchainImageViews;
+        std::vector<VkImageView> swapchainImageViews;
 
-        VkExtent2D _actualExtent{};
-        VkSurfaceKHR _surface; // Vulkan window surface
+        VkExtent2D actualExtent{};
+        VkSurfaceKHR surface; // Vulkan window surface
 
-        VkImageView _depthImageView;
-        AllocatedImage _depthImage;
+        VkImageView depthImageView;
+        AllocatedImage depthImage;
 
         //the format for the depth image
-        VkFormat _depthFormat;
-        void init_swapchain(SDL_Window* window);
+        VkFormat depthFormat;
+        void InitSwapchain(SDL_Window* p_window);
     private: 
-        VkPhysicalDevice* _chosenGPU;
-        VkDevice* _device;
-        VmaAllocator* _allocator;
-        DeletionQueue* _DeletionQueue;
+        VkPhysicalDevice* p_chosenGPU;
+        VkDevice* p_device;
+        VmaAllocator* p_allocator;
+        DeletionQueue* p_deletionQueue;
     };
 }

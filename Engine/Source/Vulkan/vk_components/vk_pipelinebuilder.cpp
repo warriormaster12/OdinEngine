@@ -5,7 +5,7 @@
 
 namespace vkcomponent
 {
-    VkPipeline PipelineBuilder::build_pipeline(VkDevice device, VkRenderPass pass)
+    VkPipeline PipelineBuilder::BuildPipeline(VkDevice& device, VkRenderPass& pass)
     {
         //make viewport state from our stored viewport and scissor.
             //at the moment we wont support multiple viewports or scissors
@@ -14,9 +14,9 @@ namespace vkcomponent
         viewportState.pNext = nullptr;
 
         viewportState.viewportCount = 1;
-        viewportState.pViewports = &_viewport;
+        viewportState.pViewports = &viewport;
         viewportState.scissorCount = 1;
-        viewportState.pScissors = &_scissor;
+        viewportState.pScissors = &scissor;
 
         //setup dummy color blending. We arent using transparent objects yet
         //the blending is just "no blend", but we do write to the color attachment
@@ -27,7 +27,7 @@ namespace vkcomponent
         colorBlending.logicOpEnable = VK_FALSE;
         colorBlending.logicOp = VK_LOGIC_OP_COPY;
         colorBlending.attachmentCount = 1;
-        colorBlending.pAttachments = &_colorBlendAttachment;
+        colorBlending.pAttachments = &colorBlendAttachment;
 
         //build the actual pipeline
         //we now use all of the info structs we have been writing into into this one to create the pipeline
@@ -42,16 +42,16 @@ namespace vkcomponent
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipelineInfo.pNext = nullptr;
 
-        pipelineInfo.stageCount = _shaderStages.size();
-        pipelineInfo.pStages = _shaderStages.data();
-        pipelineInfo.pVertexInputState = &_vertexInputInfo;
-        pipelineInfo.pInputAssemblyState = &_inputAssembly;
+        pipelineInfo.stageCount = shaderStages.size();
+        pipelineInfo.pStages = shaderStages.data();
+        pipelineInfo.pVertexInputState = &vertexInputInfo;
+        pipelineInfo.pInputAssemblyState = &inputAssembly;
         pipelineInfo.pViewportState = &viewportState;
-        pipelineInfo.pRasterizationState = &_rasterizer;
-        pipelineInfo.pMultisampleState = &_multisampling;
+        pipelineInfo.pRasterizationState = &rasterizer;
+        pipelineInfo.pMultisampleState = &multisampling;
         pipelineInfo.pColorBlendState = &colorBlending;
-        pipelineInfo.pDepthStencilState = &_depthStencil;
-        pipelineInfo.layout = _pipelineLayout;
+        pipelineInfo.pDepthStencilState = &depthStencil;
+        pipelineInfo.layout = pipelineLayout;
         pipelineInfo.renderPass = pass;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;

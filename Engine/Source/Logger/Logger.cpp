@@ -4,7 +4,7 @@
 std::shared_ptr<spdlog::logger> Logger::s_CoreLogger;
 std::shared_ptr<spdlog::logger> Logger::s_ClientLogger;
 
-void Logger::init()
+void Logger::Init()
 {
   spdlog::set_pattern("%^[%T] %n: %v%$");
   s_CoreLogger = spdlog::stdout_color_mt("Engine");

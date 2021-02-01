@@ -21,16 +21,16 @@ struct Vertex {
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv;
-	static VertexInputDescription get_vertex_description();
+	static VertexInputDescription GetVertexDescription();
 };
 
 
 struct Mesh {
-	std::vector<Vertex> _vertices;
+	std::vector<Vertex> vertices;
 	
 
-	AllocatedBuffer _vertexBuffer;
+	AllocatedBuffer vertexBuffer;
 	
-	bool load_from_obj(const char* filename);
+	bool LoadFromObj(const char* filename);
 };
 

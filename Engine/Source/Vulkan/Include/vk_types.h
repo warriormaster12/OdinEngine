@@ -4,13 +4,13 @@
 #include "../../third-party/Vma/vk_mem_alloc.h"
 
 struct AllocatedBuffer {
-    VkBuffer _buffer;
-    VmaAllocation _allocation;
+    VkBuffer buffer;
+    VmaAllocation allocation;
 };
 struct AllocatedImage {
-    VkImage _image;
-    VmaAllocation _allocation;
-	VkImageView _defaultView;
+    VkImage image;
+    VmaAllocation allocation;
+	VkImageView defaultView;
 	int mipLevels;
 };
 

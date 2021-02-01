@@ -5,7 +5,7 @@
 
 namespace Core
 {
-    void coreInit();
-    void coreUpdate();
-    void coreCleanup();
+    void CoreInit();
+    void CoreUpdate();
+    void CoreCleanup();
 }

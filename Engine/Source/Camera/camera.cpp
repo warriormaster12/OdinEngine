@@ -3,15 +3,15 @@
 
 #include <glm/gtx/transform.hpp>
 
-Camera::Camera(vkcomponent::SwapChain& swapChain_ref)
+Camera::Camera(vkcomponent::SwapChain& swapChain)
 {
-    _swapChain = &swapChain_ref;
+    p_swapChain = &swapChain;
 }
-void Camera::process_input_event(SDL_Event* ev)
+void Camera::ProcessInputEvent(SDL_Event* p_ev)
 {
-	if (ev->type == SDL_KEYDOWN)
+	if (p_ev->type == SDL_KEYDOWN)
 	{
-		switch (ev->key.keysym.sym)
+		switch (p_ev->key.keysym.sym)
 		{
 		case SDLK_UP:
 		case SDLK_w:
@@ -41,9 +41,9 @@ void Camera::process_input_event(SDL_Event* ev)
 			break;
 		}
 	}
-	else if (ev->type == SDL_KEYUP)
+	else if (p_ev->type == SDL_KEYUP)
 	{
-		switch (ev->key.keysym.sym)
+		switch (p_ev->key.keysym.sym)
 		{
 		case SDLK_UP:
 		case SDLK_w:
@@ -73,18 +73,18 @@ void Camera::process_input_event(SDL_Event* ev)
 			break;
 		}
 	}
-	else if (ev->type == SDL_MOUSEMOTION) {
+	else if (p_ev->type == SDL_MOUSEMOTION) {
 		if (!bLocked)
 		{
-			pitch += ev->motion.yrel * 0.003f;
-			yaw += ev->motion.xrel * 0.003f;
+			pitch += p_ev->motion.yrel * 0.003f;
+			yaw += p_ev->motion.xrel * 0.003f;
 		}
 	}
 
 	inputAxis = glm::clamp(inputAxis, { -1.0,-1.0,-1.0 }, { 1.0,1.0,1.0 });
 }
 
-void Camera::update_camera(float deltaSeconds)
+void Camera::UpdateCamera(float deltaTime)
 {
 	const float cam_vel = 0.001f + bSprint * 0.01;
 	glm::vec3 forward = { 0,0,-cam_vel };
@@ -98,13 +98,13 @@ void Camera::update_camera(float deltaSeconds)
 
 	velocity = inputAxis.x * forward + inputAxis.y * right + inputAxis.z * up;
 
-	velocity *= 10 * deltaSeconds;
+	velocity *= 10 * deltaTime;
 
 	position += velocity;
 }
 
 
-glm::mat4 Camera::get_view_matrix()
+glm::mat4 Camera::GetViewMatrix()
 {
 	glm::vec3 camPos = position;
 
@@ -118,16 +118,16 @@ glm::mat4 Camera::get_view_matrix()
 	return view;
 }
 
-glm::mat4 Camera::get_projection_matrix(bool bReverse /*= true*/)
+glm::mat4 Camera::GetProjectionMatrix(bool bReverse /*= true*/)
 {
 	if (bReverse)
 	{
-		glm::mat4 pro = glm::perspective(glm::radians(FOV), (float)_swapChain->_actualExtent.width / (float)_swapChain->_actualExtent.height, zFar, zNear);
+		glm::mat4 pro = glm::perspective(glm::radians(Fov), (float)p_swapChain->actualExtent.width / (float)p_swapChain->actualExtent.height, zFar, zNear);
 		pro[1][1] *= -1;
 		return pro;
 	}
 	else {
-		glm::mat4 pro = glm::perspective(glm::radians(FOV), (float)_swapChain->_actualExtent.width / (float)_swapChain->_actualExtent.height, zNear, zFar);
+		glm::mat4 pro = glm::perspective(glm::radians(Fov), (float)p_swapChain->actualExtent.width / (float)p_swapChain->actualExtent.height, zNear, zFar);
 		pro[1][1] *= -1;
 		return pro;
 	}

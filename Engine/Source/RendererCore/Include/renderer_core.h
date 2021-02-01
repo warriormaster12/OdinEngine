@@ -6,8 +6,8 @@
 
 namespace RendererCore
 {
-    void init_renderer();
-    void update_renderer();
-    void renderer_events(SDL_Event& ev);
-    void cleanup_renderer();
+    void InitRenderer();
+    void UpdateRenderer();
+    void RendererEvents(SDL_Event& ev);
+    void CleanupRenderer();
 };

@@ -15,9 +15,9 @@ struct Resolution
 class WindowHandler
 {
 public:
-    void createWindow(uint32_t width, uint32_t height);
-    void destroyWindow();
+    void CreateWindow(uint32_t width, uint32_t height);
+    void DestroyWindow();
 
-    Resolution _resolution;
-    struct SDL_Window* _window{ nullptr };
+    Resolution resolution;
+    struct SDL_Window* window{ nullptr };
 };

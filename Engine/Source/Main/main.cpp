@@ -3,9 +3,9 @@
 int main(int argc, char* argv[])
 {
 
-	Core::coreInit();
-	Core::coreUpdate();
-	Core::coreCleanup();
+	Core::CoreInit();
+	Core::CoreUpdate();
+	Core::CoreCleanup();
 	return 0;
 }
 

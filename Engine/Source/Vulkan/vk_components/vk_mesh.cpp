@@ -3,7 +3,7 @@
 #include "../../third-party/tinyobjloader/tiny_obj_loader.h"
 
 
-VertexInputDescription Vertex::get_vertex_description()
+VertexInputDescription Vertex::GetVertexDescription()
 {
 	VertexInputDescription description;
 
@@ -50,7 +50,7 @@ VertexInputDescription Vertex::get_vertex_description()
 	return description;
 }
 
-bool Mesh::load_from_obj(const char* filename)
+bool Mesh::LoadFromObj(const char* filename)
 {
     //attrib will contain the vertex arrays of the file
 	tinyobj::attrib_t attrib;
@@ -119,7 +119,7 @@ bool Mesh::load_from_obj(const char* filename)
 				new_vert.uv.y = 1-uy;
 
 				
-				_vertices.push_back(new_vert);
+				vertices.push_back(new_vert);
 			}
 			index_offset += fv;
 		}

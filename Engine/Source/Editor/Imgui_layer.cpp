@@ -11,7 +11,7 @@ void imgui_layer::init_imgui_layer(VulkanRenderer& renderer, bool show_window /*
 	{
 		//1: create descriptor pool for IMGUI
 		// the size of the pool is very oversize, but its copied from imgui demo itself.
-		VkDescriptorPoolSize pool_sizes[] =
+		VkDescriptorPoolSize poolSizes[] =
 		{
 			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
@@ -30,11 +30,11 @@ void imgui_layer::init_imgui_layer(VulkanRenderer& renderer, bool show_window /*
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		pool_info.maxSets = 1000;
-		pool_info.poolSizeCount = std::size(pool_sizes);
-		pool_info.pPoolSizes = pool_sizes;
+		pool_info.poolSizeCount = std::size(poolSizes);
+		pool_info.pPoolSizes = poolSizes;
 
 		VkDescriptorPool imguiPool;
-		VK_CHECK(vkCreateDescriptorPool(renderer._device, &pool_info, nullptr, &imguiPool));
+		VK_CHECK(vkCreateDescriptorPool(renderer.device, &pool_info, nullptr, &imguiPool));
 
 
 		// 2: initialize imgui library
@@ -90,22 +90,22 @@ void imgui_layer::init_imgui_layer(VulkanRenderer& renderer, bool show_window /*
 		colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 		//this initializes imgui for SDL
-		ImGui_ImplSDL2_InitForVulkan(renderer._windowHandler->_window);
+		ImGui_ImplSDL2_InitForVulkan(renderer.p_windowHandler->window);
 
 		//this initializes imgui for Vulkan
 		ImGui_ImplVulkan_InitInfo init_info = {};
-		init_info.Instance = renderer._instance;
-		init_info.PhysicalDevice = renderer._chosenGPU;
-		init_info.Device = renderer._device;
-		init_info.Queue = renderer._graphicsQueue;
+		init_info.Instance = renderer.instance;
+		init_info.PhysicalDevice = renderer.chosenGPU;
+		init_info.Device = renderer.device;
+		init_info.Queue = renderer.graphicsQueue;
 		init_info.DescriptorPool = imguiPool;
 		init_info.MinImageCount = 3;
 		init_info.ImageCount = 3;
 
-		ImGui_ImplVulkan_Init(&init_info, renderer._renderPass);
+		ImGui_ImplVulkan_Init(&init_info, renderer.renderPass);
 
 		//execute a gpu command to upload imgui font textures
-		renderer.immediate_submit([&](VkCommandBuffer cmd) {
+		renderer.ImmediateSubmit([&](VkCommandBuffer cmd) {
 			ImGui_ImplVulkan_CreateFontsTexture(cmd);
 			});
 
@@ -113,9 +113,9 @@ void imgui_layer::init_imgui_layer(VulkanRenderer& renderer, bool show_window /*
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 
 		//add the destroy the imgui created structures
-		renderer._mainDeletionQueue.push_function([=]() {
+		renderer.mainDeletionQueue.push_function([=]() {
 			ImGui_ImplVulkan_Shutdown();
-			vkDestroyDescriptorPool(renderer._device, imguiPool, nullptr);
+			vkDestroyDescriptorPool(renderer.device, imguiPool, nullptr);
 			});
 	}
 }
@@ -126,7 +126,7 @@ void imgui_layer::update_ui()
 	{
 		//imgui new frame 
 		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplSDL2_NewFrame(p_renderer->_windowHandler->_window);
+		ImGui_ImplSDL2_NewFrame(p_renderer->p_windowHandler->window);
 
 		ImGui::NewFrame();        
 

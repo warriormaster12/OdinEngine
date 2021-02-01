@@ -11,11 +11,11 @@
 #include "../Editor/Include/Imgui_layer.h"
 
 
-bool _isInitialized{ false };
+bool isInitialized{ false };
 Coordinator gCoordinator;
-void Core::coreInit()
+void Core::CoreInit()
 {
-    Logger::init();
+    Logger::Init();
 	//Test of an entity system
 	gCoordinator.Init();
 	gCoordinator.RegisterComponent<Test>();
@@ -26,13 +26,13 @@ void Core::coreInit()
 	}
 	testSystem->Init();
 	
-	RendererCore::init_renderer();
+	RendererCore::InitRenderer();
 	//imgui_layer::init_imgui_layer(renderer);
     //everything went fine
-    _isInitialized = true;
+    isInitialized = true;
 }
 
-void Core::coreUpdate()
+void Core::CoreUpdate()
 {
     SDL_Event e;
 	bool bQuit = false;
@@ -59,17 +59,17 @@ void Core::coreUpdate()
 				}
 			}
 
-			RendererCore::renderer_events(e);
+			RendererCore::RendererEvents(e);
 		}
 		//imgui_layer::update_ui();
-		RendererCore::update_renderer();
+		RendererCore::UpdateRenderer();
     }
 }
 
-void Core::coreCleanup()
+void Core::CoreCleanup()
 {
-    if (_isInitialized)
+    if (isInitialized)
     {
-		RendererCore::cleanup_renderer();
+		RendererCore::CleanupRenderer();
     }
 }

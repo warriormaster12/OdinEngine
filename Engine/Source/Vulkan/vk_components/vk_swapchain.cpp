@@ -1,20 +1,20 @@
 #include "Include/vk_swapchain.h"
 #include "VkBootstrap.h"
 
-vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, DeletionQueue& refDeletionQueue)
+vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, DeletionQueue& deletionQueue)
 {
-	_chosenGPU = &chosenGPU;
-	_device = &device;
-	_allocator = &allocator;
-	_DeletionQueue = &refDeletionQueue;
+	p_chosenGPU = &chosenGPU;
+	p_device = &device;
+	p_allocator = &allocator;
+	p_deletionQueue = &deletionQueue;
 }
 
-void vkcomponent::SwapChain::init_swapchain(SDL_Window* window)
+void vkcomponent::SwapChain::InitSwapchain(SDL_Window* p_window)
 {
 	int width;
 	int height;
-	SDL_Vulkan_GetDrawableSize(window, &width, &height);
-    vkb::SwapchainBuilder swapchainBuilder{*_chosenGPU,*_device,_surface };
+	SDL_Vulkan_GetDrawableSize(p_window, &width, &height);
+    vkb::SwapchainBuilder swapchainBuilder{*p_chosenGPU,*p_device,surface };
 	vkb::Swapchain vkbSwapchain = swapchainBuilder
 		.use_default_format_selection()
 		//use vsync present mode
@@ -24,25 +24,25 @@ void vkcomponent::SwapChain::init_swapchain(SDL_Window* window)
 		.value();
 
 	//store swapchain and its related images
-	_swapchain = vkbSwapchain.swapchain;
-	_swapchainImages = vkbSwapchain.get_images().value();
-	_swapchainImageViews = vkbSwapchain.get_image_views().value();
-	_swapchainImageFormat = vkbSwapchain.image_format;
+	swapchain = vkbSwapchain.swapchain;
+	swapchainImages = vkbSwapchain.get_images().value();
+	swapchainImageViews = vkbSwapchain.get_image_views().value();
+	swapchainImageFormat = vkbSwapchain.image_format;
 
 	//we get actual resolution of the displayed content
-	_actualExtent = vkbSwapchain.extent;
+	actualExtent = vkbSwapchain.extent;
 	//depth image size will match the window
 	VkExtent3D depthImageExtent = {
-		_actualExtent.width,
-		_actualExtent.height,
+		actualExtent.width,
+		actualExtent.height,
 		1
 	};
 
 	//hardcoding the depth format to 32 bit float
-	_depthFormat = VK_FORMAT_D32_SFLOAT;
+	depthFormat = VK_FORMAT_D32_SFLOAT;
 
 	//the depth image will be a image with the format we selected and Depth Attachment usage flag
-	VkImageCreateInfo dimg_info = vkinit::image_create_info(_depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depthImageExtent);
+	VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depthImageExtent);
 
 	//for the depth image, we want to allocate it from gpu local memory
 	VmaAllocationCreateInfo dimg_allocinfo = {};
@@ -50,23 +50,23 @@ void vkcomponent::SwapChain::init_swapchain(SDL_Window* window)
 	dimg_allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	//allocate and create the image
-	vmaCreateImage(*_allocator, &dimg_info, &dimg_allocinfo, &_depthImage._image, &_depthImage._allocation, nullptr);
+	vmaCreateImage(*p_allocator, &dimg_info, &dimg_allocinfo, &depthImage.image, &depthImage.allocation, nullptr);
 
 	//build a image-view for the depth image to use for rendering
-	VkImageViewCreateInfo dview_info = vkinit::imageview_create_info(_depthFormat, _depthImage._image, VK_IMAGE_ASPECT_DEPTH_BIT);;
+	VkImageViewCreateInfo dview_info = vkinit::ImageViewCreateInfo(depthFormat, depthImage.image, VK_IMAGE_ASPECT_DEPTH_BIT);;
 
-	VK_CHECK(vkCreateImageView(*_device, &dview_info, nullptr, &_depthImageView));
+	VK_CHECK(vkCreateImageView(*p_device, &dview_info, nullptr, &depthImageView));
 
-	_DeletionQueue->push_function([=]()
+	p_deletionQueue->push_function([=]()
 	{
-		vkDestroyImageView(*_device, _depthImageView, nullptr);
-		vmaDestroyImage(*_allocator, _depthImage._image, _depthImage._allocation);
-		for (int i = 0; i < _swapchainImageViews.size(); i++)
+		vkDestroyImageView(*p_device, depthImageView, nullptr);
+		vmaDestroyImage(*p_allocator, depthImage.image, depthImage.allocation);
+		for (int i = 0; i < swapchainImageViews.size(); i++)
 		{
-			vkDestroyImageView(*_device, _swapchainImageViews[i], nullptr);
+			vkDestroyImageView(*p_device, swapchainImageViews[i], nullptr);
 		}
 
-		vkDestroySwapchainKHR(*_device,_swapchain, nullptr);
+		vkDestroySwapchainKHR(*p_device,swapchain, nullptr);
 	});
 
 }

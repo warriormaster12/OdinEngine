@@ -1,44 +1,44 @@
 #include "Include/renderer_core.h"
 
-VulkanRenderer vk_renderer;
-WindowHandler _windowHandler;
+VulkanRenderer vkRenderer;
+WindowHandler windowHandler;
 auto start = std::chrono::system_clock::now();
 auto end = std::chrono::system_clock::now();
-float deltatime;
-void RendererCore::init_renderer()
+float deltaTime;
+void RendererCore::InitRenderer()
 {
-    _windowHandler.createWindow(1920, 1080);
-    vk_renderer.init(_windowHandler);
+    windowHandler.CreateWindow(1920, 1080);
+    vkRenderer.Init(windowHandler);
 }
 
-void RendererCore::update_renderer()
+void RendererCore::UpdateRenderer()
 {
     end = std::chrono::system_clock::now();
     std::chrono::duration<float> elapsed_seconds = end - start;
-    deltatime = elapsed_seconds.count() * 1000.f;
+    deltaTime = elapsed_seconds.count() * 1000.f;
     start = std::chrono::system_clock::now();
    
-    vk_renderer._camera.update_camera(deltatime);
-    vk_renderer.begin_draw();
+    vkRenderer.camera.UpdateCamera(deltaTime);
+    vkRenderer.BeginDraw();
 
-    vk_renderer.draw_objects(vk_renderer._renderables.data(), vk_renderer._renderables.size());	
+    vkRenderer.DrawObjects(vkRenderer.renderables.data(), vkRenderer.renderables.size());	
 	//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
 
-	vk_renderer.end_draw();
+	vkRenderer.EndDraw();
 }
 
-void RendererCore::renderer_events(SDL_Event& ev)
+void RendererCore::RendererEvents(SDL_Event& ev)
 {
-    vk_renderer._camera.process_input_event(&ev);
+    vkRenderer.camera.ProcessInputEvent(&ev);
     
     if (ev.type == SDL_WINDOWEVENT_RESIZED)
     {
-        vk_renderer.frameBufferResize();
+        vkRenderer.FrameBufferResize();
     }
 }
 
-void RendererCore::cleanup_renderer()
+void RendererCore::CleanupRenderer()
 {
-    vk_renderer.cleanup();
-    _windowHandler.destroyWindow();
+    vkRenderer.CleanUp();
+    windowHandler.DestroyWindow();
 }

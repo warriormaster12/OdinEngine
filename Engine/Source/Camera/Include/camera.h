@@ -13,7 +13,7 @@
 class Camera {
 public:
 
-    Camera(vkcomponent::SwapChain& swapChain_ref);
+    Camera(vkcomponent::SwapChain& swapChain);
 	glm::vec3 position;
 	glm::vec3 velocity;
 	glm::vec3 inputAxis;
@@ -21,20 +21,20 @@ public:
 	float pitch{ 0 }; //up-down rotation
 	float yaw{ 0 }; //left-right rotation
 
-    float FOV = 70;
+    float Fov = 70;
 	float zNear = 0.1f;
 	float zFar = 100.0f;
 
 	bool bSprint = false;
 	bool bLocked;
 
-	void process_input_event(SDL_Event* ev);
-	void update_camera(float deltaSeconds);
+	void ProcessInputEvent(SDL_Event* p_ev);
+	void UpdateCamera(float deltaTime);
 
 
-	glm::mat4 get_view_matrix();
-	glm::mat4 get_projection_matrix(bool bReverse = true);
+	glm::mat4 GetViewMatrix();
+	glm::mat4 GetProjectionMatrix(bool bReverse = true);
 	glm::mat4 get_rotation_matrix();
 private: 
-    vkcomponent::SwapChain* _swapChain;
+    vkcomponent::SwapChain* p_swapChain;
 };
