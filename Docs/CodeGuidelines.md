@@ -13,10 +13,6 @@ VkCommandBuffer cmd;
 ```
 void* p_examplePointer;
 ```
-### References
-```
-float& r_exampleRef;
-```
 
 ## Functions 
 ```
