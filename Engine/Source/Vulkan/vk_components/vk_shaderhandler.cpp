@@ -1,5 +1,5 @@
 #include "Include/vk_shaderhandler.h"
-#include "../../Logger/Include/Logger.h"
+#include "../../Logger/Include/logger.h"
 #include <iostream>
 #include <fstream>
 

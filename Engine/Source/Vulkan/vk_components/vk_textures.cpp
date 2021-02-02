@@ -1,9 +1,9 @@
 #include "Include/vk_textures.h"
 
 #include "../Include/vk_init.h"
-#include "../../third-party/stb_image/stb_image.h"
-#include "../../Asset_manager/Include/texture_asset.h"
-#include "../../Asset_manager/Include/asset_loader.h"
+#include "../../Third-Party/stb_image/stb_image.h"
+#include "../../Asset_Manager/Include/texture_asset.h"
+#include "../../Asset_Manager/Include/asset_loader.h"
 bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file, AllocatedImage& outImage)
 {
 	int texWidth, texHeight, texChannels;

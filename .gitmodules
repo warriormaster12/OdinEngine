@@ -1,12 +1,12 @@
-[submodule "third-party/vk-bootstrap"]
-	path = third-party/vk-bootstrap
+[submodule "Third-Party/vk-bootstrap"]
+	path = Third-Party/vk-bootstrap
 	url = https://github.com/charles-lunarg/vk-bootstrap.git
-[submodule "third-party/glm"]
-	path = third-party/glm
+[submodule "Third-Party/glm"]
+	path = Third-Party/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "third-party/glslang"]
-	path = third-party/glslang
+[submodule "Third-Party/glslang"]
+	path = Third-Party/glslang
 	url = https://github.com/KhronosGroup/glslang.git
-[submodule "third-party/spdlog"]
-	path = third-party/spdlog
+[submodule "Third-Party/spdlog"]
+	path = Third-Party/spdlog
 	url = https://github.com/gabime/spdlog.git

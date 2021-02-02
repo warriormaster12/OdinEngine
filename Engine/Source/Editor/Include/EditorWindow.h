@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "../../third-party/imgui/Include/imgui.h"
+#include "../../Third-Party/imgui/Include/imgui.h"
 #include <iostream>
 #include "../../Vulkan/Include/vk_renderer.h"
 

@@ -1,11 +1,11 @@
-#include "../third-party/nlohmann_json/json.hpp"
+#include "../Third-Party/nlohmann_json/json.hpp"
 
 
-#include "../third-party/lz4/Include/lz4.h"
+#include "../Third-Party/lz4/Include/lz4.h"
 #include <chrono>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "../third-party/stb_image/stb_image.h"
+#include "../Third-Party/stb_image/stb_image.h"
 
 #include "Include/texture_asset.h"
 
@@ -15,7 +15,7 @@
 
 #include "Include/asset_builder.h"
 #include <fstream>
-#include "../Logger/Include/Logger.h"
+#include "../Logger/Include/logger.h"
 
 
 using namespace assets;

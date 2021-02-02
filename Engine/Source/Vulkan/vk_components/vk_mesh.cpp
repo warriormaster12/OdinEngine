@@ -1,6 +1,6 @@
 #include "Include/vk_mesh.h"
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "../../third-party/tinyobjloader/tiny_obj_loader.h"
+#include "../../Third-Party/tinyobjloader/tiny_obj_loader.h"
 
 
 VertexInputDescription Vertex::GetVertexDescription()

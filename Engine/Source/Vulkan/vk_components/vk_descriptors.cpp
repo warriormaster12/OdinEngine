@@ -4,7 +4,7 @@
 namespace vkcomponent {
 
 
-	VkDescriptorPool createPool(VkDevice device, const DescriptorAllocator::PoolSizes& poolSizes, int count, VkDescriptorPoolCreateFlags flags)
+	VkDescriptorPool CreatePool(VkDevice device, const DescriptorAllocator::PoolSizes& poolSizes, int count, VkDescriptorPoolCreateFlags flags)
 	{
 		std::vector<VkDescriptorPoolSize> sizes;
 		sizes.reserve(poolSizes.sizes.size());
@@ -24,7 +24,7 @@ namespace vkcomponent {
 		return descriptorPool;
 	}
 
-	void DescriptorAllocator::reset_pools()
+	void DescriptorAllocator::ResetPools()
 	{
 		for (auto p : usedPools)
 		{
@@ -36,11 +36,11 @@ namespace vkcomponent {
 		currentPool = VK_NULL_HANDLE;
 	}
 
-	bool DescriptorAllocator::allocate(VkDescriptorSet* set, VkDescriptorSetLayout layout)
+	bool DescriptorAllocator::Allocate(VkDescriptorSet* p_set, VkDescriptorSetLayout layout)
 	{
 		if (currentPool == VK_NULL_HANDLE)
 		{
-			currentPool = grab_pool();
+			currentPool = GrabPool();
 			usedPools.push_back(currentPool);
 		}
 
@@ -53,7 +53,7 @@ namespace vkcomponent {
 		allocInfo.descriptorSetCount = 1;		
 		
 
-		VkResult allocResult = vkAllocateDescriptorSets(device, &allocInfo, set);
+		VkResult allocResult = vkAllocateDescriptorSets(device, &allocInfo, p_set);
 		bool needReallocate = false;
 
 		switch (allocResult) {
@@ -75,10 +75,10 @@ namespace vkcomponent {
 		if (needReallocate)
 		{
 			//allocate a new pool and retry
-			currentPool = grab_pool();
+			currentPool = GrabPool();
 			usedPools.push_back(currentPool);
 
-			allocResult = vkAllocateDescriptorSets(device, &allocInfo, set);
+			allocResult = vkAllocateDescriptorSets(device, &allocInfo, p_set);
 
 			//if it still fails then we have big issues
 			if (allocResult == VK_SUCCESS)
@@ -90,12 +90,12 @@ namespace vkcomponent {
 		return false;
 	}
 
-	void DescriptorAllocator::init(VkDevice newDevice)
+	void DescriptorAllocator::Init(VkDevice newDevice)
 	{
 		device = newDevice;
 	}
 
-	void DescriptorAllocator::cleanup()
+	void DescriptorAllocator::CleanUp()
 	{
 		//delete every pool held
 		for (auto p : freePools)
@@ -108,7 +108,7 @@ namespace vkcomponent {
 		}
 	}
 
-	VkDescriptorPool DescriptorAllocator::grab_pool()
+	VkDescriptorPool DescriptorAllocator::GrabPool()
 	{
 		if (freePools.size() > 0)
 		{
@@ -117,29 +117,29 @@ namespace vkcomponent {
 			return pool;
 		}
 		else {
-			return createPool(device, descriptorSizes, 1000, 0);
+			return CreatePool(device, descriptorSizes, 1000, 0);
 		}
 	}
 
 
-	void DescriptorLayoutCache::init(VkDevice newDevice)
+	void DescriptorLayoutCache::Init(VkDevice newDevice)
 	{
 		device = newDevice;
 	}
 
-	VkDescriptorSetLayout DescriptorLayoutCache::create_descriptor_layout(VkDescriptorSetLayoutCreateInfo* info)
+	VkDescriptorSetLayout DescriptorLayoutCache::CreateDescriptorLayout(VkDescriptorSetLayoutCreateInfo* p_info)
 	{
 		DescriptorLayoutInfo layoutinfo;
-		layoutinfo.bindings.reserve(info->bindingCount);
+		layoutinfo.bindings.reserve(p_info->bindingCount);
 		bool isSorted = true;
 		int32_t lastBinding = -1;
-		for (uint32_t i = 0; i < info->bindingCount; i++) {
-			layoutinfo.bindings.push_back(info->pBindings[i]);
+		for (uint32_t i = 0; i < p_info->bindingCount; i++) {
+			layoutinfo.bindings.push_back(p_info->pBindings[i]);
 
 			//check that the bindings are in strict increasing order
-			if (static_cast<int32_t>(info->pBindings[i].binding) > lastBinding)
+			if (static_cast<int32_t>(p_info->pBindings[i].binding) > lastBinding)
 			{
-				lastBinding = info->pBindings[i].binding;
+				lastBinding = p_info->pBindings[i].binding;
 			}
 			else{
 				isSorted = false;
@@ -159,7 +159,7 @@ namespace vkcomponent {
 		}
 		else {
 			VkDescriptorSetLayout layout;
-			vkCreateDescriptorSetLayout(device, info, nullptr, &layout);
+			vkCreateDescriptorSetLayout(device, p_info, nullptr, &layout);
 
 			//layoutCache.emplace()
 			//add to cache
@@ -169,7 +169,7 @@ namespace vkcomponent {
 	}
 
 
-	void DescriptorLayoutCache::cleanup()
+	void DescriptorLayoutCache::CleanUp()
 	{
 		//delete every descriptor layout held
 		for (auto pair : layoutCache)
@@ -178,17 +178,17 @@ namespace vkcomponent {
 		}
 	}
 
-	vkcomponent::DescriptorBuilder DescriptorBuilder::begin(DescriptorLayoutCache* layoutCache, DescriptorAllocator* allocator)
+	vkcomponent::DescriptorBuilder DescriptorBuilder::Begin(DescriptorLayoutCache* p_layoutCache, DescriptorAllocator* p_allocator)
 	{
 		DescriptorBuilder builder;
 		
-		builder.cache = layoutCache;
-		builder.alloc = allocator;
+		builder.p_cache = p_layoutCache;
+		builder.p_alloc = p_allocator;
 		return builder;
 	}
 
 
-	vkcomponent::DescriptorBuilder& DescriptorBuilder::bind_buffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo, VkDescriptorType type, VkShaderStageFlags stageFlags)
+	vkcomponent::DescriptorBuilder& DescriptorBuilder::BindBuffer(uint32_t binding, VkDescriptorBufferInfo* p_bufferInfo, VkDescriptorType type, VkShaderStageFlags stageFlags)
 	{
 		VkDescriptorSetLayoutBinding newBinding{};
 
@@ -206,7 +206,7 @@ namespace vkcomponent {
 
 		newWrite.descriptorCount = 1;
 		newWrite.descriptorType = type;
-		newWrite.pBufferInfo = bufferInfo;
+		newWrite.pBufferInfo = p_bufferInfo;
 		newWrite.dstBinding = binding;
 
 		writes.push_back(newWrite);
@@ -214,7 +214,7 @@ namespace vkcomponent {
 	}
 
 
-	vkcomponent::DescriptorBuilder& DescriptorBuilder::bind_image(uint32_t binding,  VkDescriptorImageInfo* imageInfo, VkDescriptorType type, VkShaderStageFlags stageFlags)
+	vkcomponent::DescriptorBuilder& DescriptorBuilder::BindImage(uint32_t binding,  VkDescriptorImageInfo* p_imageInfo, VkDescriptorType type, VkShaderStageFlags stageFlags)
 	{
 		VkDescriptorSetLayoutBinding newBinding{};
 
@@ -232,14 +232,14 @@ namespace vkcomponent {
 
 		newWrite.descriptorCount = 1;
 		newWrite.descriptorType = type;
-		newWrite.pImageInfo = imageInfo;
+		newWrite.pImageInfo = p_imageInfo;
 		newWrite.dstBinding = binding;
 
 		writes.push_back(newWrite);
 		return *this;
 	}
 
-	bool DescriptorBuilder::build(VkDescriptorSet& set, VkDescriptorSetLayout& layout)
+	bool DescriptorBuilder::Build(VkDescriptorSet& set, VkDescriptorSetLayout& layout)
 	{
 		//build layout first
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
@@ -249,11 +249,11 @@ namespace vkcomponent {
 		layoutInfo.pBindings = bindings.data();
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 
-		layout = cache->create_descriptor_layout(&layoutInfo);
+		layout = p_cache->CreateDescriptorLayout(&layoutInfo);
 
 
 		//allocate descriptor
-		bool success = alloc->allocate(&set, layout);
+		bool success = p_alloc->Allocate(&set, layout);
 		if (!success) { return false; };
 
 		//write descriptor
@@ -262,16 +262,16 @@ namespace vkcomponent {
 			w.dstSet = set;
 		}
 
-		vkUpdateDescriptorSets(alloc->device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+		vkUpdateDescriptorSets(p_alloc->device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 
 		return true;
 	}
 
 
-	bool DescriptorBuilder::build(VkDescriptorSet& set)
+	bool DescriptorBuilder::Build(VkDescriptorSet& set)
 	{
 		VkDescriptorSetLayout layout;
-		return build(set, layout);
+		return Build(set, layout);
 	}
 
 

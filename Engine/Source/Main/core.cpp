@@ -1,7 +1,7 @@
-#include "Include/Core.h"
+#include "Include/core.h"
 #include "../RendererCore/Include/renderer_core.h"
-#include "../Window/Include/WindowHandler.h"
-#include "../Logger/Include/Logger.h"
+#include "../Window/Include/window_handler.h"
+#include "../Logger/Include/logger.h"
 
 #include "../ECS/Component/TestComponent.h"
 #include "../ECS/System/Include/TestSystem.h"

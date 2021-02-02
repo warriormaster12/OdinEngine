@@ -1,5 +1,5 @@
-#include "Include/WindowHandler.h"
-#include "../Logger/Include/Logger.h"
+#include "Include/window_handler.h"
+#include "../Logger/Include/logger.h"
 
 void WindowHandler::CreateWindow(uint32_t width, uint32_t height)
 {

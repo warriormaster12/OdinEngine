@@ -1,4 +1,4 @@
-#include "Include/Core.h"
+#include "Include/core.h"
 
 int main(int argc, char* argv[])
 {

@@ -1,7 +1,7 @@
 #pragma once 
 
-#include "../../third-party/imgui/Include/imgui.h"
-#include "../../Window/Include/WindowHandler.h"
+#include "../../Third-Party/imgui/Include/imgui.h"
+#include "../../Window/Include/window_handler.h"
 #include "../../Vulkan/Include/vk_renderer.h"
 #include <iostream>
 

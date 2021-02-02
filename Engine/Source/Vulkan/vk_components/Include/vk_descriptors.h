@@ -28,16 +28,16 @@ namespace vkcomponent {
 			};
 		};
 
-		void reset_pools();
-		bool allocate(VkDescriptorSet* set, VkDescriptorSetLayout layout);
+		void ResetPools();
+		bool Allocate(VkDescriptorSet* p_set, VkDescriptorSetLayout layout);
 		
-		void init(VkDevice newDevice);
+		void Init(VkDevice newDevice);
 
-		void cleanup();
+		void CleanUp();
 
 		VkDevice device;
 	private:
-		VkDescriptorPool grab_pool();
+		VkDescriptorPool GrabPool();
 
 		VkDescriptorPool currentPool{VK_NULL_HANDLE};
 		PoolSizes descriptorSizes;
@@ -48,10 +48,10 @@ namespace vkcomponent {
 
 	class DescriptorLayoutCache {
 	public:
-		void init(VkDevice newDevice);
-		void cleanup();
+		void Init(VkDevice newDevice);
+		void CleanUp();
 
-		VkDescriptorSetLayout create_descriptor_layout(VkDescriptorSetLayoutCreateInfo* info);
+		VkDescriptorSetLayout CreateDescriptorLayout(VkDescriptorSetLayoutCreateInfo* p_info);
 
 		struct DescriptorLayoutInfo {
 			//good idea to turn this into a inlined array
@@ -83,21 +83,21 @@ namespace vkcomponent {
 	class DescriptorBuilder {
 	public:
 
-		static DescriptorBuilder begin(DescriptorLayoutCache* layoutCache, DescriptorAllocator* allocator );
+		static DescriptorBuilder Begin(DescriptorLayoutCache* p_layoutCache, DescriptorAllocator* p_allocator );
 
-		DescriptorBuilder& bind_buffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo, VkDescriptorType type, VkShaderStageFlags stageFlags);
+		DescriptorBuilder& BindBuffer(uint32_t binding, VkDescriptorBufferInfo* p_bufferInfo, VkDescriptorType type, VkShaderStageFlags stageFlags);
 
-		DescriptorBuilder& bind_image(uint32_t binding, VkDescriptorImageInfo* imageInfo, VkDescriptorType type, VkShaderStageFlags stageFlags);
+		DescriptorBuilder& BindImage(uint32_t binding, VkDescriptorImageInfo* p_imageInfo, VkDescriptorType type, VkShaderStageFlags stageFlags);
 
-		bool build(VkDescriptorSet& set, VkDescriptorSetLayout& layout);
-		bool build(VkDescriptorSet& set);
+		bool Build(VkDescriptorSet& set, VkDescriptorSetLayout& layout);
+		bool Build(VkDescriptorSet& set);
 	private:
 		
 		std::vector<VkWriteDescriptorSet> writes;
 		std::vector<VkDescriptorSetLayoutBinding> bindings;
 		
 
-		DescriptorLayoutCache* cache;
-		DescriptorAllocator* alloc;
+		DescriptorLayoutCache* p_cache;
+		DescriptorAllocator* p_alloc;
 	};
 }

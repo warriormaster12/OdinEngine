@@ -38,24 +38,24 @@ if (WIN32)
 endif ()
 
 #SDL2
-add_subdirectory(third-party/SDL2-2.0.14 EXCLUDE_FROM_ALL)
+add_subdirectory(Third-Party/SDL2-2.0.14 EXCLUDE_FROM_ALL)
 target_link_libraries(VulkanEngine.x86_64 PRIVATE SDL2)
 
 #vk-bootstrap
-add_subdirectory(third-party/vk-bootstrap EXCLUDE_FROM_ALL)
+add_subdirectory(Third-Party/vk-bootstrap EXCLUDE_FROM_ALL)
 target_link_libraries(VulkanEngine.x86_64 PUBLIC vk-bootstrap -ldl)
 
 
 #glm
-add_subdirectory(third-party/glm EXCLUDE_FROM_ALL)
+add_subdirectory(Third-Party/glm EXCLUDE_FROM_ALL)
 target_link_libraries(VulkanEngine.x86_64 PRIVATE glm)
 
 #glslang 
-add_subdirectory(third-party/glslang EXCLUDE_FROM_ALL)
+add_subdirectory(Third-Party/glslang EXCLUDE_FROM_ALL)
 target_link_libraries(VulkanEngine.x86_64 PRIVATE glslang SPIRV)
 
 #spdlog
-add_subdirectory(third-party/spdlog EXCLUDE_FROM_ALL)
+add_subdirectory(Third-Party/spdlog EXCLUDE_FROM_ALL)
 target_link_libraries(VulkanEngine.x86_64 PRIVATE spdlog)
 
 

@@ -5,8 +5,8 @@
 #include "vk_components/Include/vk_pipelinebuilder.h"
 #include "vk_components/Include/vk_shaderhandler.h"
 #include "vk_components/Include/vk_textures.h"
-#include "../Asset_manager/Include/asset_builder.h"
-#include "../third-party/imgui/Include/imgui_impl_vulkan.h"
+#include "../Asset_Manager/Include/asset_builder.h"
+#include "../Third-Party/imgui/Include/imgui_impl_vulkan.h"
 #include "../Editor/Include/Imgui_layer.h"
 
 
@@ -15,9 +15,9 @@
 //bootstrap library
 #include "VkBootstrap.h"
 #define VMA_IMPLEMENTATION
-#include "../third-party/Vma/vk_mem_alloc.h"
+#include "../Third-Party/Vma/vk_mem_alloc.h"
 
-#include "../Logger/Include/Logger.h"
+#include "../Logger/Include/logger.h"
 
 vkcomponent::PipelineBuilder pipelineBuilder;
 VkCommandBuffer cmd;
@@ -947,29 +947,29 @@ size_t VulkanRenderer::PadUniformBufferSize(size_t originalSize)
 void VulkanRenderer::InitDescriptors()
 {
 	p_descriptorAllocator = new vkcomponent::DescriptorAllocator{};
-	p_descriptorAllocator->init(device);
+	p_descriptorAllocator->Init(device);
 
 	p_descriptorLayoutCache = new vkcomponent::DescriptorLayoutCache{};
-	p_descriptorLayoutCache->init(device);
+	p_descriptorLayoutCache->Init(device);
 	
 	VkDescriptorSetLayoutBinding cameraBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0);
 	VkDescriptorSetLayoutBinding sceneBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	
 	std::vector<VkDescriptorSetLayoutBinding> bindings = { cameraBind,sceneBind };
 	VkDescriptorSetLayoutCreateInfo _set1 = vkinit::DescriptorLayoutInfo(bindings);
-	globalSetLayout = p_descriptorLayoutCache->create_descriptor_layout(&_set1);
+	globalSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set1);
 
 	VkDescriptorSetLayoutBinding objectBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
 	VkDescriptorSetLayoutBinding objectFragBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
 	std::vector<VkDescriptorSetLayoutBinding> objectBindings = { objectBind,objectFragBind };
 	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(objectBindings);
-	objectSetLayout = p_descriptorLayoutCache->create_descriptor_layout(&_set2);
+	objectSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set2);
 
 	VkDescriptorSetLayoutBinding diffuseTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {diffuseTextureBind};
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
-	singleTextureSetLayout = p_descriptorLayoutCache->create_descriptor_layout(&_set3);
+	singleTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
 	const size_t sceneParamBufferSize = FRAME_OVERLAP * PadUniformBufferSize(sizeof(GPUSceneData));
 	sceneParameterBuffer = CreateBuffer(sceneParamBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -977,16 +977,16 @@ void VulkanRenderer::InitDescriptors()
 	for (int i = 0; i < FRAME_OVERLAP; i++)
 	{
 		frames[i].p_dynamicDescriptorAllocator = new vkcomponent::DescriptorAllocator{};
-		frames[i].p_dynamicDescriptorAllocator->init(device);
+		frames[i].p_dynamicDescriptorAllocator->Init(device);
 		frames[i].cameraBuffer = CreateBuffer(sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 		const int MAX_OBJECTS = 10000;
 		frames[i].objectBuffer = CreateBuffer(sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 		frames[i].objectFragBuffer = CreateBuffer(sizeof(GPUObjectFragData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-		frames[i].p_dynamicDescriptorAllocator->allocate(&frames[i].globalDescriptor, globalSetLayout);
+		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].globalDescriptor, globalSetLayout);
 
-		frames[i].p_dynamicDescriptorAllocator->allocate(&frames[i].objectDescriptor, objectSetLayout);
+		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].objectDescriptor, objectSetLayout);
 
 		VkDescriptorBufferInfo cameraInfo;
 		cameraInfo.buffer = frames[i].cameraBuffer.buffer;
@@ -1031,10 +1031,10 @@ void VulkanRenderer::InitDescriptors()
 		vmaDestroyBuffer(allocator, sceneParameterBuffer.buffer, sceneParameterBuffer.allocation);
 		for (auto& frame : frames)
 		{
-			frame.p_dynamicDescriptorAllocator->cleanup();
+			frame.p_dynamicDescriptorAllocator->CleanUp();
 		}
-		p_descriptorAllocator->cleanup();
-		p_descriptorLayoutCache->cleanup();
+		p_descriptorAllocator->CleanUp();
+		p_descriptorLayoutCache->CleanUp();
 	});
 	
 }
@@ -1076,7 +1076,7 @@ void VulkanRenderer::CreateTexture(std::string materialName, std::string texture
 {
 	Material* texturedMaterial = GetMaterial(materialName);
 
-	p_descriptorAllocator->allocate(&texturedMaterial->textureSet, singleTextureSetLayout);
+	p_descriptorAllocator->Allocate(&texturedMaterial->textureSet, singleTextureSetLayout);
 
 	//write to the descriptor set so that it points to our empire_diffuse texture
 	VkDescriptorImageInfo imageBufferInfo;

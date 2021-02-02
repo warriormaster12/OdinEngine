@@ -1,6 +1,6 @@
 #include "Include/texture_asset.h"
-#include "../third-party/nlohmann_json/json.hpp"
-#include "../third-party/lz4/Include/lz4.h"
+#include "../Third-Party/nlohmann_json/json.hpp"
+#include "../Third-Party/lz4/Include/lz4.h"
 #include <iostream>
 
 

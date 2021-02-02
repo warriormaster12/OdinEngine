@@ -14,7 +14,7 @@
 #include "../vk_components/Include/vk_descriptors.h"
 #include "../vk_components/Include/vk_mesh.h"
 
-#include "../../Window/Include/WindowHandler.h"
+#include "../../Window/Include/window_handler.h"
 
 #include "../../Camera/Include/camera.h"
 
