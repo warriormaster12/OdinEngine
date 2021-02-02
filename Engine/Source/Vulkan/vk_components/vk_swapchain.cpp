@@ -57,7 +57,7 @@ void vkcomponent::SwapChain::InitSwapchain(SDL_Window* p_window)
 
 	VK_CHECK(vkCreateImageView(*p_device, &dview_info, nullptr, &depthImageView));
 
-	p_deletionQueue->push_function([=]()
+	p_deletionQueue->PushFunction([=]()
 	{
 		vkDestroyImageView(*p_device, depthImageView, nullptr);
 		vmaDestroyImage(*p_allocator, depthImage.image, depthImage.allocation);

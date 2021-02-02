@@ -7,7 +7,7 @@
 
 bool glslangInitialized = false;
   
-TBuiltInResource vkcomponent::handleResources()
+TBuiltInResource vkcomponent::HandleResources()
 {
     TBuiltInResource DefaultTBuiltInResource {};
     DefaultTBuiltInResource.maxLights =  32;
@@ -182,7 +182,7 @@ const std::string vkcomponent::CompileGLSL(const std::string& filename)
         Shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
 
         TBuiltInResource Resources;
-        Resources = handleResources();
+        Resources = HandleResources();
         EShMessages messages = (EShMessages) (EShMsgSpvRules | EShMsgVulkanRules);
 
         const int DefaultVersion = 100;
@@ -240,10 +240,10 @@ std::string vkcomponent::GetFilePath(const std::string& str)
     //size_t FileName = str.substr(found+1);
 }
 
-bool vkcomponent::load_shader_module(const char* filePath, VkShaderModule* outShaderModule, VkDevice& device)
+bool vkcomponent::LoadShaderModule(const char* p_filePath, VkShaderModule* p_outShaderModule, VkDevice& device)
 {
 	//open the file. With cursor at the end
-	std::ifstream file(filePath, std::ios::ate | std::ios::binary);
+	std::ifstream file(p_filePath, std::ios::ate | std::ios::binary);
 
 	if (!file.is_open()) {
 		return false;
@@ -279,7 +279,7 @@ bool vkcomponent::load_shader_module(const char* filePath, VkShaderModule* outSh
 	if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
 		return false;
 	}
-	*outShaderModule = shaderModule;
+	*p_outShaderModule = shaderModule;
 	return true;
 }
     

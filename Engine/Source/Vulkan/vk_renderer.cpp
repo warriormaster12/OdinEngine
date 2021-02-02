@@ -59,8 +59,8 @@ void VulkanRenderer::CleanUp()
 		
 	vkDeviceWaitIdle(device);
 	
-	swapDeletionQueue.flush();
-	mainDeletionQueue.flush();
+	swapDeletionQueue.Flush();
+	mainDeletionQueue.Flush();
 
 	vkDestroySurfaceKHR(instance, swapChainObj.surface, nullptr);
 
@@ -250,7 +250,7 @@ void VulkanRenderer::InitVulkan()
 void VulkanRenderer::RecreateSwapchain()
 {	
 	vkDeviceWaitIdle(device);
-	swapDeletionQueue.flush();
+	swapDeletionQueue.Flush();
 	swapChainObj.InitSwapchain(p_windowHandler->window);
 
 	InitFramebuffers();	
@@ -331,7 +331,7 @@ void VulkanRenderer::InitDefaultRenderpass()
 	render_pass_info.pDependencies = &dependency;
 	
 	VK_CHECK(vkCreateRenderPass(device, &render_pass_info, nullptr, &renderPass));
-	mainDeletionQueue.push_function([=]() {
+	mainDeletionQueue.PushFunction([=]() {
 		vkDestroyRenderPass(device, renderPass, nullptr);
 	});
 }
@@ -350,7 +350,7 @@ void VulkanRenderer::InitFramebuffers()
 		fb_info.attachmentCount = attachments.size();
 		fb_info.pAttachments = attachments.data();
 		VK_CHECK(vkCreateFramebuffer(device, &fb_info, nullptr, &framebuffers[i]));
-		swapDeletionQueue.push_function([=]() {
+		swapDeletionQueue.PushFunction([=]() {
 			vkDestroyFramebuffer(device, framebuffers[i], nullptr);
 		});
 	}
@@ -371,14 +371,14 @@ void VulkanRenderer::InitCommands()
 		VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::CommandBufferAllocateInfo(frames[i].commandPool, 1);
 
 		VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocInfo, &frames[i].mainCommandBuffer));
-		mainDeletionQueue.push_function([=]() {
+		mainDeletionQueue.PushFunction([=]() {
 			vkDestroyCommandPool(device, frames[i].commandPool, nullptr);
 		});
 	}
 	VkCommandPoolCreateInfo uploadCommandPoolInfo = vkinit::CommandPoolCreateInfo(graphicsQueueFamily);
 	//create pool for upload context
 	VK_CHECK(vkCreateCommandPool(device, &uploadCommandPoolInfo, nullptr, &uploadContext.commandPool));
-	mainDeletionQueue.push_function([=]() {
+	mainDeletionQueue.PushFunction([=]() {
 		vkDestroyCommandPool(device, uploadContext.commandPool, nullptr);
 	});
 }
@@ -398,7 +398,7 @@ void VulkanRenderer::InitSyncStructures()
 		VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &frames[i].renderFence));
 
 		//enqueue the destruction of the fence
-		mainDeletionQueue.push_function([=]() {
+		mainDeletionQueue.PushFunction([=]() {
 			vkDestroyFence(device, frames[i].renderFence, nullptr);
 			});
 
@@ -407,7 +407,7 @@ void VulkanRenderer::InitSyncStructures()
 		VK_CHECK(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frames[i].renderSemaphore));
 
 		//enqueue the destruction of semaphores
-		mainDeletionQueue.push_function([=]() {
+		mainDeletionQueue.PushFunction([=]() {
 			vkDestroySemaphore(device, frames[i].presentSemaphore, nullptr);
 			vkDestroySemaphore(device, frames[i].renderSemaphore, nullptr);
 			});
@@ -417,7 +417,7 @@ void VulkanRenderer::InitSyncStructures()
 
 	VK_CHECK(vkCreateFence(device, &uploadFenceCreateInfo, nullptr, &uploadContext.uploadFence));
 
-	mainDeletionQueue.push_function([=]() {
+	mainDeletionQueue.PushFunction([=]() {
 		vkDestroyFence(device, uploadContext.uploadFence, nullptr);
 	});
 
@@ -427,13 +427,13 @@ void VulkanRenderer::InitSyncStructures()
 void VulkanRenderer::InitPipelines()
 {
 	VkShaderModule texturedMeshShader;
-	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, device))
+	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, device))
 	{
 		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
 	}
 
 	VkShaderModule meshVertShader;
-	if (!vkcomponent::load_shader_module(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, device))
+	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, device))
 	{
 		ENGINE_CORE_ERROR("Error when building the mesh vertex shader module");
 	}
@@ -526,7 +526,7 @@ void VulkanRenderer::InitPipelines()
 	vkDestroyShaderModule(device, meshVertShader, nullptr);
 	vkDestroyShaderModule(device, texturedMeshShader, nullptr);
 
-	mainDeletionQueue.push_function([=]() {
+	mainDeletionQueue.PushFunction([=]() {
 		vkDestroyPipeline(device, texPipeline, nullptr);
 		vkDestroyPipelineLayout(device, texturedPipeLayout, nullptr);
 	});
@@ -660,7 +660,7 @@ void VulkanRenderer::UploadMesh(Mesh& mesh)
 		&mesh.vertexBuffer.allocation,
 		nullptr));
 	//add the destruction of triangle mesh buffer to the deletion queue
-	mainDeletionQueue.push_function([=]() {
+	mainDeletionQueue.PushFunction([=]() {
 
 		vmaDestroyBuffer(allocator, mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
 		});
@@ -684,11 +684,11 @@ void VulkanRenderer::LoadImage(std::string texture_name, std::string texture_pat
 	if(texture_name != "empty")
 	{
 		asset_builder::convert_image(path,bin_path);
-		vkcomponent::load_image_from_asset(*this, (texture_path + ".bin").c_str(), inputTextures.image);
+		vkcomponent::LoadImageFromAsset(*this, (texture_path + ".bin").c_str(), inputTextures.image);
 	}
 	else
 	{
-		vkcomponent::load_empty(*this, inputTextures.image);
+		vkcomponent::LoadEmpty(*this, inputTextures.image);
 	}
 	
 	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -696,7 +696,7 @@ void VulkanRenderer::LoadImage(std::string texture_name, std::string texture_pat
 
 	_loadedTextures[texture_name] = inputTextures;
 
-	mainDeletionQueue.push_function([=]() {
+	mainDeletionQueue.PushFunction([=]() {
 		vkDestroyImageView(device, inputTextures.imageView, nullptr);
 	});
 
@@ -901,7 +901,7 @@ void VulkanRenderer::InitScene()
 	//LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
 	CreateTexture("texturedmesh2", "empty", blockySampler);
 
-	mainDeletionQueue.push_function([=]() {
+	mainDeletionQueue.PushFunction([=]() {
 		vkDestroySampler(device, blockySampler, nullptr);
 	});
 }
@@ -1020,14 +1020,14 @@ void VulkanRenderer::InitDescriptors()
 		std::vector <VkWriteDescriptorSet> setWrites = { cameraWrite,sceneWrite,objectWrite, objectFragWrite };
 
 		vkUpdateDescriptorSets(device, setWrites.size(), setWrites.data(), 0, nullptr);
-		mainDeletionQueue.push_function([=]()
+		mainDeletionQueue.PushFunction([=]()
 		{
 			vmaDestroyBuffer(allocator, frames[i].objectFragBuffer.buffer, frames[i].objectFragBuffer.allocation);
 			vmaDestroyBuffer(allocator, frames[i].objectBuffer.buffer, frames[i].objectBuffer.allocation);
 			vmaDestroyBuffer(allocator, frames[i].cameraBuffer.buffer, frames[i].cameraBuffer.allocation);
 		});
 	}
-	mainDeletionQueue.push_function([=]() {
+	mainDeletionQueue.PushFunction([=]() {
 		vmaDestroyBuffer(allocator, sceneParameterBuffer.buffer, sceneParameterBuffer.allocation);
 		for (auto& frame : frames)
 		{

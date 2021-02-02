@@ -4,14 +4,14 @@
 #include "../../third-party/stb_image/stb_image.h"
 #include "../../Asset_manager/Include/texture_asset.h"
 #include "../../Asset_manager/Include/asset_loader.h"
-bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* file, AllocatedImage& outImage)
+bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file, AllocatedImage& outImage)
 {
 	int texWidth, texHeight, texChannels;
 
-	stbi_uc* pixels = stbi_load(file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load(p_file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	if (!pixels) {
-		std::cout << "Failed to load texture file " << file << std::endl;
+		std::cout << "Failed to load texture file " << p_file << std::endl;
 		return false;
 	}
     void* pixel_ptr = pixels;
@@ -95,24 +95,24 @@ bool vkcomponent::load_image_from_file(VulkanRenderer& renderer, const char* fil
         //barrier the image into the shader readable layout
         vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier_toReadable);
     });
-    renderer.mainDeletionQueue.push_function([=]() {
+    renderer.mainDeletionQueue.PushFunction([=]() {
 	
 		vmaDestroyImage(renderer.allocator, newImage.image, newImage.allocation);
 	});
 
 	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 
-	ENGINE_CORE_ERROR("Texture loaded succesfully {0}", file);
+	ENGINE_CORE_ERROR("Texture loaded succesfully {0}", p_file);
 
 	outImage = newImage;
     return true;
 }
 
 
-bool vkcomponent::load_image_from_asset(VulkanRenderer& renderer, const char* filename, AllocatedImage& outImage)
+bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_filename, AllocatedImage& outImage)
 {
 	assets::AssetFile file;
-	bool loaded = assets::load_binaryfile(filename, file);
+	bool loaded = assets::load_binaryfile(p_filename, file);
 
 	if (!loaded) {
 		std::cout << "Error when loading mesh ";
@@ -140,13 +140,13 @@ bool vkcomponent::load_image_from_asset(VulkanRenderer& renderer, const char* fi
 
 	vmaUnmapMemory(renderer.allocator, stagingBuffer.allocation);	
 
-	outImage = upload_image(textureInfo.pixelsize[0], textureInfo.pixelsize[1], image_format, renderer, stagingBuffer);
+	outImage = UploadImage(textureInfo.pixelsize[0], textureInfo.pixelsize[1], image_format, renderer, stagingBuffer);
 
 	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 	
 	return true;
 }
-bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
+bool vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage& outImage)
 {
 	int texWidth, texHeight;
 	texWidth = 1;
@@ -233,7 +233,7 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
         //barrier the image into the shader readable layout
         vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier_toReadable);
     });
-    renderer.mainDeletionQueue.push_function([=]() {
+    renderer.mainDeletionQueue.PushFunction([=]() {
 	
 		vmaDestroyImage(renderer.allocator, newImage.image, newImage.allocation);
 	});
@@ -244,7 +244,7 @@ bool vkcomponent::load_empty(VulkanRenderer& renderer, AllocatedImage& outImage)
     return true;
 }
 
-AllocatedImage vkcomponent::upload_image(int texWidth, int texHeight, VkFormat image_format, VulkanRenderer& renderer, AllocatedBuffer& stagingBuffer)
+AllocatedImage vkcomponent::UploadImage(int texWidth, int texHeight, VkFormat image_format, VulkanRenderer& renderer, AllocatedBuffer& stagingBuffer)
 {
 	VkExtent3D imageExtent;
 	imageExtent.width = static_cast<uint32_t>(texWidth);
@@ -317,7 +317,7 @@ AllocatedImage vkcomponent::upload_image(int texWidth, int texHeight, VkFormat i
 	vkCreateImageView(renderer.device, &view_info, nullptr, &newImage.defaultView);
 
 
-	renderer.mainDeletionQueue.push_function([=, &renderer]() {
+	renderer.mainDeletionQueue.PushFunction([=, &renderer]() {
 		vkDestroyImageView(renderer.device,newImage.defaultView, nullptr);
 		vmaDestroyImage(renderer.allocator, newImage.image, newImage.allocation);
 	});

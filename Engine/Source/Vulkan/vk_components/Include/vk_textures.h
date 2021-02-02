@@ -6,9 +6,9 @@
 
 namespace vkcomponent 
 {
-    bool load_image_from_file(VulkanRenderer& renderer, const char* file, AllocatedImage& outImage);
-    bool load_image_from_asset(VulkanRenderer& renderer, const char* filename, AllocatedImage& outImage);
-    bool load_empty(VulkanRenderer& renderer, AllocatedImage& outImage);
+    bool LoadImageFromFile(VulkanRenderer& renderer, const char* p_file, AllocatedImage& outImage);
+    bool LoadImageFromAsset(VulkanRenderer& renderer, const char* p_filename, AllocatedImage& outImage);
+    bool LoadEmpty(VulkanRenderer& renderer, AllocatedImage& outImage);
 
-    AllocatedImage upload_image(int texWidth, int texHeight, VkFormat image_format, VulkanRenderer& engine, AllocatedBuffer& stagingBuffer);
+    AllocatedImage UploadImage(int texWidth, int texHeight, VkFormat image_format, VulkanRenderer& engine, AllocatedBuffer& stagingBuffer);
 }

@@ -1,13 +1,13 @@
 #include "Include/Imgui_layer.h"
 
 VulkanRenderer* p_renderer;
-bool can_show_window;
+bool canShowWindow;
 
-void imgui_layer::init_imgui_layer(VulkanRenderer& renderer, bool show_window /*= true*/)
+void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= true*/)
 {
 	p_renderer = &renderer;
-	can_show_window = show_window;
-	if (can_show_window == true)
+	canShowWindow = showWindow;
+	if (canShowWindow == true)
 	{
 		//1: create descriptor pool for IMGUI
 		// the size of the pool is very oversize, but its copied from imgui demo itself.
@@ -113,16 +113,16 @@ void imgui_layer::init_imgui_layer(VulkanRenderer& renderer, bool show_window /*
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 
 		//add the destroy the imgui created structures
-		renderer.mainDeletionQueue.push_function([=]() {
+		renderer.mainDeletionQueue.PushFunction([=]() {
 			ImGui_ImplVulkan_Shutdown();
 			vkDestroyDescriptorPool(renderer.device, imguiPool, nullptr);
 			});
 	}
 }
 
-void imgui_layer::update_ui()
+void imgui_layer::UpdateUi()
 {
-	if (can_show_window == true)
+	if (canShowWindow == true)
 	{
 		//imgui new frame 
 		ImGui_ImplVulkan_NewFrame();

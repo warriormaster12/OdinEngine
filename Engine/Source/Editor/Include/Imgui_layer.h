@@ -8,6 +8,6 @@
 
 namespace imgui_layer
 {
-    void init_imgui_layer(VulkanRenderer& renderer, bool show_window = true);
-    void update_ui();
+    void InitImguiLayer(VulkanRenderer& renderer, bool showWindow = true);
+    void UpdateUi();
 }
