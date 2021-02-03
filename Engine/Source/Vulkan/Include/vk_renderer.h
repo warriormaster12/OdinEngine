@@ -168,16 +168,16 @@ public:
 	//run main loop
 	void BeginDraw();
 	void EndDraw();
+
+	void UploadMesh(Mesh& mesh);
 	
 	FrameData& GetCurrentFrame();
 	FrameData& GetLastFrame();
 
 	//default array of renderable objects
-	std::vector<RenderObject> renderables;
 
 	std::unordered_map<std::string, Material> materials;
 	std::vector<std::string> materialList; 
-	std::unordered_map<std::string, Mesh> meshes;
 
 	UploadContext uploadContext;
 
@@ -190,8 +190,7 @@ public:
 	//returns nullptr if it cant be found
 	Material* GetMaterial(const std::string& name);
 
-	//returns nullptr if it cant be found
-	Mesh* GetMesh(const std::string& name);
+	
 
 	//our draw function
 	void DrawObjects(RenderObject* p_objects, int count);
@@ -223,10 +222,6 @@ private:
 	void InitScene();
 
 	void InitDescriptors();
-
-	void LoadMeshes();
-
-	void UploadMesh(Mesh& mesh);
 
 	void RecreateSwapchain();
 

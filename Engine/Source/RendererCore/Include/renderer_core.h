@@ -10,4 +10,10 @@ namespace RendererCore
     void UpdateRenderer();
     void RendererEvents(SDL_Event& ev);
     void CleanupRenderer();
+
+    void LoadMeshes();
+    Mesh* GetMesh(const std::string& name);
+
+    void InitScene();
+
 };
