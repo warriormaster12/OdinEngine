@@ -21,12 +21,15 @@ public:
     bool WindowShouldClose();
     void WindowClose();
     int GetKInput(int key);
+    int GetMInput(int button);
 
     Resolution resolution;
     GLFWwindow* p_window;
 
     bool frameBufferResized = false;
+    bool mouseMotion = false;
 
-    float GetXOffset();
-    float GetYOffset();
+    float xoffset;
+    float yoffset;
+
 };

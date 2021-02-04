@@ -4,8 +4,7 @@
 
 float lastX =  800.0f / 2.0;
 float lastY =  600.0 / 2.0;
-float xoffset;
-float yoffset;
+
 bool firstMouse = true;
 
 
@@ -45,6 +44,10 @@ int WindowHandler::GetKInput(int key)
 {
 	return glfwGetKey(p_window, key);
 }
+int WindowHandler::GetMInput(int button)
+{
+	return glfwGetMouseButton(p_window, button);
+}
 
 bool WindowHandler::WindowShouldClose()
 {
@@ -58,28 +61,22 @@ void WindowHandler::WindowClose()
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    auto app = reinterpret_cast<WindowHandler*>(glfwGetWindowUserPointer(window));
     if(firstMouse)
     {
         lastX = xpos;
         lastY = ypos;
         firstMouse = false;
     }
-    float temp_xoffset = xpos - lastX;
-    float temp_yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    app->xoffset = xoffset;
+    app->yoffset = -yoffset;
     
-    
+    app->mouseMotion = true;
     lastX = xpos;
     lastY = ypos;
 }
 
 
-float WindowHandler::GetXOffset()
-{
-    return xoffset;
-}
-
-float WindowHandler::GetYOffset()
-{
-    return yoffset;
-}
 

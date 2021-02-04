@@ -54,27 +54,32 @@ void Camera::ProcessInputEvent(WindowHandler& windowHandler)
 	}
 	if (possessCamera)
 	{
-		pitch += windowHandler.GetYOffset() * 0.003f;
-		yaw += windowHandler.GetXOffset() * 0.003f;
-		// 1.56 radians is about equal to 89.x degrees
-		if(pitch > 1.56f)
+		if(windowHandler.mouseMotion == true)
 		{
-			pitch = 1.56f;
-		}
-		if(pitch < -1.56f)
-		{
-			pitch = -1.56f;
+			pitch += windowHandler.yoffset * 0.003f;
+			yaw += windowHandler.xoffset * 0.003f;
+			// 1.56 radians is about equal to 89.x degrees
+			if(pitch > 1.56f)
+			{
+				pitch = 1.56f;
+			}
+			if(pitch < -1.56f)
+			{
+				pitch = -1.56f;
+			}
+			windowHandler.mouseMotion = false;
 		}
 	}
-	// if(windowHandler.GetKInput(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_CLICK)
-	// {
-	// 	ENGINE_CORE_ERROR("pressed");
-	// 	possessCamera = true;
-	// }
-	// else
-	// {
-	// 	possessCamera = false;
-	// }
+	if(windowHandler.GetMInput(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
+		possessCamera = true;
+		glfwSetInputMode(windowHandler.p_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
+	else
+	{
+		possessCamera = false;
+		glfwSetInputMode(windowHandler.p_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
 	
 
 	inputAxis = glm::clamp(inputAxis, { -1.0,-1.0,-1.0 }, { 1.0,1.0,1.0 });

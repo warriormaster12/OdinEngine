@@ -26,7 +26,6 @@ public:
 	float zFar = 100.0f;
 
 	bool bSprint = false;
-	bool bLocked;
 	bool possessCamera = false;
 
 
