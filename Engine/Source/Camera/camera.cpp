@@ -73,14 +73,41 @@ void Camera::ProcessInputEvent(SDL_Event* p_ev)
 			break;
 		}
 	}
-	else if (p_ev->type == SDL_MOUSEMOTION) {
+	else if (p_ev->type == SDL_MOUSEBUTTONDOWN)
+	{
+		switch (p_ev->button.button)
+		{
+			case SDL_BUTTON_RIGHT:
+				possessCamera = true;
+				break;
+		}
+	}
+	else if (p_ev->type == SDL_MOUSEBUTTONUP)
+	{
+		switch (p_ev->button.button)
+		{
+			case SDL_BUTTON_RIGHT:
+				possessCamera = false;
+				break;
+		}
+	}
+	else if (p_ev->type == SDL_MOUSEMOTION && possessCamera == true) {
 		if (!bLocked)
 		{
 			pitch += p_ev->motion.yrel * 0.003f;
 			yaw += p_ev->motion.xrel * 0.003f;
+
+			if(pitch > 1.5f)
+			{
+				pitch = 1.5f;
+			}
+			if(pitch < -1.5f)
+			{
+				pitch = -1.5f;
+			}
 		}
 	}
-
+	SDL_SetRelativeMouseMode(SDL_bool(possessCamera));
 	inputAxis = glm::clamp(inputAxis, { -1.0,-1.0,-1.0 }, { 1.0,1.0,1.0 });
 }
 
@@ -95,12 +122,21 @@ void Camera::UpdateCamera(float deltaTime)
 
 	forward = cam_rot * glm::vec4(forward, 0.f);
 	right = cam_rot * glm::vec4(right, 0.f);
+	
+	if(possessCamera == true)
+	{
+		velocity = inputAxis.x * forward + inputAxis.y * right + inputAxis.z * up;
 
-	velocity = inputAxis.x * forward + inputAxis.y * right + inputAxis.z * up;
+		velocity *= 10 * deltaTime;
 
-	velocity *= 10 * deltaTime;
-
+	}
+	else
+	{
+		velocity = glm::vec3(0.0f);
+	}
 	position += velocity;
+	
+
 }
 
 

@@ -27,6 +27,8 @@ public:
 
 	bool bSprint = false;
 	bool bLocked;
+	bool possessCamera = false;
+
 
 	void ProcessInputEvent(SDL_Event* p_ev);
 	void UpdateCamera(float deltaTime);
