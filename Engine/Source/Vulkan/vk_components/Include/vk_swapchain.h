@@ -5,8 +5,9 @@
 #include "vk_deletionqueue.h"
 #include "vk_check.h"
 #include <iostream>
-#include <SDL.h>
-#include <SDL_vulkan.h>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 
 namespace vkcomponent
 {
@@ -33,7 +34,7 @@ namespace vkcomponent
 
         //the format for the depth image
         VkFormat depthFormat;
-        void InitSwapchain(SDL_Window* p_window);
+        void InitSwapchain(GLFWwindow* p_window);
     private: 
         VkPhysicalDevice* p_chosenGPU;
         VkDevice* p_device;

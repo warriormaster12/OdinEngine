@@ -32,14 +32,10 @@ void RendererCore::UpdateRenderer()
 	vkRenderer.EndDraw();
 }
 
-void RendererCore::RendererEvents(SDL_Event& ev)
+void RendererCore::RendererEvents()
 {
-    vkRenderer.camera.ProcessInputEvent(&ev);
+    vkRenderer.camera.ProcessInputEvent(windowHandler);
     
-    if (ev.type == SDL_WINDOWEVENT_RESIZED)
-    {
-        vkRenderer.FrameBufferResize();
-    }
 }
 
 void RendererCore::CleanupRenderer()
@@ -58,6 +54,11 @@ Mesh* RendererCore::GetMesh(const std::string& name)
 	else {
 		return &(*it).second;
 	}
+}
+
+WindowHandler RendererCore::GetWindowHandler()
+{
+	return windowHandler;
 }
 
 

@@ -9,11 +9,11 @@ vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device,
 	p_deletionQueue = &deletionQueue;
 }
 
-void vkcomponent::SwapChain::InitSwapchain(SDL_Window* p_window)
+void vkcomponent::SwapChain::InitSwapchain(GLFWwindow* p_window)
 {
 	int width;
 	int height;
-	SDL_Vulkan_GetDrawableSize(p_window, &width, &height);
+	glfwGetFramebufferSize(p_window, &width, &height);
     vkb::SwapchainBuilder swapchainBuilder{*p_chosenGPU,*p_device,surface };
 	vkb::Swapchain vkbSwapchain = swapchainBuilder
 		.use_default_format_selection()

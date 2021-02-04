@@ -1,8 +1,8 @@
 #pragma once 
 
 #include <iostream>
-#include <SDL.h>
-#include <SDL_vulkan.h>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 
 
@@ -18,6 +18,15 @@ public:
     void CreateWindow(uint32_t width, uint32_t height);
     void DestroyWindow();
 
+    bool WindowShouldClose();
+    void WindowClose();
+    int GetKInput(int key);
+
     Resolution resolution;
-    struct SDL_Window* window{ nullptr };
+    GLFWwindow* p_window;
+
+    bool frameBufferResized = false;
+
+    float GetXOffset();
+    float GetYOffset();
 };

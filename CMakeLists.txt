@@ -37,9 +37,10 @@ if (WIN32)
 	target_link_libraries(VulkanEngine.x86_64 PRIVATE ${WIN32_LIBRARIES})   
 endif ()
 
-#SDL2
-add_subdirectory(Third-Party/SDL2-2.0.14 EXCLUDE_FROM_ALL)
-target_link_libraries(VulkanEngine.x86_64 PRIVATE SDL2)
+
+#glfw
+add_subdirectory(Third-Party/glfw EXCLUDE_FROM_ALL)
+target_link_libraries(VulkanEngine.x86_64 PRIVATE glfw) 
 
 #vk-bootstrap
 add_subdirectory(Third-Party/vk-bootstrap EXCLUDE_FROM_ALL)

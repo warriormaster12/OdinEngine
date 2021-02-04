@@ -1,5 +1,4 @@
 #include "Include/camera.h"
-#include "SDL.h"
 
 #include <glm/gtx/transform.hpp>
 
@@ -7,108 +6,77 @@ Camera::Camera(vkcomponent::SwapChain& swapChain)
 {
     p_swapChain = &swapChain;
 }
-void Camera::ProcessInputEvent(SDL_Event* p_ev)
+void Camera::ProcessInputEvent(WindowHandler& windowHandler)
 {
-	if (p_ev->type == SDL_KEYDOWN)
+	if(windowHandler.GetKInput(GLFW_KEY_W) == GLFW_PRESS)
 	{
-		switch (p_ev->key.keysym.sym)
+		inputAxis.x += 1.f;
+	}
+	else if(windowHandler.GetKInput(GLFW_KEY_S) == GLFW_PRESS)
+	{
+		inputAxis.x -= 1.f;
+	}
+	else
+	{
+		inputAxis.x = 0.f;
+	}
+	if(windowHandler.GetKInput(GLFW_KEY_D) == GLFW_PRESS)
+	{
+		inputAxis.y += 1.f;
+	}
+	else if(windowHandler.GetKInput(GLFW_KEY_A) == GLFW_PRESS)
+	{
+		inputAxis.y -= 1.f;
+	}
+	else
+	{
+		inputAxis.y = 0.f;
+	}
+	if(windowHandler.GetKInput(GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		inputAxis.z -= 1.f;
+	}
+	else if(windowHandler.GetKInput(GLFW_KEY_E) == GLFW_PRESS)
+	{
+		inputAxis.z += 1.f;
+	}
+	else
+	{
+		inputAxis.z = 0.f;
+	}
+	if(windowHandler.GetKInput(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	{
+		bSprint = true;
+	}
+	else
+	{
+		bSprint = false;
+	}
+	if (possessCamera)
+	{
+		pitch += windowHandler.GetYOffset() * 0.003f;
+		yaw += windowHandler.GetXOffset() * 0.003f;
+		// 1.56 radians is about equal to 89.x degrees
+		if(pitch > 1.56f)
 		{
-		case SDLK_UP:
-		case SDLK_w:
-			inputAxis.x += 1.f;
-			break;
-		case SDLK_DOWN:
-		case SDLK_s:
-			inputAxis.x -= 1.f;
-			break;
-		case SDLK_LEFT:
-		case SDLK_a:
-			inputAxis.y -= 1.f;
-			break;
-		case SDLK_RIGHT:
-		case SDLK_d:
-			inputAxis.y += 1.f;
-			break;		
-		case SDLK_q:
-			inputAxis.z -= 1.f;
-			break;
-		
-		case SDLK_e:
-			inputAxis.z += 1.f;
-			break;
-		case SDLK_LSHIFT:
-			bSprint = true;
-			break;
+			pitch = 1.56f;
+		}
+		if(pitch < -1.56f)
+		{
+			pitch = -1.56f;
 		}
 	}
-	else if (p_ev->type == SDL_KEYUP)
-	{
-		switch (p_ev->key.keysym.sym)
-		{
-		case SDLK_UP:
-		case SDLK_w:
-			inputAxis.x -= 1.f;
-			break;
-		case SDLK_DOWN:
-		case SDLK_s:
-			inputAxis.x += 1.f;
-			break;
-		case SDLK_LEFT:
-		case SDLK_a:
-			inputAxis.y += 1.f;
-			break;
-		case SDLK_RIGHT:
-		case SDLK_d:
-			inputAxis.y -= 1.f;
-			break;
-		case SDLK_q:
-			inputAxis.z += 1.f;
-			break;
+	// if(windowHandler.GetKInput(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_CLICK)
+	// {
+	// 	ENGINE_CORE_ERROR("pressed");
+	// 	possessCamera = true;
+	// }
+	// else
+	// {
+	// 	possessCamera = false;
+	// }
+	
 
-		case SDLK_e:
-			inputAxis.z -= 1.f;
-			break;
-		case SDLK_LSHIFT:
-			bSprint = false;
-			break;
-		}
-	}
-	else if (p_ev->type == SDL_MOUSEBUTTONDOWN)
-	{
-		switch (p_ev->button.button)
-		{
-			case SDL_BUTTON_RIGHT:
-				possessCamera = true;
-				break;
-		}
-	}
-	else if (p_ev->type == SDL_MOUSEBUTTONUP)
-	{
-		switch (p_ev->button.button)
-		{
-			case SDL_BUTTON_RIGHT:
-				possessCamera = false;
-				break;
-		}
-	}
-	else if (p_ev->type == SDL_MOUSEMOTION && possessCamera == true) {
-		if (!bLocked)
-		{
-			pitch += p_ev->motion.yrel * 0.003f;
-			yaw += p_ev->motion.xrel * 0.003f;
-
-			// 1.56 radians is about equal to 89.x degrees
-			if(pitch > 1.56f)
-			{
-				pitch = 1.56f;
-			}
-			if(pitch < -1.56f)
-			{
-				pitch = -1.56f;
-			}
-		}
-	}
-	SDL_SetRelativeMouseMode(SDL_bool(possessCamera));
 	inputAxis = glm::clamp(inputAxis, { -1.0,-1.0,-1.0 }, { 1.0,1.0,1.0 });
 }
 
@@ -129,7 +97,6 @@ void Camera::UpdateCamera(float deltaTime)
 		velocity = inputAxis.x * forward + inputAxis.y * right + inputAxis.z * up;
 
 		velocity *= 10 * deltaTime;
-
 	}
 	else
 	{

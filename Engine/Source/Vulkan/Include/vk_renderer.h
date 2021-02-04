@@ -201,9 +201,6 @@ public:
 
 	WindowHandler* p_windowHandler;
 
-	bool frameBufferResized = false;
-
-	void FrameBufferResize();
 	
 private:
 

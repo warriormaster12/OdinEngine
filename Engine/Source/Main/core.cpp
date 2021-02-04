@@ -34,33 +34,16 @@ void Core::CoreInit()
 
 void Core::CoreUpdate()
 {
-    SDL_Event e;
-	bool bQuit = false;
 	
 	//main loop
-	while (!bQuit)
+	while (!RendererCore::GetWindowHandler().WindowShouldClose())
 	{
-	
-		//Handle events on queue
-		while (SDL_PollEvent(&e) != 0)
-		{
-
-			//ImGui_ImplSDL2_ProcessEvent(&e);
-			//close the window when user alt-f4s or clicks the X button			
-			if (e.type == SDL_QUIT)
-			{
-				bQuit = true;
-			}
-			else if (e.type == SDL_KEYDOWN)
-			{
-				if (e.key.keysym.sym == SDLK_ESCAPE)
-				{
-					bQuit = true;
-				}
-			}
-
-			RendererCore::RendererEvents(e);
-		}
+		glfwPollEvents();
+		RendererCore::RendererEvents();
+		if(RendererCore::GetWindowHandler().GetKInput(GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            RendererCore::GetWindowHandler().WindowClose();
+        }
 		//imgui_layer::update_ui();
 		RendererCore::UpdateRenderer();
     }

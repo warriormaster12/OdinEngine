@@ -90,7 +90,7 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 		colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 		//this initializes imgui for SDL
-		ImGui_ImplSDL2_InitForVulkan(renderer.p_windowHandler->window);
+		//ImGui_ImplSDL2_InitForVulkan(renderer.p_windowHandler->p_window);
 
 		//this initializes imgui for Vulkan
 		ImGui_ImplVulkan_InitInfo init_info = {};
@@ -126,7 +126,7 @@ void imgui_layer::UpdateUi()
 	{
 		//imgui new frame 
 		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplSDL2_NewFrame(p_renderer->p_windowHandler->window);
+		//ImGui_ImplSDL2_NewFrame(p_renderer->p_windowHandler->window);
 
 		ImGui::NewFrame();        
 

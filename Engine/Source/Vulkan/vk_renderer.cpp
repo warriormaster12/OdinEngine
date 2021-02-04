@@ -29,7 +29,7 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 {
 	p_windowHandler = &windowHandler;
 	InitVulkan();
-	swapChainObj.InitSwapchain(p_windowHandler->window);
+	swapChainObj.InitSwapchain(p_windowHandler->p_window);
 
 	InitDefaultRenderpass();
 
@@ -70,10 +70,6 @@ void VulkanRenderer::CleanUp()
 	ENGINE_CORE_INFO("vulkan destroyed");
 }
 
-void VulkanRenderer::FrameBufferResize()
-{
-	frameBufferResized = true;
-}
 
 void VulkanRenderer::BeginDraw()
 {
@@ -165,8 +161,8 @@ void VulkanRenderer::EndDraw()
 
 	drawResult = vkQueuePresentKHR(graphicsQueue, &presentInfo);
 
-	if (drawResult == VK_ERROR_OUT_OF_DATE_KHR || drawResult == VK_SUBOPTIMAL_KHR || frameBufferResized == true) {
-		frameBufferResized = false;
+	if (drawResult == VK_ERROR_OUT_OF_DATE_KHR || drawResult == VK_SUBOPTIMAL_KHR || p_windowHandler->frameBufferResized == true) {
+		p_windowHandler->frameBufferResized = false;
 		RecreateSwapchain();
 	} else if (drawResult != VK_SUCCESS) {
 		throw std::runtime_error("failed to present swap chain image!");
@@ -206,7 +202,7 @@ void VulkanRenderer::InitVulkan()
 	instance = vkb_inst.instance;
 	debugMessenger = vkb_inst.debug_messenger;
 
-	SDL_Vulkan_CreateSurface(p_windowHandler->window, instance, &swapChainObj.surface);
+	glfwCreateWindowSurface(instance, p_windowHandler->p_window, nullptr, &swapChainObj.surface);
 	
 
 	//use vkbootstrap to select a gpu. 
@@ -249,7 +245,14 @@ void VulkanRenderer::RecreateSwapchain()
 {	
 	vkDeviceWaitIdle(device);
 	swapDeletionQueue.Flush();
-	swapChainObj.InitSwapchain(p_windowHandler->window);
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(p_windowHandler->p_window, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(p_windowHandler->p_window, &width, &height);
+		glfwWaitEvents();
+	}
+
+	swapChainObj.InitSwapchain(p_windowHandler->p_window);
 
 	InitFramebuffers();	
 

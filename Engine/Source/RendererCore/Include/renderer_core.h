@@ -8,12 +8,15 @@ namespace RendererCore
 {
     void InitRenderer();
     void UpdateRenderer();
-    void RendererEvents(SDL_Event& ev);
+    void RendererEvents();
     void CleanupRenderer();
 
     void LoadMeshes();
     Mesh* GetMesh(const std::string& name);
 
     void InitScene();
+
+
+    WindowHandler GetWindowHandler();
 
 };

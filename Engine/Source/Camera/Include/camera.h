@@ -5,8 +5,8 @@
 
 #include "../../Vulkan/Include/vk_types.h"
 #include "../../Vulkan/vk_components/Include/vk_swapchain.h"
+#include "../../Window/Include/window_handler.h"
 
-#include <SDL_events.h>
 #include <glm/glm.hpp>
 
 
@@ -30,7 +30,7 @@ public:
 	bool possessCamera = false;
 
 
-	void ProcessInputEvent(SDL_Event* p_ev);
+	void ProcessInputEvent(WindowHandler& windowHandler);
 	void UpdateCamera(float deltaTime);
 
 
