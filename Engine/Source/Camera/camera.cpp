@@ -97,13 +97,14 @@ void Camera::ProcessInputEvent(SDL_Event* p_ev)
 			pitch += p_ev->motion.yrel * 0.003f;
 			yaw += p_ev->motion.xrel * 0.003f;
 
-			if(pitch > 1.5f)
+			// 1.56 radians is about equal to 89.x degrees
+			if(pitch > 1.56f)
 			{
-				pitch = 1.5f;
+				pitch = 1.56f;
 			}
-			if(pitch < -1.5f)
+			if(pitch < -1.56f)
 			{
-				pitch = -1.5f;
+				pitch = -1.56f;
 			}
 		}
 	}
