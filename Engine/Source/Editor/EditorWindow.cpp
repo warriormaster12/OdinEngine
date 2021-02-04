@@ -16,7 +16,7 @@ void Editor::showMainWindow(VulkanRenderer& renderer)
 void Editor::setupDockSpace()
 {
     bool window_open = true;
-    int windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    int windowFlags = ImGuiWindowFlags_MenuBar;
 
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(width, height));
@@ -28,7 +28,4 @@ void Editor::setupDockSpace()
 
     ImGui::Begin("editor window", &window_open, windowFlags);
     ImGui::PopStyleVar(2);
-
-    //dockspace
-    ImGui::DockSpace(ImGui::GetID("Dockspace"));
 }
