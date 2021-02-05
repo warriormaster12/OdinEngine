@@ -139,29 +139,43 @@ void RendererCore::InitScene()
 	RenderObject monkey;
 	monkey.p_mesh = GetMesh("monkey");
 	monkey.p_material = vkRenderer.GetMaterial("texturedmesh2");
-	monkey.transformMatrix = glm::mat4{ 1.0f };
+	monkey.transformMatrix =  glm::translate(glm::vec3{ 0,0,0 });
 
 	renderables.push_back(monkey);
 
-	RenderObject map;
-	map.p_mesh = GetMesh("empire");
-	map.p_material = vkRenderer.GetMaterial("texturedmesh");
-	map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
+	RenderObject monkey2;
+	monkey2.p_mesh = GetMesh("monkey");
+	monkey2.p_material = vkRenderer.GetMaterial("texturedmesh2");
+	monkey2.transformMatrix =  glm::translate(glm::vec3{ 1,0,0 });
 
-	renderables.push_back(map);
+	renderables.push_back(monkey2);
 
-	RenderObject viking_room;
-	viking_room.p_mesh = GetMesh("viking_room");
-	viking_room.p_material = vkRenderer.GetMaterial("texturedmesh2");
-	viking_room.transformMatrix = glm::translate(glm::vec3{ 0,0,2.0f }); 
+	RenderObject monkey3;
+	monkey3.p_mesh = GetMesh("monkey");
+	monkey3.p_material = vkRenderer.GetMaterial("texturedmesh2");
+	monkey3.transformMatrix =  glm::translate(glm::vec3{ -1,0,0 });
 
-	renderables.push_back(viking_room);
+	renderables.push_back(monkey3);
+
+	// RenderObject map;
+	// map.p_mesh = GetMesh("empire");
+	// map.p_material = vkRenderer.GetMaterial("texturedmesh");
+	// map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
+
+	// renderables.push_back(map);
+
+	// RenderObject viking_room;
+	// viking_room.p_mesh = GetMesh("viking_room");
+	// viking_room.p_material = vkRenderer.GetMaterial("texturedmesh2");
+	// viking_room.transformMatrix = glm::translate(glm::vec3{ 0,0,2.0f }); 
+
+	// renderables.push_back(viking_room);
 	
-	RenderObject skyBox;
-	skyBox.p_mesh = GetMesh("skyBox");
-	skyBox.p_material = vkRenderer.GetMaterial("texturedmesh2");
-	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
-	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
-	skyBox.transformMatrix = translation * scale;
-	renderables.push_back(skyBox);
+	// RenderObject skyBox;
+	// skyBox.p_mesh = GetMesh("skyBox");
+	// skyBox.p_material = vkRenderer.GetMaterial("texturedmesh2");
+	// glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
+	// glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
+	// skyBox.transformMatrix = translation * scale;
+	// renderables.push_back(skyBox);
 }

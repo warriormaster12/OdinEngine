@@ -220,6 +220,14 @@ void VulkanRenderer::InitVulkan()
 	//use vkbootstrap to select a gpu. 
 	//We want a gpu that can write to the SDL surface and supports vulkan 1.2
 	vkb::PhysicalDeviceSelector selector{ vkb_inst };
+	VkPhysicalDeviceFeatures feats{};
+
+	//feats.pipelineStatisticsQuery = true;
+	feats.multiDrawIndirect = true;
+	feats.drawIndirectFirstInstance = true;
+	//feats.samplerAnisotropy = true;
+	selector.set_required_features(feats);
+
 	vkb::PhysicalDevice physicalDevice = selector
 		.set_minimum_version(1, 1)
 		.set_surface(swapChainObj.surface)
