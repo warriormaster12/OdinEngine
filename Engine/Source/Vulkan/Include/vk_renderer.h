@@ -9,14 +9,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-#include "../vk_components/Include/vk_swapchain.h"
-#include "../vk_components/Include/vk_deletionqueue.h"
-#include "../vk_components/Include/vk_descriptors.h"
-#include "../vk_components/Include/vk_mesh.h"
+#include "vk_swapchain.h"
+#include "vk_deletionqueue.h"
+#include "vk_descriptors.h"
+#include "vk_mesh.h"
 
-#include "../../Window/Include/window_handler.h"
+#include "window_handler.h"
 
-#include "../../Camera/Include/camera.h"
+#include "camera.h"
 
 
 

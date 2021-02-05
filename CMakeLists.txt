@@ -15,7 +15,23 @@ file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/Engine/Source/*)
 add_executable(VulkanEngine.x86_64 ${SRC})
 
 target_include_directories(VulkanEngine.x86_64 PUBLIC
-    Engine/Source/
+    Engine/Source/Asset_Manager/Include/
+    Engine/Source/Camera/Include/
+    Engine/Source/Editor/Include/
+    Engine/Source/Logger/Include/
+    Engine/Source/Vulkan/Include/
+    Engine/Source/Vulkan/vk_components/Include/
+    Engine/Source/Main/Include/
+    Engine/Source/Window/Include/
+    Engine/Source/RendererCore/Include/
+    
+    Engine/Source/Third-Party/catch2/
+    Engine/Source/Third-Party/imgui/Include/
+    Engine/Source/Third-Party/lz4/Include/
+    Engine/Source/Third-Party/nlohmann_json/
+    Engine/Source/Third-Party/stb_image/
+    Engine/Source/Third-Party/tinyobjloader/
+    Engine/Source/Third-Party/Vma/
 )
 
 
@@ -58,6 +74,8 @@ target_link_libraries(VulkanEngine.x86_64 PRIVATE glslang SPIRV)
 #spdlog
 add_subdirectory(Third-Party/spdlog EXCLUDE_FROM_ALL)
 target_link_libraries(VulkanEngine.x86_64 PRIVATE spdlog)
+
+add_subdirectory(Engine/Test)
 
 
 

@@ -1,9 +1,9 @@
 #pragma once 
 
-#include "../../Third-Party/imgui/Include/imgui.h"
-#include "../../Third-Party/imgui/Include/imgui_impl_glfw.h"
-#include "../../Third-Party/imgui/Include/imgui_impl_vulkan.h"
-#include "../../Vulkan/Include/vk_renderer.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+#include "vk_renderer.h"
 #include "EditorWindow.h"
 
 namespace imgui_layer

@@ -1,5 +1,5 @@
 #include "Include/window_handler.h"
-#include "../Logger/Include/logger.h"
+#include "logger.h"
 
 
 float lastX =  800.0f / 2.0;

@@ -1,7 +1,7 @@
 #pragma once 
 
-#include "../../Vulkan/Include/vk_renderer.h"
-#include "../../Window/Include/window_handler.h"
+#include "vk_renderer.h"
+#include "window_handler.h"
 
 
 namespace RendererCore

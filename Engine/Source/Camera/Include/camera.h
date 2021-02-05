@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "../../Vulkan/Include/vk_types.h"
-#include "../../Vulkan/vk_components/Include/vk_swapchain.h"
-#include "../../Window/Include/window_handler.h"
+#include "vk_types.h"
+#include "vk_swapchain.h"
+#include "window_handler.h"
 
 #include <glm/glm.hpp>
 

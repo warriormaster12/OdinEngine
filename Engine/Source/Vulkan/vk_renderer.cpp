@@ -1,13 +1,13 @@
 #include "Include/vk_renderer.h"
 #include "Include/vk_types.h"
 #include "Include/vk_init.h"
-#include "vk_components/Include/vk_check.h"
-#include "vk_components/Include/vk_pipelinebuilder.h"
-#include "vk_components/Include/vk_shaderhandler.h"
-#include "vk_components/Include/vk_textures.h"
-#include "../Asset_Manager/Include/asset_builder.h"
-#include "../Third-Party/imgui/Include/imgui_impl_vulkan.h"
-#include "../Editor/Include/Imgui_layer.h"
+#include "vk_check.h"
+#include "vk_pipelinebuilder.h"
+#include "vk_shaderhandler.h"
+#include "vk_textures.h"
+#include "asset_builder.h"
+#include "imgui_impl_vulkan.h"
+#include "Imgui_layer.h"
 
 
 
@@ -15,9 +15,9 @@
 //bootstrap library
 #include "VkBootstrap.h"
 #define VMA_IMPLEMENTATION
-#include "../Third-Party/Vma/vk_mem_alloc.h"
+#include "vk_mem_alloc.h"
 
-#include "../Logger/Include/logger.h"
+#include "logger.h"
 
 vkcomponent::PipelineBuilder pipelineBuilder;
 VkCommandBuffer cmd;
