@@ -26,7 +26,7 @@ void RendererCore::UpdateRenderer()
     vkRenderer.camera.UpdateCamera(deltaTime);
     vkRenderer.BeginDraw();
 
-    vkRenderer.DrawObjects(renderables.data(), renderables.size());	
+    vkRenderer.DrawObjects(renderables);
 	//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
 
 	vkRenderer.EndDraw();

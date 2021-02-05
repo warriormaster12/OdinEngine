@@ -45,6 +45,30 @@ struct RenderObject {
 	glm::mat4 transformMatrix;
 };
 
+struct DescriptorSetData {
+	/* Descriptor set for uniform data */
+	VkDescriptorSet uniform;
+	/* Dynamic offset for 'uniform' descriptor set */
+	uint32_t uniformOffset;
+	/* Descriptor set for object data */
+	VkDescriptorSet object;
+	/* Dynamic offset for 'object' descriptor set */
+	uint32_t objectOffset;
+};
+
+struct DrawCall {
+	Mesh* pMesh;
+	Material* pMaterial;
+	/* Descriptor sets to bind during draw call*/
+	DescriptorSetData descriptorSets;
+	/* Transform matrix of the object */
+	glm::mat4 transformMatrix;
+	/* Start index of the first object to draw */
+	uint32_t index;
+	/* Number of objects to draw, starting from 'index' */
+	uint32_t count;
+};
+
 
 struct FrameData {
 	VkSemaphore presentSemaphore, renderSemaphore;
@@ -60,6 +84,7 @@ struct FrameData {
 
 	vkcomponent::DescriptorAllocator* p_dynamicDescriptorAllocator;
 
+	AllocatedBuffer indirectDrawBuffer;
 	AllocatedBuffer objectBuffer;
 	AllocatedBuffer objectFragBuffer;
 	VkDescriptorSet objectDescriptor;
@@ -193,7 +218,7 @@ public:
 	
 
 	//our draw function
-	void DrawObjects(RenderObject* p_objects, int count);
+	void DrawObjects(const std::vector<RenderObject>& p_objects);
 
 	AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 
@@ -223,6 +248,7 @@ private:
 	void RecreateSwapchain();
 
 	void CreateTexture(std::string materialName, std::string textureName, VkSampler& sampler, uint32_t binding = 0);
+
 };
 
 

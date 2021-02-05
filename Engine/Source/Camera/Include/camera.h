@@ -33,9 +33,9 @@ public:
 	void UpdateCamera(float deltaTime);
 
 
-	glm::mat4 GetViewMatrix();
-	glm::mat4 GetProjectionMatrix(bool bReverse = true);
-	glm::mat4 get_rotation_matrix();
+	glm::mat4 GetViewMatrix() const;
+	glm::mat4 GetProjectionMatrix(bool bReverse = true) const;
+	glm::mat4 get_rotation_matrix() const ;
 private: 
     vkcomponent::SwapChain* p_swapChain;
 };

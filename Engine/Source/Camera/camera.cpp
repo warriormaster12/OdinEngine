@@ -113,7 +113,7 @@ void Camera::UpdateCamera(float deltaTime)
 }
 
 
-glm::mat4 Camera::GetViewMatrix()
+glm::mat4 Camera::GetViewMatrix() const
 {
 	glm::vec3 camPos = position;
 
@@ -127,7 +127,7 @@ glm::mat4 Camera::GetViewMatrix()
 	return view;
 }
 
-glm::mat4 Camera::GetProjectionMatrix(bool bReverse /*= true*/)
+glm::mat4 Camera::GetProjectionMatrix(bool bReverse /*= true*/) const
 {
 	if (bReverse)
 	{
@@ -142,7 +142,7 @@ glm::mat4 Camera::GetProjectionMatrix(bool bReverse /*= true*/)
 	}
 }
 
-glm::mat4 Camera::get_rotation_matrix()
+glm::mat4 Camera::get_rotation_matrix() const
 {
 	glm::mat4 yaw_rot = glm::rotate(glm::mat4{ 1 }, yaw, { 0,-1,0 });
 	glm::mat4 pitch_rot = glm::rotate(glm::mat4{ yaw_rot }, pitch, { -1,0,0 });

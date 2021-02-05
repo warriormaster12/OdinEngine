@@ -24,6 +24,18 @@ VkCommandBuffer cmd;
 uint32_t swapchainImageIndex;
 VkResult drawResult;
 
+// Forward declare utility methods
+void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation allocation, const Camera& cam);
+void UploadSceneData(const VmaAllocator& allocator, const VmaAllocation allocation, const GPUSceneData& data, size_t offset);
+void UploadObjectData(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects);
+void UploadObjectFragData(const VmaAllocator& allocator, const VmaAllocation allocation, Material material);
+void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects);
+std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, const DescriptorSetData& descriptorSets);
+void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls);
+void BindMaterial(Material* material, const DescriptorSetData& descriptorSets);
+void BindMesh(Mesh* mesh);
+
+
 constexpr bool bUseValidationLayers = true;
 void VulkanRenderer::Init(WindowHandler& windowHandler)
 {
@@ -662,118 +674,38 @@ Material* VulkanRenderer::GetMaterial(const std::string& name)
 
 
 
-void VulkanRenderer::DrawObjects(RenderObject* objects, int count)
+void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 {
+	size_t frameIndex = frameNumber % FRAME_OVERLAP;
+	size_t uniformOffset = PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
 
-	GPUCameraData camData;
-	camData.view = camera.GetViewMatrix();
-	camData.proj = camera.GetProjectionMatrix(false);
-	camData.viewproj = camData.proj * camData.view ;
-	camData.camPos = glm::vec4(glm::vec3(camera.position), 0.0f);
-
-	void* data;
-	vmaMapMemory(allocator, GetCurrentFrame().cameraBuffer.allocation, &data);
-
-	memcpy(data, &camData, sizeof(GPUCameraData));
-
-	vmaUnmapMemory(allocator, GetCurrentFrame().cameraBuffer.allocation);
-
+	// Static light data, can be moved away
 	sceneParameters.lightData.lightPositions[0] = glm::vec4(glm::vec3(0.0f,  1.0f, 2.0f),0.0f);
-	
 	sceneParameters.lightData.lightColors[0] = glm::vec4(glm::vec3(1.0f),0.0f);
 	sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  -1.0f, -2.0f),0.0f);
-	
 	sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(3.0f),0.0f);
 
+	// Convert material ID to material
+	// TODO: Handle nullptr material, apply default?
+	// TODO: Material at index 0 is broken
+	Material material = *GetMaterial(materialList[1]);
 
-	
+	// Store descriptor set data
+	DescriptorSetData descriptorSets;
+	descriptorSets.uniform = GetCurrentFrame().globalDescriptor;
+	descriptorSets.uniformOffset = uniformOffset;
+	descriptorSets.object = GetCurrentFrame().objectDescriptor;
+	descriptorSets.objectOffset = 0;
 
+	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera);
+	UploadSceneData(allocator, sceneParameterBuffer.allocation, sceneParameters, uniformOffset);
+	UploadObjectData(allocator, GetCurrentFrame().objectBuffer.allocation, objects);
+	UploadObjectFragData(allocator, GetCurrentFrame().objectFragBuffer.allocation, material);
 
-	
-	char* sceneData;
-	vmaMapMemory(allocator, sceneParameterBuffer.allocation , (void**)&sceneData);
+	UploadDrawCalls(allocator, GetCurrentFrame().indirectDrawBuffer.allocation, objects);
 
-	int frameIndex = frameNumber % FRAME_OVERLAP;
-
-	sceneData += PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
-
-	memcpy(sceneData, &sceneParameters, sizeof(GPUSceneData));
-
-	vmaUnmapMemory(allocator, sceneParameterBuffer.allocation);
-
-
-	void* objectData;
-	vmaMapMemory(allocator, GetCurrentFrame().objectBuffer.allocation, &objectData);
-	
-	GPUObjectData* objectSSBO = (GPUObjectData*)objectData;
-	
-	for (int i = 0; i < count; i++)
-	{
-		RenderObject& object = objects[i];
-		objectSSBO[i].modelMatrix = object.transformMatrix;
-	}
-	
-	vmaUnmapMemory(allocator, GetCurrentFrame().objectBuffer.allocation);
-
-	void* objectFragData;
-	vmaMapMemory(allocator, GetCurrentFrame().objectFragBuffer.allocation, &objectFragData);
-	GPUObjectFragData* objectFragSSBO = (GPUObjectFragData*)objectFragData;
-	for (int i = 0; i < materialList.size(); i++)
-	{
-		objectFragSSBO->matData.albedo = GetMaterial(materialList[i])->albedo;
-		objectFragSSBO->matData.metallic = glm::vec4(glm::vec3(GetMaterial(materialList[i])->metallic),0.0f);
-		objectFragSSBO->matData.roughness = glm::vec4(glm::vec3(GetMaterial(materialList[i])->roughness),0.0f);
-		objectFragSSBO->matData.ao = glm::vec4(glm::vec3(GetMaterial(materialList[i])->ao),0.0f);
-	}
-	vmaUnmapMemory(allocator,  GetCurrentFrame().objectFragBuffer.allocation);
-
-	Mesh* lastMesh = nullptr;
-	Material* lastMaterial = nullptr;
-	
-	for (int i = 0; i < count; i++)
-	{
-		RenderObject& object = objects[i];
-		//only bind the pipeline if it doesnt match with the already bound one
-		if (object.p_material != lastMaterial) {
-
-			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.p_material->pipeline);
-			vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder.viewport);
-			vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder.scissor);
-			float blendConstant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-			vkCmdSetBlendConstants(cmd, blendConstant);
-			lastMaterial = object.p_material;
-
-			uint32_t uniformOffset = PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.p_material->pipelineLayout, 0, 1, &GetCurrentFrame().globalDescriptor, 1, &uniformOffset);
-
-			//object data descriptor
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.p_material->pipelineLayout, 1, 1, &GetCurrentFrame().objectDescriptor, 0, nullptr);
-			if (object.p_material->textureSet != VK_NULL_HANDLE) {
-				//texture descriptor
-				tempTextureSet = object.p_material->textureSet;
-				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.p_material->pipelineLayout, 2, 1, &tempTextureSet, 0, nullptr);
-			}
-		}
-
-		glm::mat4 model = object.transformMatrix;
-		//final render matrix, that we are calculating on the cpu
-		glm::mat4 mesh_matrix = model;
-
-		MeshPushConstants constants;
-		constants.render_matrix = mesh_matrix;
-
-		//upload the mesh to the gpu via pushconstants
-		vkCmdPushConstants(cmd, object.p_material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &constants);
-		//only bind the mesh if its a different one from last bind
-		if (object.p_mesh != lastMesh) {
-			//bind the mesh vertex buffer with offset 0
-			VkDeviceSize offset = 0;
-			vkCmdBindVertexBuffers(cmd, 0, 1, &object.p_mesh->vertexBuffer.buffer, &offset);
-			lastMesh = object.p_mesh;
-		}
-		//we can now draw
-		vkCmdDraw(cmd, object.p_mesh->vertices.size(), 1,0 , i);
-	}
+	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);
+	IssueDrawCalls(cmd, GetCurrentFrame().indirectDrawBuffer.buffer, drawCalls);
 }
 
 
@@ -879,6 +811,10 @@ void VulkanRenderer::InitDescriptors()
 		frames[i].objectBuffer = CreateBuffer(sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 		frames[i].objectFragBuffer = CreateBuffer(sizeof(GPUObjectFragData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
+		const int MAX_COMMANDS = 1000;
+		frames[i].indirectDrawBuffer = CreateBuffer(MAX_COMMANDS * sizeof(VkDrawIndirectCommand),
+			VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
 		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].globalDescriptor, globalSetLayout);
 
 		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].objectDescriptor, objectSetLayout);
@@ -919,6 +855,7 @@ void VulkanRenderer::InitDescriptors()
 		{
 			vmaDestroyBuffer(allocator, frames[i].objectFragBuffer.buffer, frames[i].objectFragBuffer.allocation);
 			vmaDestroyBuffer(allocator, frames[i].objectBuffer.buffer, frames[i].objectBuffer.allocation);
+			vmaDestroyBuffer(allocator, frames[i].indirectDrawBuffer.buffer, frames[i].indirectDrawBuffer.allocation);
 			vmaDestroyBuffer(allocator, frames[i].cameraBuffer.buffer, frames[i].cameraBuffer.allocation);
 		});
 	}
@@ -982,4 +919,161 @@ void VulkanRenderer::CreateTexture(std::string materialName, std::string texture
 	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->textureSet, &imageBufferInfo, binding);
 
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
+}
+
+// Utility functions
+
+void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation allocation, const Camera& cam)
+{
+	GPUCameraData camData;
+	camData.view = cam.GetViewMatrix();
+	camData.proj = cam.GetProjectionMatrix(false);
+	camData.viewproj = camData.proj * camData.view;
+	camData.camPos = glm::vec4(glm::vec3(cam.position), 0.0f);
+
+	void* data;
+	vmaMapMemory(allocator, allocation, &data);
+	memcpy(data, &camData, sizeof(GPUCameraData));
+	vmaUnmapMemory(allocator, allocation);
+}
+
+void UploadSceneData(const VmaAllocator& allocator, const VmaAllocation allocation, const GPUSceneData& data, size_t offset)
+{
+	char* sceneData;
+	vmaMapMemory(allocator, allocation , (void**)&sceneData);
+	// TODO: What is this?
+	sceneData += offset;
+	memcpy(sceneData, &data, 1 * sizeof(GPUSceneData));
+	vmaUnmapMemory(allocator, allocation);
+}
+
+void UploadObjectData(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects)
+{
+	std::vector<GPUObjectData> data;
+	data.reserve(objects.size());
+	for (const RenderObject& obj : objects)
+	{
+		// TODO: Emplace back
+		GPUObjectData objData;
+		objData.modelMatrix = obj.transformMatrix;
+		data.push_back(objData);
+	}
+
+	void* objectSSBO;
+	vmaMapMemory(allocator, allocation, &objectSSBO);
+	memcpy(objectSSBO, data.data(), data.size() * sizeof(GPUObjectData));
+	vmaUnmapMemory(allocator, allocation);
+}
+
+void UploadObjectFragData(const VmaAllocator& allocator, const VmaAllocation allocation, Material material)
+{
+    GPUObjectFragData fragData;
+    fragData.matData.albedo = material.albedo;
+    fragData.matData.metallic = glm::vec4(glm::vec3(material.metallic), 0.0f);
+    fragData.matData.roughness = glm::vec4(glm::vec3(material.roughness), 0.0f);
+    fragData.matData.ao = glm::vec4(glm::vec3(material.ao), 0.0f);
+
+	void* objectSSBO;
+	vmaMapMemory(allocator, allocation, &objectSSBO);
+	memcpy(objectSSBO, &fragData, 1 * sizeof(GPUObjectFragData));
+	vmaUnmapMemory(allocator, allocation);
+}
+
+void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects)
+{
+	std::vector<VkDrawIndirectCommand> commands;
+	commands.reserve(objects.size());
+    for (size_t i = 0; i < objects.size(); ++i)
+    {
+        VkDrawIndirectCommand cmd;
+        cmd.vertexCount = objects[i].p_mesh->vertices.size();
+		cmd.instanceCount = 1;
+        cmd.firstVertex = 0;
+		cmd.firstInstance = i;
+        commands.push_back(cmd);
+	}
+
+	void* data;
+	vmaMapMemory(allocator, allocation, &data);
+	memcpy(data, commands.data(), commands.size() * sizeof(VkDrawIndirectCommand));
+	vmaUnmapMemory(allocator, allocation);
+}
+
+std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, const DescriptorSetData& descriptorSets)
+{
+	std::vector<DrawCall> batch;
+	
+	// Create initial draw call
+	{
+		DrawCall dc;
+		dc.pMesh = objects[0].p_mesh;
+		dc.pMaterial = objects[0].p_material;
+		dc.descriptorSets = descriptorSets;
+		dc.transformMatrix = objects[0].transformMatrix;
+		dc.index = 0;
+		dc.count = 1;
+		batch.push_back(dc);
+	}
+
+	for (size_t i = 1; i < objects.size(); ++i)
+	{
+		bool isSameMesh = objects[i].p_mesh == batch.back().pMesh;
+		bool isSameMaterial = objects[i].p_material == batch.back().pMaterial;
+
+		if (isSameMesh && isSameMaterial)
+		{
+			++batch.back().count;
+		}
+		else
+		{
+			DrawCall dc;
+			dc.pMesh = objects[i].p_mesh;
+			dc.pMaterial = objects[i].p_material;
+			dc.descriptorSets = descriptorSets;
+			dc.transformMatrix = objects[0].transformMatrix;
+			dc.index = i;
+			dc.count = 1;
+			batch.push_back(dc);
+		}
+	}
+
+	return batch;
+}
+
+void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls)
+{
+	for (const DrawCall& dc : drawCalls)
+	{
+		BindMaterial(dc.pMaterial, dc.descriptorSets);
+		BindMesh(dc.pMesh);
+
+		uint32_t stride = sizeof(VkDrawIndirectCommand);
+		uint32_t offset = dc.index * stride;
+
+		vkCmdDrawIndirect(cmd, drawCommandBuffer, offset, dc.count, stride);
+	}
+}
+
+void BindMaterial(Material* material, const DescriptorSetData& descriptorSets)
+{
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
+    vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder.viewport);
+    vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder.scissor);
+    float blendConstant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    vkCmdSetBlendConstants(cmd, blendConstant);
+
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, &descriptorSets.uniform, 1, &descriptorSets.uniformOffset);
+
+    //object data descriptor
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 1, 1, &descriptorSets.object, 0, &descriptorSets.objectOffset);
+    if (material->textureSet != VK_NULL_HANDLE) {
+        //texture descriptor
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 2, 1, &material->textureSet, 0, nullptr);
+    }
+}
+
+void BindMesh(Mesh* mesh)
+{
+    VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(cmd, 0, 1, &mesh->vertexBuffer.buffer, &offset);
 }
