@@ -5,3 +5,17 @@ build/*
 debug/*
 release/*
 *.spv
+
+# Visual studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+
+# CMake
+CMakeFiles
+CMakeCache.txt
+
+# Custom build directory for windows
+VisualStudio
