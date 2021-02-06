@@ -1,8 +1,8 @@
-#include "Include/vk_textures.h"
+#include "vk_textures.h"
 #include "vk_init.h"
 #include "vk_utils.h"
-
 #include "vk_init.h"
+
 #include "stb_image.h"
 #include "texture_asset.h"
 #include "asset_loader.h"
@@ -10,11 +10,6 @@
 
 
 namespace {
-    void CreateImageView(VulkanRenderer& renderer, VkFormat format, VkImage image, VkImageView* outImageView) {
-        VkImageViewCreateInfo view_info = vkinit::ImageViewCreateInfo(format, image, VK_IMAGE_ASPECT_COLOR_BIT);
-        vkCreateImageView(renderer.device, &view_info, nullptr, outImageView);
-    }
-
     void UploadImage(
         int texWidth,
         int texHeight,
@@ -86,19 +81,27 @@ namespace {
         });
 
 
-        outImage->mipLevels = 1;// mips.size();
+		// TODO: Mip levels
+        outImage->mipLevels = 1;
     }
 }
 
 
-bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file, AllocatedImage* outImage)
+bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_filename, AllocatedImage* outImage)
 {
+	if (p_filename == nullptr)
+	{
+		ENGINE_CORE_WARN("Failed to load image file: Filename is null");
+		LoadEmpty(renderer, outImage);
+		return false;
+	}
+
 	int texWidth, texHeight, texChannels;
 
-	stbi_uc* pixels = stbi_load(p_file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load(p_filename, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	if (!pixels) {
-		ENGINE_CORE_WARN("FILE: Failed to load texture file or path is null");
+		ENGINE_CORE_WARN("Failed to load image file: Could not load image '{0}'", p_filename);
 		LoadEmpty(renderer, outImage);
 		return false;
 	}
@@ -125,7 +128,7 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 
 	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 
-	ENGINE_CORE_INFO("Texture loaded succesfully {0}", p_file);
+	ENGINE_CORE_INFO("Texture loaded succesfully {0}", p_filename);
 
     return true;
 }
@@ -133,11 +136,16 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 
 bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_filename, AllocatedImage* outImage)
 {
-	assets::AssetFile file;
-	bool loaded = assets::load_binaryfile(p_filename, file);
+	if (p_filename == nullptr)
+	{
+		ENGINE_CORE_WARN("Failed to load image asset: Filename is null");
+		LoadEmpty(renderer, outImage);
+		return false;
+	}
 
-	if (!loaded) {
-		ENGINE_CORE_WARN("ASSET: Failed to load texture file or path is null");
+	assets::AssetFile file;
+	if (!assets::load_binaryfile(p_filename, file)) {
+		ENGINE_CORE_WARN("Failed to load image asset: Could not load binary file '{0}'", p_filename);
 		LoadEmpty(renderer, outImage);
 		return false;
 	}
@@ -151,6 +159,7 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 		image_format = VK_FORMAT_R8G8B8A8_SRGB;
 		break;
 	default:
+		ENGINE_CORE_WARN("Failed to load image asset: Unknown texture format '{0}', {1}", p_filename, textureInfo.textureFormat);
 		LoadEmpty(renderer, outImage);
 		return false;
 	}
@@ -176,7 +185,7 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 	
 	return true;
 }
-bool vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage)
+void vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage)
 {
 	const uint64_t texWidth = 1;
 	const uint64_t texHeight = 1;
@@ -202,7 +211,5 @@ bool vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage)
     UploadImage(texWidth, texHeight, image_format, renderer, stagingBuffer, outImage);
 
 	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
-
-    return true;
 }
 
