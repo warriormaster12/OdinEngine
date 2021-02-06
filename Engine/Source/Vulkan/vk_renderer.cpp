@@ -609,26 +609,10 @@ void VulkanRenderer::InitPipelines()
 	pipelineBuilder.shaderStages.push_back(
 		vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, texturedMeshShader));
 
-	//we start from just the default empty pipeline layout info
-	VkPipelineLayoutCreateInfo mesh_pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
-
-	//setup push constants
-	VkPushConstantRange push_constant;
-	//offset 0
-	push_constant.offset = 0;
-	//size of a MeshPushConstant struct
-	push_constant.size = sizeof(MeshPushConstants);
-	//for the vertex shader
-	push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	mesh_pipeline_layout_info.pPushConstantRanges = &push_constant;
-	mesh_pipeline_layout_info.pushConstantRangeCount = 1;
-
 	//we start from  the normal mesh layout
-	VkPipelineLayoutCreateInfo textured_pipeline_layout_info = mesh_pipeline_layout_info;
+	VkPipelineLayoutCreateInfo textured_pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
 		
-	VkDescriptorSetLayout texturedSetLayouts[] = { globalSetLayout, objectSetLayout,materialTextureSetLayout };
-
+	VkDescriptorSetLayout texturedSetLayouts[] = { globalSetLayout, objectSetLayout, materialTextureSetLayout };
 	textured_pipeline_layout_info.setLayoutCount = 3;
 	textured_pipeline_layout_info.pSetLayouts = texturedSetLayouts;
 

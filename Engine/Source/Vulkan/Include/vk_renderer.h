@@ -20,12 +20,6 @@
 
 
 
-struct MeshPushConstants {
-	glm::vec4 data;
-	glm::mat4 render_matrix;
-};
-
-
 struct Material {
 	VkDescriptorSet materialSet{VK_NULL_HANDLE};
 	AllocatedBuffer buffer;
