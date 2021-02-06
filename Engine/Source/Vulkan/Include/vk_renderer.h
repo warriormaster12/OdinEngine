@@ -28,7 +28,7 @@ struct MeshPushConstants {
 
 struct Material {
 	VkDescriptorSet materialSet{VK_NULL_HANDLE};
-	AllocatedBuffer objectMatBuffer;
+	AllocatedBuffer buffer;
 	VkPipeline pipeline;
 	VkPipelineLayout pipelineLayout;
 
@@ -98,7 +98,7 @@ struct GPUCameraData{
 	glm::vec4 camPos; // vec3
 };
 
-struct MaterialData 
+struct GPUMaterialData 
 {
 	glm::vec4 albedo; // vec4
 	glm::vec4 metallic; // float
@@ -118,10 +118,6 @@ struct GPUSceneData {
 
 struct GPUObjectData {
 	glm::mat4 modelMatrix;
-};
-
-struct GPUObjectMatData {
-	MaterialData matData;
 };
 
 struct UploadContext {
