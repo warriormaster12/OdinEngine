@@ -13,6 +13,8 @@ void CreateBuffer(const VmaAllocator& allocator, AllocatedBuffer* outBuffer, Cre
 template<typename T>
 void UploadArrayData(const VmaAllocator& allocator, const VmaAllocation& allocation, T* data, size_t len, size_t byteOffset = 0)
 {
+    // Note: pData is not initialized because vmaMapMemory(...) allocates memory for pData. Similarly,
+    // vmaUnmapMemory deallocates the memory.
     char* pData;
     vmaMapMemory(allocator, allocation, (void**)&pData);
     // Forward pointer

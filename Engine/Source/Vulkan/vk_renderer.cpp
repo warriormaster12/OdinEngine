@@ -710,7 +710,7 @@ void VulkanRenderer::LoadImage(std::string texture_name, std::string texture_pat
 	const std::filesystem::path bin_path = texture_path + ".bin";
 	
 	asset_builder::convert_image(path,bin_path);
-	vkcomponent::LoadImageFromAsset(*this, (texture_path + ".bin").c_str(), inputTextures.image);
+	vkcomponent::LoadImageFromAsset(*this, (texture_path + ".bin").c_str(), &inputTextures.image);
 	
 	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
@@ -719,6 +719,7 @@ void VulkanRenderer::LoadImage(std::string texture_name, std::string texture_pat
 
 	mainDeletionQueue.PushFunction([=]() {
 		vkDestroyImageView(device, inputTextures.imageView, nullptr);
+		vmaDestroyImage(allocator, inputTextures.image.image, inputTextures.image.allocation);
 	});
 
 }
