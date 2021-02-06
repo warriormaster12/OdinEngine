@@ -28,29 +28,38 @@ bool asset_builder::convert_image(const fs::path& input, const fs::path& output)
     std::ifstream file_binary(binary_filename);
 	if(file_binary.fail())
 	{
-		stbi_uc* pixels = stbi_load(input.u8string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-
-		if (!pixels) {
-			ENGINE_CORE_ERROR("Failed to load texture file {0}", input);
+		if(input == "" || output == ".bin")
+		{
+			ENGINE_CORE_INFO("path to a file is null");
 			return false;
 		}
-		
-		int texture_size = texWidth * texHeight * 4;
+		else
+		{
+			stbi_uc* pixels = stbi_load(input.u8string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-		TextureInfo texinfo;
-		texinfo.textureSize = texture_size;
-		texinfo.pixelsize[0] = texWidth;
-		texinfo.pixelsize[1] = texHeight;
-		texinfo.textureFormat = TextureFormat::RGBA8;	
-		texinfo.originalFile = input.string();
-		AssetFile newImage = assets::pack_texture(&texinfo, pixels);	
+			if (!pixels) {
+				ENGINE_CORE_ERROR("Failed to load texture file {0}", input);
+				return false;
+			}
 			
+			int texture_size = texWidth * texHeight * 4;
 
-		stbi_image_free(pixels);
+			TextureInfo texinfo;
+			texinfo.textureSize = texture_size;
+			texinfo.pixelsize[0] = texWidth;
+			texinfo.pixelsize[1] = texHeight;
+			texinfo.textureFormat = TextureFormat::RGBA8;	
+			texinfo.originalFile = input.string();
+			AssetFile newImage = assets::pack_texture(&texinfo, pixels);	
+				
 
-		save_binaryfile(output.string().c_str(), newImage);
+			stbi_image_free(pixels);
 
-		return true;
+			save_binaryfile(output.string().c_str(), newImage);
+
+			return true;
+		}
+		
 	}
 	else
 	{

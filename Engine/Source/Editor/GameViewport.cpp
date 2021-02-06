@@ -10,7 +10,7 @@ void Viewport::ShowGameViewport(VulkanRenderer& renderer)
     ImVec2 windowPos = getCenteredPositionForViewport(windowSize);
    
     ImGui::SetCursorPos(windowPos);
-    ImTextureID textureId = renderer.tempTextureSet;
+    ImTextureID textureId = 0;
     ImGui::Image(textureId, windowSize, ImVec2(-1,0), ImVec2(0,1));
 }
 

@@ -133,7 +133,6 @@ public:
 	int selectedShader{ 0 };
 
 
-	VkDescriptorSet tempTextureSet{VK_NULL_HANDLE};
 	VkInstance instance;
 	VkDebugUtilsMessengerEXT debugMessenger;
 	VkPhysicalDevice chosenGPU;
@@ -237,7 +236,7 @@ private:
 
 	void RecreateSwapchain();
 
-	void CreateTexture(std::string materialName, std::string textureName, VkSampler& sampler, uint32_t binding = 0);
+	void CreateTexture(std::string materialName, std::string textureName, VkSampler& sampler, uint32_t binding = 1);
 
 };
 

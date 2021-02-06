@@ -198,9 +198,6 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 
 	InitPipelines();
 
-	//loading empty image first in case if we want to use it for any object later
-	LoadImage("empty", "");
-
 	InitScene();
 
 	camera.position = { 0.f,0.f,10.f };
@@ -755,15 +752,9 @@ void VulkanRenderer::LoadImage(std::string texture_name, std::string texture_pat
 	Texture inputTextures;
 	const std::filesystem::path path = texture_path;
 	const std::filesystem::path bin_path = texture_path + ".bin";
-	if(texture_name != "empty")
-	{
-		asset_builder::convert_image(path,bin_path);
-		vkcomponent::LoadImageFromAsset(*this, (texture_path + ".bin").c_str(), inputTextures.image);
-	}
-	else
-	{
-		vkcomponent::LoadEmpty(*this, inputTextures.image);
-	}
+	
+	asset_builder::convert_image(path,bin_path);
+	vkcomponent::LoadImageFromAsset(*this, (texture_path + ".bin").c_str(), inputTextures.image);
 	
 	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
@@ -882,7 +873,7 @@ void VulkanRenderer::InitScene()
 
 	VkSampler blockySampler;
 	vkCreateSampler(device, &samplerInfo, nullptr, &blockySampler);
-
+	LoadImage("empty", "");
 	LoadImage("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
 	CreateTexture("texturedmesh", "empire_diffuse", blockySampler);
 	LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
@@ -1058,7 +1049,7 @@ void VulkanRenderer::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& 
 	vkResetCommandPool(device, uploadContext.commandPool, 0);
 }
 
-void VulkanRenderer::CreateTexture(std::string materialName, std::string textureName, VkSampler& sampler, uint32_t binding /*= 0*/)
+void VulkanRenderer::CreateTexture(std::string materialName, std::string textureName, VkSampler& sampler, uint32_t binding /*= 1*/)
 {
 	Material* texturedMaterial = GetMaterial(materialName);
 
@@ -1068,7 +1059,7 @@ void VulkanRenderer::CreateTexture(std::string materialName, std::string texture
 	imageBufferInfo.imageView = _loadedTextures[textureName].imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, 1);
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, binding);
 	
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
 }

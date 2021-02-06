@@ -1,9 +1,10 @@
 #include "Include/vk_textures.h"
 
-#include "../Include/vk_init.h"
-#include "../../Third-Party/stb_image/stb_image.h"
-#include "../../Asset_Manager/Include/texture_asset.h"
-#include "../../Asset_Manager/Include/asset_loader.h"
+#include "vk_init.h"
+#include "stb_image.h"
+#include "texture_asset.h"
+#include "asset_loader.h"
+#include "logger.h"
 bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file, AllocatedImage& outImage)
 {
 	int texWidth, texHeight, texChannels;
@@ -11,7 +12,8 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 	stbi_uc* pixels = stbi_load(p_file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	if (!pixels) {
-		std::cout << "Failed to load texture file " << p_file << std::endl;
+		ENGINE_CORE_WARN("Failed to load texture file or path is null");
+		LoadEmpty(renderer, outImage);
 		return false;
 	}
     void* pixel_ptr = pixels;
@@ -102,7 +104,7 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 
 	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 
-	ENGINE_CORE_ERROR("Texture loaded succesfully {0}", p_file);
+	ENGINE_CORE_INFO("Texture loaded succesfully {0}", p_file);
 
 	outImage = newImage;
     return true;
@@ -115,7 +117,8 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 	bool loaded = assets::load_binaryfile(p_filename, file);
 
 	if (!loaded) {
-		std::cout << "Error when loading mesh ";
+		ENGINE_CORE_WARN("Failed to load texture file or path is null");
+		LoadEmpty(renderer, outImage);
 		return false;
 	}
 	
@@ -128,6 +131,7 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 		image_format = VK_FORMAT_R8G8B8A8_SRGB;
 		break;
 	default:
+		LoadEmpty(renderer, outImage);
 		return false;
 	}
 
