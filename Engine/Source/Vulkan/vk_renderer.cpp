@@ -33,6 +33,7 @@ void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation allocati
 std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, const DescriptorSetData& descriptorSets);
 void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls);
 void BindMaterial(Material* material, const DescriptorSetData& descriptorSets);
+void BindDynamicStates();
 void BindMesh(Mesh* mesh);
 
 
@@ -1076,6 +1077,8 @@ void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffe
 {
 	for (const DrawCall& dc : drawCalls)
 	{
+		BindDynamicStates();
+		
 		BindMaterial(dc.pMaterial, dc.descriptorSets);
 		BindMesh(dc.pMesh);
 
@@ -1085,15 +1088,18 @@ void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffe
 		vkCmdDrawIndirect(cmd, drawCommandBuffer, offset, dc.count, stride);
 	}
 }
+void BindDynamicStates()
+{
+	vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder.viewport);
+    vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder.scissor);
+    float blendConstant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    vkCmdSetBlendConstants(cmd, blendConstant);
+}
 
 void BindMaterial(Material* material, const DescriptorSetData& descriptorSets)
 {
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
-    vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder.viewport);
-    vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder.scissor);
-    float blendConstant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-    vkCmdSetBlendConstants(cmd, blendConstant);
-
+    
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, &descriptorSets.uniform, 1, &descriptorSets.uniformOffset);
 
     //object data descriptor
