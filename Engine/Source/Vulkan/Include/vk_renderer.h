@@ -209,8 +209,6 @@ public:
 	//our draw function
 	void DrawObjects(const std::vector<RenderObject>& p_objects);
 
-	AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
-
 	size_t PadUniformBufferSize(size_t originalSize);
 
 	WindowHandler* p_windowHandler;

@@ -1,6 +1,7 @@
 #include "Include/vk_renderer.h"
 #include "Include/vk_types.h"
 #include "Include/vk_init.h"
+#include "vk_utils.h"
 #include "vk_check.h"
 #include "vk_pipelinebuilder.h"
 #include "vk_shaderhandler.h"
@@ -25,24 +26,7 @@ VkResult drawResult;
 // Utility (pure) functions are put in an anonymous namespace
 
 namespace {
-	template<typename T>
-	void UploadArrayData(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<T>& data, size_t byteOffset = 0)
-	{
-		char* pData;
-		vmaMapMemory(allocator, allocation, (void**)&pData);
-		// Forward pointer
-		pData += byteOffset;
-		memcpy(pData, data.data(), data.size() * sizeof(T));
-		vmaUnmapMemory(allocator, allocation);
-	}
-
-	template<typename T>
-	void UploadSingleData(const VmaAllocator& allocator, const VmaAllocation allocation, const T& data, size_t byteOffset = 0)
-	{
-		UploadArrayData(allocator, allocation, std::vector<T>{data}, byteOffset);
-	}
-
-    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation allocation, const Camera& cam)
+    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, const Camera& cam)
     {
         GPUCameraData camData;
         camData.view = cam.GetViewMatrix();
@@ -53,12 +37,12 @@ namespace {
 		UploadSingleData(allocator, allocation, camData);
     }
 
-    void UploadSceneData(const VmaAllocator& allocator, const VmaAllocation allocation, const GPUSceneData& data, size_t offset)
+    void UploadSceneData(const VmaAllocator& allocator, const VmaAllocation& allocation, const GPUSceneData& data, size_t offset)
     {
 		UploadSingleData(allocator, allocation, data, offset);
     }
 
-    void UploadObjectData(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects)
+    void UploadObjectData(const VmaAllocator& allocator, const VmaAllocation& allocation, const std::vector<RenderObject>& objects)
     {
         std::vector<GPUObjectData> data;
         data.reserve(objects.size());
@@ -69,7 +53,7 @@ namespace {
             data.push_back(objData);
         }
 
-		UploadArrayData(allocator, allocation, data);
+		UploadVectorData(allocator, allocation, data);
     }
 
     void UploadMaterialData(const VmaAllocator& allocator, std::vector<Material>& materials)
@@ -86,7 +70,7 @@ namespace {
         }
     }
 
-    void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects)
+    void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation& allocation, const std::vector<RenderObject>& objects)
     {
         std::vector<VkDrawIndirectCommand> commands;
         commands.reserve(objects.size());
@@ -100,7 +84,7 @@ namespace {
             commands.push_back(cmd);
         }
 
-		UploadArrayData(allocator, allocation, commands);
+		UploadVectorData(allocator, allocation, commands);
     }
 
     std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, const DescriptorSetData& descriptorSets)
@@ -679,58 +663,30 @@ void VulkanRenderer::InitPipelines()
 }
 
 
-
-
-
-
-
-
 void VulkanRenderer::UploadMesh(Mesh& mesh)
 {
-	const size_t bufferSize= mesh.vertices.size() * sizeof(Vertex);
-	//allocate vertex buffer
-	VkBufferCreateInfo stagingBufferInfo = {};
-	stagingBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	stagingBufferInfo.pNext = nullptr;
-	//this is the total size, in bytes, of the buffer we are allocating
-	stagingBufferInfo.size = bufferSize;
-	//this buffer is going to be used as a Vertex Buffer
-	stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-
-	//let the VMA library know that this data should be writeable by CPU, but also readable by GPU
-	VmaAllocationCreateInfo vmaallocInfo = {};
-	vmaallocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+	const size_t BUFFER_SIZE = mesh.vertices.size() * sizeof(Vertex);
 
 	AllocatedBuffer stagingBuffer;
-
-	//allocate the buffer
-	VK_CHECK(vmaCreateBuffer(allocator, &stagingBufferInfo, &vmaallocInfo,
-		&stagingBuffer.buffer,
-		&stagingBuffer.allocation,
-		nullptr));	
+	{
+		CreateBufferInfo info;
+		info.allocSize = BUFFER_SIZE;
+		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+		CreateBuffer(allocator, &stagingBuffer, info);
+	}
 
 	//copy vertex data
-	UploadArrayData(allocator, stagingBuffer.allocation, mesh.vertices);
+	UploadVectorData(allocator, stagingBuffer.allocation, mesh.vertices);
 
+	{
+		CreateBufferInfo info;
+		info.allocSize = BUFFER_SIZE;
+		info.bufferUsage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
+		CreateBuffer(allocator, &mesh.vertexBuffer, info);
+	}
 
-	//allocate vertex buffer
-	VkBufferCreateInfo vertexBufferInfo = {};
-	vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	vertexBufferInfo.pNext = nullptr;
-	//this is the total size, in bytes, of the buffer we are allocating
-	vertexBufferInfo.size = bufferSize;
-	//this buffer is going to be used as a Vertex Buffer
-	vertexBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-
-	//let the VMA library know that this data should be gpu native	
-	vmaallocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-	//allocate the buffer
-	VK_CHECK(vmaCreateBuffer(allocator, &vertexBufferInfo, &vmaallocInfo,
-		&mesh.vertexBuffer.buffer,
-		&mesh.vertexBuffer.allocation,
-		nullptr));
 	//add the destruction of triangle mesh buffer to the deletion queue
 	mainDeletionQueue.PushFunction([=]() {
 		vmaDestroyBuffer(allocator, mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
@@ -740,7 +696,7 @@ void VulkanRenderer::UploadMesh(Mesh& mesh)
 		VkBufferCopy copy;
 		copy.dstOffset = 0;
 		copy.srcOffset = 0;
-		copy.size = bufferSize;
+		copy.size = BUFFER_SIZE;
 		vkCmdCopyBuffer(cmd, stagingBuffer.buffer, mesh.vertexBuffer.buffer, 1, & copy);
 	});
 
@@ -779,7 +735,13 @@ Material* VulkanRenderer::CreateMaterial(VkPipeline pipeline, VkPipelineLayout l
 
 	p_descriptorAllocator->Allocate(&materials[name].materialSet, materialTextureSetLayout);
 
-	materials[name].buffer = CreateBuffer(sizeof(GPUMaterialData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	{
+		CreateBufferInfo info;
+		info.allocSize = sizeof(GPUMaterialData);
+		info.bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		CreateBuffer(allocator, &materials[name].buffer, info);
+	}
 
 	VkDescriptorBufferInfo materialBufferInfo;
 	materialBufferInfo.buffer = materials[name].buffer.buffer;
@@ -885,31 +847,6 @@ void VulkanRenderer::InitScene()
 	});
 }
 
-AllocatedBuffer VulkanRenderer::CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage)
-{
-	//allocate vertex buffer
-	VkBufferCreateInfo bufferInfo = {};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.pNext = nullptr;
-	bufferInfo.size = allocSize;
-
-	bufferInfo.usage = usage;
-
-
-	//let the VMA library know that this data should be writeable by CPU, but also readable by GPU
-	VmaAllocationCreateInfo vmaallocInfo = {};
-	vmaallocInfo.usage = memoryUsage;
-
-	AllocatedBuffer newBuffer;
-
-	//allocate the buffer
-	VK_CHECK(vmaCreateBuffer(allocator, &bufferInfo, &vmaallocInfo,
-		&newBuffer.buffer,
-		&newBuffer.allocation,
-		nullptr));
-
-	return newBuffer;
-}
 
 size_t VulkanRenderer::PadUniformBufferSize(size_t originalSize)
 {
@@ -951,25 +888,47 @@ void VulkanRenderer::InitDescriptors()
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
-	const size_t sceneParamBufferSize = FRAME_OVERLAP * PadUniformBufferSize(sizeof(GPUSceneData));
-	sceneParameterBuffer = CreateBuffer(sceneParamBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	{
+		CreateBufferInfo info;
+		info.allocSize = FRAME_OVERLAP * PadUniformBufferSize(sizeof(GPUSceneData));
+		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		CreateBuffer(allocator, &sceneParameterBuffer, info);
+	}
+
+    const int MAX_OBJECTS = 10000;
+    const int MAX_COMMANDS = 1000;
 
 	for (int i = 0; i < FRAME_OVERLAP; i++)
 	{
 		frames[i].p_dynamicDescriptorAllocator = new vkcomponent::DescriptorAllocator{};
 		frames[i].p_dynamicDescriptorAllocator->Init(device);
-		frames[i].cameraBuffer = CreateBuffer(sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-		const int MAX_OBJECTS = 10000;
-		frames[i].objectBuffer = CreateBuffer(sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-		const int MAX_COMMANDS = 1000;
-		frames[i].indirectDrawBuffer = CreateBuffer(MAX_COMMANDS * sizeof(VkDrawIndirectCommand),
-			VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
 		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].globalDescriptor, globalSetLayout);
-
 		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].objectDescriptor, objectSetLayout);
+
+		{
+			CreateBufferInfo info;
+			info.allocSize = sizeof(GPUCameraData);
+			info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+			CreateBuffer(allocator, &frames[i].cameraBuffer, info);
+		}
+
+		{
+			CreateBufferInfo info;
+			info.allocSize = MAX_OBJECTS * sizeof(GPUObjectData);
+			info.bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+            CreateBuffer(allocator, &frames[i].objectBuffer, info);
+		}
+
+		{
+			CreateBufferInfo info;
+			info.allocSize = MAX_COMMANDS * sizeof(VkDrawIndirectCommand);
+			info.bufferUsage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+			CreateBuffer(allocator, &frames[i].indirectDrawBuffer, info);
+		}
 
 		VkDescriptorBufferInfo cameraInfo;
 		cameraInfo.buffer = frames[i].cameraBuffer.buffer;
@@ -986,17 +945,13 @@ void VulkanRenderer::InitDescriptors()
 		objectBufferInfo.offset = 0;
 		objectBufferInfo.range = sizeof(GPUObjectData) * MAX_OBJECTS;
 
-
-
 		VkWriteDescriptorSet cameraWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, frames[i].globalDescriptor,&cameraInfo,0);
-		
 		VkWriteDescriptorSet sceneWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, frames[i].globalDescriptor, &sceneInfo, 1);
-
 		VkWriteDescriptorSet objectWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, frames[i].objectDescriptor, &objectBufferInfo, 0);
 
-		std::vector <VkWriteDescriptorSet> setWrites = { cameraWrite,sceneWrite,objectWrite};
-
+		std::vector <VkWriteDescriptorSet> setWrites = { cameraWrite, sceneWrite, objectWrite};
 		vkUpdateDescriptorSets(device, setWrites.size(), setWrites.data(), 0, nullptr);
+
 		mainDeletionQueue.PushFunction([=]()
 		{
 			vmaDestroyBuffer(allocator, frames[i].objectBuffer.buffer, frames[i].objectBuffer.allocation);
@@ -1004,6 +959,7 @@ void VulkanRenderer::InitDescriptors()
 			vmaDestroyBuffer(allocator, frames[i].cameraBuffer.buffer, frames[i].cameraBuffer.allocation);
 		});
 	}
+
 	mainDeletionQueue.PushFunction([=]() {
 		vmaDestroyBuffer(allocator, sceneParameterBuffer.buffer, sceneParameterBuffer.allocation);
 		for (auto& frame : frames)

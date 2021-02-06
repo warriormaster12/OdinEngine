@@ -6,7 +6,9 @@
 struct AllocatedBuffer {
     VkBuffer buffer;
     VmaAllocation allocation;
+    VmaAllocationInfo allocationInfo;
 };
+
 struct AllocatedImage {
     VkImage image;
     VmaAllocation allocation;

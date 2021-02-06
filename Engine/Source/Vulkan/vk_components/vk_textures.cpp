@@ -1,10 +1,13 @@
 #include "Include/vk_textures.h"
+#include "vk_init.h"
+#include "vk_utils.h"
 
 #include "vk_init.h"
 #include "stb_image.h"
 #include "texture_asset.h"
 #include "asset_loader.h"
 #include "logger.h"
+
 bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file, AllocatedImage& outImage)
 {
 	int texWidth, texHeight, texChannels;
@@ -16,22 +19,22 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 		LoadEmpty(renderer, outImage);
 		return false;
 	}
-    void* pixel_ptr = pixels;
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
+	VkDeviceSize imageSize = texWidth * texHeight * sizeof(stbi_uc);
 
     //the format R8G8B8A8 matchs exactly with the pixels loaded from stb_image lib
 	VkFormat image_format = VK_FORMAT_R8G8B8A8_SRGB;
 
     //allocate temporary buffer for holding texture data to upload
-	AllocatedBuffer stagingBuffer = renderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+	AllocatedBuffer stagingBuffer;
+	{
+		CreateBufferInfo info;
+		info.allocSize = imageSize;
+		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+		CreateBuffer(renderer.allocator, &stagingBuffer, info);
+	}
 
-    //copy data to buffer
-	void* data;
-	vmaMapMemory(renderer.allocator, stagingBuffer.allocation, &data);
-
-	memcpy(data, pixel_ptr, static_cast<size_t>(imageSize));
-
-	vmaUnmapMemory(renderer.allocator, stagingBuffer.allocation);
+	UploadArrayData(renderer.allocator, stagingBuffer.allocation, pixels, imageSize);
     //we no longer need the loaded data, so we can free the pixels as they are now in the staging buffer
 	stbi_image_free(pixels);
 
@@ -42,7 +45,7 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 	
 	VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
-	AllocatedImage newImage;	
+	AllocatedImage newImage;
 	
 	VmaAllocationCreateInfo dimg_allocinfo = {};
 	dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -135,7 +138,14 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 		return false;
 	}
 
-	AllocatedBuffer stagingBuffer = renderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+    AllocatedBuffer stagingBuffer;
+	{
+		CreateBufferInfo info;
+		info.allocSize = imageSize;
+		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+		CreateBuffer(renderer.allocator, &stagingBuffer, info);
+	}
 
 	void* data;
 	vmaMapMemory(renderer.allocator, stagingBuffer.allocation, &data);
@@ -152,31 +162,31 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 }
 bool vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage& outImage)
 {
-	int texWidth, texHeight;
-	texWidth = 1;
-	texHeight = 1;
+	const uint64_t texWidth = 1;
+	const uint64_t texHeight = 1;
 
-    char pixel_ptr[] = {0,0,0,0};
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
+    char pixelData[] = {0,0,0,0};
+	VkDeviceSize imageSize = texWidth * texHeight * sizeof(char);
 
     //the format R8G8B8A8 matchs exactly with the pixels loaded from stb_image lib
 	VkFormat image_format = VK_FORMAT_R8G8B8A8_SRGB;
 
     //allocate temporary buffer for holding texture data to upload
-	AllocatedBuffer stagingBuffer = renderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+	AllocatedBuffer stagingBuffer;
+	{
+		CreateBufferInfo info;
+		info.allocSize = imageSize;
+		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+		CreateBuffer(renderer.allocator, &stagingBuffer, info);
+	}
 
-    //copy data to buffer
-	void* data;
-	vmaMapMemory(renderer.allocator, stagingBuffer.allocation, &data);
-
-	memcpy(data, pixel_ptr, static_cast<size_t>(imageSize));
-
-	vmaUnmapMemory(renderer.allocator, stagingBuffer.allocation);
-    //we no longer need the loaded data, so we can free the pixels as they are now in the staging buffer
+    // copy pixel data to buffer
+	UploadArrayData(renderer.allocator, stagingBuffer.allocation, pixelData, imageSize);
 
     VkExtent3D imageExtent;
-	imageExtent.width = static_cast<uint32_t>(texWidth);
-	imageExtent.height = static_cast<uint32_t>(texHeight);
+	imageExtent.width = texWidth;
+	imageExtent.height = texHeight;
 	imageExtent.depth = 1;
 	
 	VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
