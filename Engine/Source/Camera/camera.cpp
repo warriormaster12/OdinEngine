@@ -8,42 +8,34 @@ Camera::Camera(vkcomponent::SwapChain& swapChain)
 }
 void Camera::ProcessInputEvent(WindowHandler& windowHandler)
 {
+	inputAxis = glm::vec3(0.0f);
 	if(windowHandler.GetKInput(GLFW_KEY_W) == GLFW_PRESS)
 	{
 		inputAxis.x += 1.f;
 	}
-	else if(windowHandler.GetKInput(GLFW_KEY_S) == GLFW_PRESS)
+	if(windowHandler.GetKInput(GLFW_KEY_S) == GLFW_PRESS)
 	{
 		inputAxis.x -= 1.f;
 	}
-	else
-	{
-		inputAxis.x = 0.f;
-	}
+	
 	if(windowHandler.GetKInput(GLFW_KEY_D) == GLFW_PRESS)
 	{
 		inputAxis.y += 1.f;
 	}
-	else if(windowHandler.GetKInput(GLFW_KEY_A) == GLFW_PRESS)
+	if(windowHandler.GetKInput(GLFW_KEY_A) == GLFW_PRESS)
 	{
 		inputAxis.y -= 1.f;
 	}
-	else
-	{
-		inputAxis.y = 0.f;
-	}
+	
 	if(windowHandler.GetKInput(GLFW_KEY_Q) == GLFW_PRESS)
 	{
 		inputAxis.z -= 1.f;
 	}
-	else if(windowHandler.GetKInput(GLFW_KEY_E) == GLFW_PRESS)
+	if(windowHandler.GetKInput(GLFW_KEY_E) == GLFW_PRESS)
 	{
 		inputAxis.z += 1.f;
 	}
-	else
-	{
-		inputAxis.z = 0.f;
-	}
+	
 	if(windowHandler.GetKInput(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
 		bSprint = true;
