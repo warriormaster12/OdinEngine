@@ -27,7 +27,8 @@ struct MeshPushConstants {
 
 
 struct Material {
-	VkDescriptorSet textureSet{VK_NULL_HANDLE};
+	VkDescriptorSet materialSet{VK_NULL_HANDLE};
+	AllocatedBuffer objectMatBuffer;
 	VkPipeline pipeline;
 	VkPipelineLayout pipelineLayout;
 
@@ -86,7 +87,6 @@ struct FrameData {
 
 	AllocatedBuffer indirectDrawBuffer;
 	AllocatedBuffer objectBuffer;
-	AllocatedBuffer objectFragBuffer;
 	VkDescriptorSet objectDescriptor;
 };
 
@@ -120,7 +120,7 @@ struct GPUObjectData {
 	glm::mat4 modelMatrix;
 };
 
-struct GPUObjectFragData {
+struct GPUObjectMatData {
 	MaterialData matData;
 };
 
@@ -172,7 +172,7 @@ public:
 
 	VkDescriptorSetLayout globalSetLayout{};
 	VkDescriptorSetLayout objectSetLayout{};
-	VkDescriptorSetLayout singleTextureSetLayout{};
+	VkDescriptorSetLayout materialTextureSetLayout{};
 
 	GPUSceneData sceneParameters;
 	AllocatedBuffer sceneParameterBuffer;

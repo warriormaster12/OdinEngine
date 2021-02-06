@@ -28,7 +28,7 @@ VkResult drawResult;
 void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation allocation, const Camera& cam);
 void UploadSceneData(const VmaAllocator& allocator, const VmaAllocation allocation, const GPUSceneData& data, size_t offset);
 void UploadObjectData(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects);
-void UploadObjectFragData(const VmaAllocator& allocator, const VmaAllocation allocation, Material material);
+void UploadObjectMatData(const VmaAllocator& allocator, std::vector<Material>& materials);
 void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects);
 std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, const DescriptorSetData& descriptorSets);
 void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls);
@@ -484,7 +484,7 @@ void VulkanRenderer::InitPipelines()
 	//we start from  the normal mesh layout
 	VkPipelineLayoutCreateInfo textured_pipeline_layout_info = mesh_pipeline_layout_info;
 		
-	VkDescriptorSetLayout texturedSetLayouts[] = { globalSetLayout, objectSetLayout,singleTextureSetLayout };
+	VkDescriptorSetLayout texturedSetLayouts[] = { globalSetLayout, objectSetLayout,materialTextureSetLayout };
 
 	textured_pipeline_layout_info.setLayoutCount = 3;
 	textured_pipeline_layout_info.pSetLayouts = texturedSetLayouts;
@@ -543,6 +543,7 @@ void VulkanRenderer::InitPipelines()
 	VkPipeline texPipeline = pipelineBuilder.BuildPipeline(device, renderPass);
 	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh");
 	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh2");
+	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh3");
 
 	vkDestroyShaderModule(device, meshVertShader, nullptr);
 	vkDestroyShaderModule(device, texturedMeshShader, nullptr);
@@ -663,6 +664,23 @@ Material* VulkanRenderer::CreateMaterial(VkPipeline pipeline, VkPipelineLayout l
 	mat.pipelineLayout = layout;
 	materials[name] = mat;
 	materialList.push_back(name);
+
+	p_descriptorAllocator->Allocate(&materials[name].materialSet, materialTextureSetLayout);
+
+	materials[name].objectMatBuffer = CreateBuffer(sizeof(GPUObjectMatData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	VkDescriptorBufferInfo objectMatBufferInfo;
+	objectMatBufferInfo.buffer = materials[name].objectMatBuffer.buffer;
+	objectMatBufferInfo.offset = 0;
+	objectMatBufferInfo.range = sizeof(GPUObjectMatData);
+
+	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, materials[name].materialSet, &objectMatBufferInfo, 0);
+	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
+	mainDeletionQueue.PushFunction([=]()
+	{
+		vmaDestroyBuffer(allocator, materials[name].objectMatBuffer.buffer, materials[name].objectMatBuffer.allocation);
+	});
+
 	return &materials[name];
 }
 
@@ -695,8 +713,8 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 
 	// Convert material ID to material
 	// TODO: Handle nullptr material, apply default?
-	// TODO: Material at index 0 is broken
-	Material material = *GetMaterial(materialList[1]);
+	// TODO: Handle multiple materials dynamically
+	std::vector<Material> materials {*GetMaterial(materialList[0]), *GetMaterial(materialList[1]), *GetMaterial(materialList[2])};
 
 	// Store descriptor set data
 	DescriptorSetData descriptorSets;
@@ -708,7 +726,8 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera);
 	UploadSceneData(allocator, sceneParameterBuffer.allocation, sceneParameters, uniformOffset);
 	UploadObjectData(allocator, GetCurrentFrame().objectBuffer.allocation, objects);
-	UploadObjectFragData(allocator, GetCurrentFrame().objectFragBuffer.allocation, material);
+	
+	UploadObjectMatData(allocator, materials);
 
 	UploadDrawCalls(allocator, GetCurrentFrame().indirectDrawBuffer.allocation, objects);
 
@@ -720,10 +739,20 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 
 void VulkanRenderer::InitScene()
 {
-	GetMaterial("texturedmesh2")->albedo = glm::vec4(1.0f);
-	GetMaterial("texturedmesh2")->metallic = 1.0f;
-	GetMaterial("texturedmesh2")->roughness = 0.25f;
+	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
+	GetMaterial("texturedmesh")->metallic = 1.0f;
+	GetMaterial("texturedmesh")->roughness = 0.25f;
+	GetMaterial("texturedmesh")->ao = 1.0f;
+
+	GetMaterial("texturedmesh2")->albedo = glm::vec4(1.0f,0.0f,0.0f,1.0f);
+	GetMaterial("texturedmesh2")->metallic = 0.5f;
+	GetMaterial("texturedmesh2")->roughness = 0.5f;
 	GetMaterial("texturedmesh2")->ao = 1.0f;
+
+	GetMaterial("texturedmesh3")->albedo = glm::vec4(1.0f);
+	GetMaterial("texturedmesh3")->metallic = 0.5f;
+	GetMaterial("texturedmesh3")->roughness = 0.5f;
+	GetMaterial("texturedmesh3")->ao = 1.0f;
 	
 	//create a sampler for the texture
 	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
@@ -733,7 +762,8 @@ void VulkanRenderer::InitScene()
 
 	LoadImage("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
 	CreateTexture("texturedmesh", "empire_diffuse", blockySampler);
-	//LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
+	LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
+	CreateTexture("texturedmesh3", "vikingroom_diffuse", blockySampler);
 	CreateTexture("texturedmesh2", "empty", blockySampler);
 
 	mainDeletionQueue.PushFunction([=]() {
@@ -795,16 +825,17 @@ void VulkanRenderer::InitDescriptors()
 	globalSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set1);
 
 	VkDescriptorSetLayoutBinding objectBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
-	VkDescriptorSetLayoutBinding objectFragBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
-	std::vector<VkDescriptorSetLayoutBinding> objectBindings = { objectBind,objectFragBind };
+	std::vector<VkDescriptorSetLayoutBinding> objectBindings = { objectBind };
 	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(objectBindings);
 	objectSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set2);
 
-	VkDescriptorSetLayoutBinding diffuseTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {diffuseTextureBind};
+
+	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	VkDescriptorSetLayoutBinding diffuseTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, diffuseTextureBind};
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
-	singleTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
+	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
 	const size_t sceneParamBufferSize = FRAME_OVERLAP * PadUniformBufferSize(sizeof(GPUSceneData));
 	sceneParameterBuffer = CreateBuffer(sceneParamBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -817,7 +848,6 @@ void VulkanRenderer::InitDescriptors()
 
 		const int MAX_OBJECTS = 10000;
 		frames[i].objectBuffer = CreateBuffer(sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-		frames[i].objectFragBuffer = CreateBuffer(sizeof(GPUObjectFragData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 		const int MAX_COMMANDS = 1000;
 		frames[i].indirectDrawBuffer = CreateBuffer(MAX_COMMANDS * sizeof(VkDrawIndirectCommand),
@@ -842,11 +872,6 @@ void VulkanRenderer::InitDescriptors()
 		objectBufferInfo.offset = 0;
 		objectBufferInfo.range = sizeof(GPUObjectData) * MAX_OBJECTS;
 
-		VkDescriptorBufferInfo objectFragBufferInfo;
-		objectFragBufferInfo.buffer = frames[i].objectFragBuffer.buffer;
-		objectFragBufferInfo.offset = 0;
-		objectFragBufferInfo.range = sizeof(GPUObjectFragData) * MAX_OBJECTS;
-
 
 
 		VkWriteDescriptorSet cameraWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, frames[i].globalDescriptor,&cameraInfo,0);
@@ -854,14 +879,12 @@ void VulkanRenderer::InitDescriptors()
 		VkWriteDescriptorSet sceneWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, frames[i].globalDescriptor, &sceneInfo, 1);
 
 		VkWriteDescriptorSet objectWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, frames[i].objectDescriptor, &objectBufferInfo, 0);
-		VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, frames[i].objectDescriptor, &objectFragBufferInfo, 1);
 
-		std::vector <VkWriteDescriptorSet> setWrites = { cameraWrite,sceneWrite,objectWrite, objectFragWrite };
+		std::vector <VkWriteDescriptorSet> setWrites = { cameraWrite,sceneWrite,objectWrite};
 
 		vkUpdateDescriptorSets(device, setWrites.size(), setWrites.data(), 0, nullptr);
 		mainDeletionQueue.PushFunction([=]()
 		{
-			vmaDestroyBuffer(allocator, frames[i].objectFragBuffer.buffer, frames[i].objectFragBuffer.allocation);
 			vmaDestroyBuffer(allocator, frames[i].objectBuffer.buffer, frames[i].objectBuffer.allocation);
 			vmaDestroyBuffer(allocator, frames[i].indirectDrawBuffer.buffer, frames[i].indirectDrawBuffer.allocation);
 			vmaDestroyBuffer(allocator, frames[i].cameraBuffer.buffer, frames[i].cameraBuffer.allocation);
@@ -916,16 +939,14 @@ void VulkanRenderer::CreateTexture(std::string materialName, std::string texture
 {
 	Material* texturedMaterial = GetMaterial(materialName);
 
-	p_descriptorAllocator->Allocate(&texturedMaterial->textureSet, singleTextureSetLayout);
-
 	//write to the descriptor set so that it points to our empire_diffuse texture
 	VkDescriptorImageInfo imageBufferInfo;
 	imageBufferInfo.sampler = sampler;
 	imageBufferInfo.imageView = _loadedTextures[textureName].imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->textureSet, &imageBufferInfo, binding);
-
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, 1);
+	
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
 }
 
@@ -973,18 +994,21 @@ void UploadObjectData(const VmaAllocator& allocator, const VmaAllocation allocat
 	vmaUnmapMemory(allocator, allocation);
 }
 
-void UploadObjectFragData(const VmaAllocator& allocator, const VmaAllocation allocation, Material material)
+void UploadObjectMatData(const VmaAllocator& allocator, std::vector<Material>& materials)
 {
-    GPUObjectFragData fragData;
-    fragData.matData.albedo = material.albedo;
-    fragData.matData.metallic = glm::vec4(glm::vec3(material.metallic), 0.0f);
-    fragData.matData.roughness = glm::vec4(glm::vec3(material.roughness), 0.0f);
-    fragData.matData.ao = glm::vec4(glm::vec3(material.ao), 0.0f);
+	for(auto material : materials)
+	{
+		GPUObjectMatData fragData;
+		fragData.matData.albedo = material.albedo;
+		fragData.matData.metallic = glm::vec4(glm::vec3(material.metallic), 0.0f);
+		fragData.matData.roughness = glm::vec4(glm::vec3(material.roughness), 0.0f);
+		fragData.matData.ao = glm::vec4(glm::vec3(material.ao), 0.0f);
 
-	void* objectSSBO;
-	vmaMapMemory(allocator, allocation, &objectSSBO);
-	memcpy(objectSSBO, &fragData, 1 * sizeof(GPUObjectFragData));
-	vmaUnmapMemory(allocator, allocation);
+		void* objectSSBO;
+		vmaMapMemory(allocator, material.objectMatBuffer.allocation, &objectSSBO);
+		memcpy(objectSSBO, &fragData, 1 * sizeof(GPUObjectMatData));
+		vmaUnmapMemory(allocator, material.objectMatBuffer.allocation);
+	}
 }
 
 void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation allocation, const std::vector<RenderObject>& objects)
@@ -1074,10 +1098,8 @@ void BindMaterial(Material* material, const DescriptorSetData& descriptorSets)
 
     //object data descriptor
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 1, 1, &descriptorSets.object, 0, &descriptorSets.objectOffset);
-    if (material->textureSet != VK_NULL_HANDLE) {
-        //texture descriptor
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 2, 1, &material->textureSet, 0, nullptr);
-    }
+    //texture + material descriptor
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 2, 1, &material->materialSet, 0, nullptr);
 }
 
 void BindMesh(Mesh* mesh)
