@@ -158,8 +158,8 @@ const std::string vkcomponent::CompileGLSL(const std::string& filename)
 
         if (!file_glsl.is_open()) 
         {
-            std::cout << "Failed to load shader: " << filename << std::endl;
-            throw std::runtime_error("failed to open file: " + filename);
+            ENGINE_CORE_ERROR("Failed to load shader: {0}", filename);
+            abort();
         }
 
         std::string InputGLSL((std::istreambuf_iterator<char>(file_glsl)),
@@ -197,26 +197,26 @@ const std::string vkcomponent::CompileGLSL(const std::string& filename)
 
         if (!Shader.preprocess(&Resources, DefaultVersion, ENoProfile, false, false, messages, &PreprocessedGLSL, Includer)) 
         {
-            std::cout << "GLSL Preprocessing Failed for: " << filename << std::endl;
-            std::cout << Shader.getInfoLog() << std::endl;
-            std::cout << Shader.getInfoDebugLog() << std::endl;
+            ENGINE_CORE_ERROR("GLSL Preprocessing Failed for: {0}", filename);
+            ENGINE_CORE_ERROR(Shader.getInfoLog());
+            ENGINE_CORE_ERROR(Shader.getInfoDebugLog());
         }
         const char* PreprocessedCStr = PreprocessedGLSL.c_str();
         Shader.setStrings(&PreprocessedCStr, 1);
         if (!Shader.parse(&Resources, 100, false, messages))
         {
-            std::cout << "GLSL Parsing Failed for: " << filename << std::endl;
-            std::cout << Shader.getInfoLog() << std::endl;
-            std::cout << Shader.getInfoDebugLog() << std::endl;
+            ENGINE_CORE_ERROR("GLSL Parsing Failed for: {0}",filename);
+            ENGINE_CORE_ERROR(Shader.getInfoLog());
+            ENGINE_CORE_ERROR(Shader.getInfoDebugLog());
         }
         glslang::TProgram Program;
         Program.addShader(&Shader);
 
         if(!Program.link(messages))
         {
-            std::cout << "GLSL Linking Failed for: " << filename << std::endl;
-            std::cout << Shader.getInfoLog() << std::endl;
-            std::cout << Shader.getInfoDebugLog() << std::endl;
+            ENGINE_CORE_ERROR("GLSL Linking Failed for: {0} ", filename);
+            ENGINE_CORE_ERROR(Shader.getInfoLog());
+            ENGINE_CORE_ERROR(Shader.getInfoDebugLog());
         }
         std::vector<unsigned int> SpirV;
         spv::SpvBuildLogger logger;
