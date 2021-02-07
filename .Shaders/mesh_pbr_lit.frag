@@ -112,13 +112,12 @@ void main()
     float roughness = texture(metalRoughnessMap, texCoord).g;
 
     // this is for objects that have a texture loaded
-    if (albedo.r > 0.1f || albedo.g > 0.1f || albedo.b > 0.1f)
+    if (albedo.a > 0.1f)
     {
         albedo *= materialData.albedo;
     }
-
     // this is for objects that have an empty texture
-    else if (albedo.rgba == vec4(0.0f))
+    else 
     {
         albedo += materialData.albedo;
     }
