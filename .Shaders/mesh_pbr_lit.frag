@@ -36,9 +36,27 @@ layout(set = 2, binding = 0) readonly buffer MaterialData{
 } materialData;
 
 layout(set = 2, binding = 1) uniform sampler2D albedoMap;
+layout(set = 2, binding = 2) uniform sampler2D aoMap;
+layout(set = 2, binding = 3) uniform sampler2D normalMap;
 
 
 const float PI = 3.14159265359;
+vec3 getNormalFromMap()
+{
+    vec3 tangentNormal = texture(normalMap, texCoord).xyz * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(WorldPos);
+    vec3 Q2  = dFdy(WorldPos);
+    vec2 st1 = dFdx(texCoord);
+    vec2 st2 = dFdy(texCoord);
+
+    vec3 N   = normalize(Normal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
 // ----------------------------------------------------------------------------
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -83,6 +101,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 void main()
 {
 	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
+    float ao = texture(aoMap, texCoord).r;
 
     // this is for objects that have a texture loaded
     if (albedo.r != 0.0f || albedo.g != 0.0f || albedo.b != 0.0f)
@@ -100,8 +119,25 @@ void main()
     {
         albedo += materialData.albedo;
     }
+
+    if(ao != 0.0f)
+    {
+        ao *= float(materialData.ao);
+    }
+    else
+    {
+        ao += float(materialData.ao);
+    }
+    vec3 N;
+    if(texture(normalMap, texCoord).xyz != vec3(0.0f))
+    {
+        N = getNormalFromMap();
+    }
+    else
+    {
+        N = normalize(Normal);
+    }
     
-    vec3 N = normalize(Normal);
     vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
@@ -149,7 +185,7 @@ void main()
     
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    vec3 ambient = vec3(0.03) * vec3(albedo) * float(materialData.ao);
+    vec3 ambient = vec3(0.03) * vec3(albedo) * ao;
 
     vec3 color = ambient + Lo;
 

@@ -784,7 +784,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	// Static light data, can be moved away
 	sceneParameters.lightData.lightPositions[0] = glm::vec4(glm::vec3(0.0f,  1.0f, 2.0f),0.0f);
 	sceneParameters.lightData.lightColors[0] = glm::vec4(glm::vec3(1.0f),0.0f);
-	sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  -1.0f, -2.0f),0.0f);
+	sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  4.0f, 8.0f),0.0f);
 	sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(3.0f),0.0f);
 
 	// Convert material ID to material
@@ -817,6 +817,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 
 void VulkanRenderer::InitScene()
 {
+	//TODO: move all of this into higher rendering level
 	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
 	GetMaterial("texturedmesh")->metallic = 1.0f;
 	GetMaterial("texturedmesh")->roughness = 0.25f;
@@ -833,8 +834,8 @@ void VulkanRenderer::InitScene()
 	GetMaterial("texturedmesh3")->ao = 1.0f;
 
 	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
-	GetMaterial("DamagedHelmetMat")->metallic = 0.5f;
-	GetMaterial("DamagedHelmetMat")->roughness = 0.5f;
+	GetMaterial("DamagedHelmetMat")->metallic = 0.8f;
+	GetMaterial("DamagedHelmetMat")->roughness = 0.2f;
 	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
 	
 	//create a sampler for the texture
@@ -843,15 +844,31 @@ void VulkanRenderer::InitScene()
 	VkSampler blockySampler;
 	vkCreateSampler(device, &samplerInfo, nullptr, &blockySampler);
 	LoadImage("empty", "");
+	//empty texture slots
+	CreateTexture("texturedmesh2", "empty", blockySampler);
+	CreateTexture("texturedmesh2", "empty", blockySampler, 2);
+	CreateTexture("texturedmesh", "empty", blockySampler, 2);
+	CreateTexture("texturedmesh3", "empty", blockySampler, 2);
+	CreateTexture("texturedmesh2", "empty", blockySampler, 3);
+	CreateTexture("texturedmesh", "empty", blockySampler, 3);
+	CreateTexture("texturedmesh3", "empty", blockySampler, 3);
+
 	LoadImage("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
 	CreateTexture("texturedmesh", "empire_diffuse", blockySampler);
 	LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
 	CreateTexture("texturedmesh3", "vikingroom_diffuse", blockySampler);
-	CreateTexture("texturedmesh2", "empty", blockySampler);
 
 	//DamagedHelmet
+
+	//diffuse
 	LoadImage("DamagedHelmet_diffuse", "EngineAssets/DamagedHelmet/Default_albedo.jpg");
 	CreateTexture("DamagedHelmetMat", "DamagedHelmet_diffuse", blockySampler);
+	LoadImage("DamagedHelmet_ao", "EngineAssets/DamagedHelmet/Default_AO.jpg");
+	//ao
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_ao", blockySampler,2);
+	//normal
+	LoadImage("DamagedHelmet_normal", "EngineAssets/DamagedHelmet/Default_normal.jpg");
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_normal", blockySampler,3);
 
 
 	mainDeletionQueue.PushFunction([=]() {
@@ -896,7 +913,9 @@ void VulkanRenderer::InitDescriptors()
 
 	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	VkDescriptorSetLayoutBinding diffuseTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, diffuseTextureBind};
+	VkDescriptorSetLayoutBinding aoTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
+	VkDescriptorSetLayoutBinding normalTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3);
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, diffuseTextureBind, aoTextureBind, normalTextureBind};
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
