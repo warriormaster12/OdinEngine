@@ -786,7 +786,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	// Static light data, can be moved away
 	sceneParameters.lightData.lightPositions[0] = glm::vec4(glm::vec3(0.0f,  1.0f, 2.0f),0.0f);
 	sceneParameters.lightData.lightColors[0] = glm::vec4(glm::vec3(1.0f),0.0f);
-	sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  4.0f, 8.0f),0.0f);
+	sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),0.0f);
 	sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(3.0f),0.0f);
 
 	// Convert material ID to material

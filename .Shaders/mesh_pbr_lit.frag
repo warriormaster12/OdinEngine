@@ -145,6 +145,22 @@ void main()
     {
         N = normalize(Normal);
     }
+    if(metallic != 0.0f)
+    {
+        metallic *= float(materialData.metallic);
+    }
+    else
+    {
+        metallic += float(materialData.metallic);
+    }
+    if(roughness != 0.0f)
+    {
+        roughness *= float(materialData.roughness);
+    }
+    else
+    {
+        roughness += float(materialData.roughness);  
+    }
     emission *= 8.0f;
     
     vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
