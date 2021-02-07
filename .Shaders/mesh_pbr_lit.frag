@@ -115,11 +115,6 @@ void main()
     if (albedo.r != 0.0f || albedo.g != 0.0f || albedo.b != 0.0f)
     {
         albedo *= materialData.albedo;
-        if (albedo.a < 0.1)
-        {
-            discard;
-        }
-
     }
 
     // this is for objects that have an empty texture
@@ -209,7 +204,7 @@ void main()
     
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    vec3 ambient = vec3(0.03) * vec3(albedo) * ao;
+    vec3 ambient = vec3(0.03) * albedo.rgb * ao;
 
     vec3 color = ambient + Lo + emission;
 
@@ -218,5 +213,5 @@ void main()
     // gamma correct
     color = pow(color, vec3(1.0/2.2)); 
 
-    outFragColor = vec4(color, 1.0f);
+    outFragColor = vec4(color, albedo.a);
 }

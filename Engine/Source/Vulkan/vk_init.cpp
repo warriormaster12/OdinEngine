@@ -96,7 +96,7 @@ VkPipelineMultisampleStateCreateInfo vkinit::MultisamplingStateCreateInfo()
     info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
     info.minSampleShading = 1.0f;
     info.pSampleMask = nullptr;
-    info.alphaToCoverageEnable = VK_FALSE;
+    info.alphaToCoverageEnable = VK_TRUE;
     info.alphaToOneEnable = VK_FALSE;
     return info;
 }
@@ -111,7 +111,7 @@ VkPipelineColorBlendAttachmentState vkinit::ColorBlendAttachmentState() {
     colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
     colorBlendAttachment.srcAlphaBlendFactor =  VK_BLEND_FACTOR_SRC_ALPHA;
     colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
     return colorBlendAttachment;
 }
 

@@ -62,9 +62,9 @@ namespace {
         {
             GPUMaterialData materialData;
             materialData.albedo = material.albedo;
-            materialData.metallic = glm::vec4(glm::vec3(material.metallic), 0.0f);
-            materialData.roughness = glm::vec4(glm::vec3(material.roughness), 0.0f);
-            materialData.ao = glm::vec4(glm::vec3(material.ao), 0.0f);
+            materialData.metallic = glm::vec4(glm::vec3(material.metallic), 1.0f);
+            materialData.roughness = glm::vec4(glm::vec3(material.roughness), 1.0f);
+            materialData.ao = glm::vec4(glm::vec3(material.ao), 1.0f);
 			materialData.emissionColor = glm::vec4(glm::vec3(material.emissionColor), 1.0f);
 			materialData.emissionPower = glm::vec4(material.emissionPower);
 
@@ -834,7 +834,7 @@ void VulkanRenderer::InitScene()
 	GetMaterial("texturedmesh2")->emissionColor = glm::vec3(0.0f);
 	GetMaterial("texturedmesh2")->emissionPower = 1.0f;
 
-	GetMaterial("texturedmesh3")->albedo = glm::vec4(0.5f);
+	GetMaterial("texturedmesh3")->albedo = glm::vec4(0.5f,0.5f,0.5f,1.0f);
 	GetMaterial("texturedmesh3")->metallic = 0.5f;
 	GetMaterial("texturedmesh3")->roughness = 0.5f;
 	GetMaterial("texturedmesh3")->ao = 1.0f;
