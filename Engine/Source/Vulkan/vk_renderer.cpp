@@ -824,21 +824,21 @@ void VulkanRenderer::InitScene()
 	GetMaterial("texturedmesh")->metallic = 1.0f;
 	GetMaterial("texturedmesh")->roughness = 0.25f;
 	GetMaterial("texturedmesh")->ao = 1.0f;
-	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,1.0f);
+	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 	GetMaterial("texturedmesh")->emissionPower = 1.0f;
 
 	GetMaterial("texturedmesh2")->albedo = glm::vec4(0.0f,0.0f,0.0f,1.0f);
 	GetMaterial("texturedmesh2")->metallic = 0.5f;
 	GetMaterial("texturedmesh2")->roughness = 0.5f;
 	GetMaterial("texturedmesh2")->ao = 1.0f;
-	GetMaterial("texturedmesh2")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,1.0f);
+	GetMaterial("texturedmesh2")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 	GetMaterial("texturedmesh2")->emissionPower = 1.0f;
 
 	GetMaterial("texturedmesh3")->albedo = glm::vec4(0.5f,0.5f,0.5f,1.0f);
 	GetMaterial("texturedmesh3")->metallic = 0.5f;
 	GetMaterial("texturedmesh3")->roughness = 0.5f;
 	GetMaterial("texturedmesh3")->ao = 1.0f;
-	GetMaterial("texturedmesh3")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,1.0f);
+	GetMaterial("texturedmesh3")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 	GetMaterial("texturedmesh3")->emissionPower = 1.0f;
 
 	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);

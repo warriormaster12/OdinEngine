@@ -117,7 +117,7 @@ void main()
         albedo *= materialData.albedo;
     }
     // this is for objects that have an empty texture
-    else 
+    else if (albedo.rgba == vec4(0.0f))
     {
         albedo += materialData.albedo;
     }
