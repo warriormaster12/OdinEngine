@@ -865,6 +865,9 @@ void VulkanRenderer::InitScene()
 	CreateTexture("texturedmesh2", "empty", blockySampler, 4);
 	CreateTexture("texturedmesh", "empty", blockySampler, 4);
 	CreateTexture("texturedmesh3", "empty", blockySampler, 4);
+	CreateTexture("texturedmesh2", "empty", blockySampler, 5);
+	CreateTexture("texturedmesh", "empty", blockySampler, 5);
+	CreateTexture("texturedmesh3", "empty", blockySampler, 5);
 
 	LoadImage("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
 	CreateTexture("texturedmesh", "empire_diffuse", blockySampler);
@@ -886,6 +889,9 @@ void VulkanRenderer::InitScene()
 	//emission
 	LoadImage("DamagedHelmet_emission", "EngineAssets/DamagedHelmet/Default_emissive.jpg");
 	CreateTexture("DamagedHelmetMat", "DamagedHelmet_emission", blockySampler,4);
+	//metallicRoughness
+	LoadImage("DamagedHelmet_metalRoughness", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg");
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_metalRoughness", blockySampler,5);
 
 
 	mainDeletionQueue.PushFunction([=]() {
@@ -933,7 +939,8 @@ void VulkanRenderer::InitDescriptors()
 	VkDescriptorSetLayoutBinding aoTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
 	VkDescriptorSetLayoutBinding normalTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3);
 	VkDescriptorSetLayoutBinding emissionTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4);
-	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, diffuseTextureBind, aoTextureBind, normalTextureBind, emissionTextureBind};
+	VkDescriptorSetLayoutBinding metalRoughnessTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5);
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, diffuseTextureBind, aoTextureBind, normalTextureBind, emissionTextureBind, metalRoughnessTextureBind};
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 

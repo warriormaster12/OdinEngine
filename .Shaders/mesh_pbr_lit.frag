@@ -42,6 +42,7 @@ layout(set = 2, binding = 1) uniform sampler2D albedoMap;
 layout(set = 2, binding = 2) uniform sampler2D aoMap;
 layout(set = 2, binding = 3) uniform sampler2D normalMap;
 layout(set = 2, binding = 4) uniform sampler2D emissionMap;
+layout(set = 2, binding = 5) uniform sampler2D metalRoughnessMap;
 
 
 const float PI = 3.14159265359;
@@ -107,6 +108,8 @@ void main()
 	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
     vec3 emission = texture(emissionMap, texCoord).rgb;
     float ao = texture(aoMap, texCoord).r;
+    float metallic = texture(metalRoughnessMap, texCoord).b;
+    float roughness = texture(metalRoughnessMap, texCoord).g;
 
     // this is for objects that have a texture loaded
     if (albedo.r != 0.0f || albedo.g != 0.0f || albedo.b != 0.0f)
@@ -142,14 +145,14 @@ void main()
     {
         N = normalize(Normal);
     }
-    emission *= vec3(materialData.emissionColor * 8.0f);
+    emission *= 8.0f;
     
     vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, vec3(albedo), float(materialData.metallic));
+    F0 = mix(F0, vec3(albedo), metallic);
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
@@ -163,8 +166,8 @@ void main()
         vec3 radiance = vec3(sceneData.lightData.lightColors[i]) * attenuation;
 
         // Cook-Torrance BRDF
-        float NDF = DistributionGGX(N, H, float(materialData.roughness));   
-        float G   = GeometrySmith(N, V, L, float(materialData.roughness));      
+        float NDF = DistributionGGX(N, H, roughness);   
+        float G   = GeometrySmith(N, V, L, roughness);      
         vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
             
         vec3 nominator    = NDF * G * F; 
@@ -180,7 +183,7 @@ void main()
         // multiply kD by the inverse metalness such that only non-metals 
         // have diffuse lighting, or a linear blend if partly metal (pure metals
         // have no diffuse light).
-        kD *= 1.0 - float(materialData.metallic);	  
+        kD *= 1.0 - metallic;	  
 
         // scale light by NdotL
         float NdotL = max(dot(N, L), 0.0);        
