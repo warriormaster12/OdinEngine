@@ -28,7 +28,7 @@ layout(set = 0, binding = 1) uniform  SceneData{
 	
 } sceneData;
 
-layout(set = 2, binding = 0) readonly buffer MaterialData{
+layout(set = 2, binding = 0) uniform MaterialData{
 	vec4 albedo; // vec4
 	vec4 metallic; // float
 	vec4 roughness; // float
@@ -106,7 +106,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 void main()
 {
 	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
-    vec3 emission = texture(emissionMap, texCoord).rgb;
+    vec3 emission = texture(emissionMap, texCoord).rgb * vec3(materialData.emissionColor) * float(materialData.emissionPower);
     float ao = texture(aoMap, texCoord).r;
     float metallic = texture(metalRoughnessMap, texCoord).b;
     float roughness = texture(metalRoughnessMap, texCoord).g;
@@ -161,7 +161,6 @@ void main()
     {
         roughness += float(materialData.roughness);  
     }
-    emission *= 8.0f;
     
     vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
 

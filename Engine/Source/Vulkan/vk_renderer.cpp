@@ -66,7 +66,7 @@ namespace {
             materialData.roughness = glm::vec4(glm::vec3(material.roughness), 0.0f);
             materialData.ao = glm::vec4(glm::vec3(material.ao), 0.0f);
 			materialData.emissionColor = glm::vec4(glm::vec3(material.emissionColor), 1.0f);
-			materialData.emissionPower = glm::vec4(glm::vec3(materialData.emissionPower), 0.0f);
+			materialData.emissionPower = glm::vec4(material.emissionPower);
 
 			UploadSingleData(allocator, material.buffer.allocation, materialData);
         }
@@ -742,7 +742,7 @@ Material* VulkanRenderer::CreateMaterial(VkPipeline pipeline, VkPipelineLayout l
 	{
 		CreateBufferInfo info;
 		info.allocSize = sizeof(GPUMaterialData);
-		info.bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 		CreateBuffer(allocator, &materials[name].buffer, info);
 	}
@@ -752,7 +752,7 @@ Material* VulkanRenderer::CreateMaterial(VkPipeline pipeline, VkPipelineLayout l
 	materialBufferInfo.offset = 0;
 	materialBufferInfo.range = sizeof(GPUMaterialData);
 
-	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
+	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
 	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
 	mainDeletionQueue.PushFunction([=]()
 	{
@@ -842,11 +842,11 @@ void VulkanRenderer::InitScene()
 	GetMaterial("texturedmesh3")->emissionPower = 1.0f;
 
 	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
-	GetMaterial("DamagedHelmetMat")->metallic = 0.8f;
-	GetMaterial("DamagedHelmetMat")->roughness = 0.2f;
+	GetMaterial("DamagedHelmetMat")->metallic = 1.0f;
+	GetMaterial("DamagedHelmetMat")->roughness = 0.1f;
 	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
 	GetMaterial("DamagedHelmetMat")->emissionColor = glm::vec3(1.0f);
-	GetMaterial("DamagedHelmetMat")->emissionPower = 16.0f;
+	GetMaterial("DamagedHelmetMat")->emissionPower = 8.0f;
 	
 	//create a sampler for the texture
 	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
@@ -934,7 +934,7 @@ void VulkanRenderer::InitDescriptors()
 	objectSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set2);
 
 
-	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	VkDescriptorSetLayoutBinding diffuseTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	VkDescriptorSetLayoutBinding aoTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
 	VkDescriptorSetLayoutBinding normalTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3);
