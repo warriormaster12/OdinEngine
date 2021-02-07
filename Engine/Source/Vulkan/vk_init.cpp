@@ -97,7 +97,7 @@ VkPipelineMultisampleStateCreateInfo vkinit::MultisamplingStateCreateInfo()
     info.minSampleShading = 1.0f;
     info.pSampleMask = nullptr;
     info.alphaToCoverageEnable = VK_TRUE;
-    info.alphaToOneEnable = VK_FALSE;
+    info.alphaToOneEnable = VK_TRUE;
     return info;
 }
 
