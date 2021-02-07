@@ -31,7 +31,7 @@ struct Material {
 	float roughness; // float
 	float ao; // float
 
-	glm::vec3 emissionColor; //vec3
+	glm::vec4 emissionColor; //vec3
     float emissionPower; // float
 
 	

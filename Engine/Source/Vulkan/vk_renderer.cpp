@@ -65,7 +65,7 @@ namespace {
             materialData.metallic = glm::vec4(glm::vec3(material.metallic), 1.0f);
             materialData.roughness = glm::vec4(glm::vec3(material.roughness), 1.0f);
             materialData.ao = glm::vec4(glm::vec3(material.ao), 1.0f);
-			materialData.emissionColor = glm::vec4(glm::vec3(material.emissionColor), 1.0f);
+			materialData.emissionColor = glm::vec4(material.emissionColor);
 			materialData.emissionPower = glm::vec4(material.emissionPower);
 
 			UploadSingleData(allocator, material.buffer.allocation, materialData);
@@ -824,28 +824,28 @@ void VulkanRenderer::InitScene()
 	GetMaterial("texturedmesh")->metallic = 1.0f;
 	GetMaterial("texturedmesh")->roughness = 0.25f;
 	GetMaterial("texturedmesh")->ao = 1.0f;
-	GetMaterial("texturedmesh")->emissionColor = glm::vec3(0.0f);
+	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,1.0f);
 	GetMaterial("texturedmesh")->emissionPower = 1.0f;
 
 	GetMaterial("texturedmesh2")->albedo = glm::vec4(0.0f,0.0f,0.0f,1.0f);
 	GetMaterial("texturedmesh2")->metallic = 0.5f;
 	GetMaterial("texturedmesh2")->roughness = 0.5f;
 	GetMaterial("texturedmesh2")->ao = 1.0f;
-	GetMaterial("texturedmesh2")->emissionColor = glm::vec3(0.0f);
+	GetMaterial("texturedmesh2")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,1.0f);
 	GetMaterial("texturedmesh2")->emissionPower = 1.0f;
 
 	GetMaterial("texturedmesh3")->albedo = glm::vec4(0.5f,0.5f,0.5f,1.0f);
 	GetMaterial("texturedmesh3")->metallic = 0.5f;
 	GetMaterial("texturedmesh3")->roughness = 0.5f;
 	GetMaterial("texturedmesh3")->ao = 1.0f;
-	GetMaterial("texturedmesh3")->emissionColor = glm::vec3(0.0f);
+	GetMaterial("texturedmesh3")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,1.0f);
 	GetMaterial("texturedmesh3")->emissionPower = 1.0f;
 
 	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
 	GetMaterial("DamagedHelmetMat")->metallic = 1.0f;
 	GetMaterial("DamagedHelmetMat")->roughness = 0.1f;
 	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
-	GetMaterial("DamagedHelmetMat")->emissionColor = glm::vec3(1.0f);
+	GetMaterial("DamagedHelmetMat")->emissionColor = glm::vec4(1.0f);
 	GetMaterial("DamagedHelmetMat")->emissionPower = 8.0f;
 	
 	//create a sampler for the texture

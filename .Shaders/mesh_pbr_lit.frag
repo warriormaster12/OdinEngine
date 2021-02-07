@@ -106,13 +106,13 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 void main()
 {
 	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
-    vec3 emission = texture(emissionMap, texCoord).rgb * vec3(materialData.emissionColor) * float(materialData.emissionPower);
+    vec4 emission = texture(emissionMap, texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
     float ao = texture(aoMap, texCoord).r;
     float metallic = texture(metalRoughnessMap, texCoord).b;
     float roughness = texture(metalRoughnessMap, texCoord).g;
 
     // this is for objects that have a texture loaded
-    if (albedo.r != 0.0f || albedo.g != 0.0f || albedo.b != 0.0f)
+    if (albedo.r > 0.1f || albedo.g > 0.1f || albedo.b > 0.1f)
     {
         albedo *= materialData.albedo;
     }
@@ -123,7 +123,7 @@ void main()
         albedo += materialData.albedo;
     }
 
-    if(ao != 0.0f)
+    if(ao > 0.1f)
     {
         ao *= float(materialData.ao);
     }
@@ -131,8 +131,8 @@ void main()
     {
         ao += float(materialData.ao);
     }
-    vec3 N;
-    if(texture(normalMap, texCoord).xyz != vec3(0.0f))
+    vec3 N = texture(normalMap, texCoord).xyz;
+    if(N.x > 0.1f || N.y > 0.1f || N.z > 0.1f)
     {
         N = getNormalFromMap();
     }
@@ -140,7 +140,7 @@ void main()
     {
         N = normalize(Normal);
     }
-    if(metallic != 0.0f)
+    if(metallic > 0.1f)
     {
         metallic *= float(materialData.metallic);
     }
@@ -148,7 +148,7 @@ void main()
     {
         metallic += float(materialData.metallic);
     }
-    if(roughness != 0.0f)
+    if(roughness > 0.1f)
     {
         roughness *= float(materialData.roughness);
     }
@@ -206,7 +206,7 @@ void main()
     // this ambient lighting with environment lighting).
     vec3 ambient = vec3(0.03) * albedo.rgb * ao;
 
-    vec3 color = ambient + Lo + emission;
+    vec3 color = ambient + Lo + vec3(emission);
 
     // HDR tonemapping
     color = color / (color + vec3(1.0));
