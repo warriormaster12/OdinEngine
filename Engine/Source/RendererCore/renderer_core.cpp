@@ -117,20 +117,25 @@ void RendererCore::LoadMeshes()
 	Mesh monkeyMesh{};
 	Mesh lostEmpire{};
 	Mesh viking_room{};
+	Mesh DamagedHelmet{};
 	monkeyMesh.LoadFromObj("EngineAssets/Meshes/monkey_smooth.obj");
 	lostEmpire.LoadFromObj("EngineAssets/Meshes/lost_empire.obj");
 	viking_room.LoadFromObj("EngineAssets/Meshes/viking_room.obj");
+	DamagedHelmet.LoadFromObj("EngineAssets/DamagedHelmet/DamagedHelmet.obj");
+
 
 	//UploadMesh(triMesh);
 	vkRenderer.UploadMesh(monkeyMesh);
 	vkRenderer.UploadMesh(lostEmpire);
 	vkRenderer.UploadMesh(cubeMesh);
 	vkRenderer.UploadMesh(viking_room);
+	vkRenderer.UploadMesh(DamagedHelmet);
 
 	meshes["monkey"] = monkeyMesh;
 	meshes["skyBox"] = cubeMesh;	
 	meshes["empire"] = lostEmpire;
 	meshes["viking_room"] = viking_room;
+	meshes["DamagedHelmet"] = DamagedHelmet;
 }
 
 void RendererCore::InitScene()
@@ -170,6 +175,13 @@ void RendererCore::InitScene()
 	viking_room.transformMatrix = glm::translate(glm::vec3{ 0,1.0f,3.0f }); 
 
 	renderables.push_back(viking_room);
+
+	RenderObject DamagedHelmet;
+	DamagedHelmet.p_mesh = GetMesh("DamagedHelmet");
+	DamagedHelmet.p_material = vkRenderer.GetMaterial("DamagedHelmetMat");
+	DamagedHelmet.transformMatrix = glm::translate(glm::vec3{ 0,3.0f,5.0f }); 
+
+	renderables.push_back(DamagedHelmet);
 	
 	RenderObject skyBox;
 	skyBox.p_mesh = GetMesh("skyBox");

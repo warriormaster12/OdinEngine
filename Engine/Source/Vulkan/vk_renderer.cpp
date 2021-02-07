@@ -652,6 +652,7 @@ void VulkanRenderer::InitPipelines()
 	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh");
 	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh2");
 	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh3");
+	CreateMaterial(texPipeline, texturedPipeLayout, "DamagedHelmetMat");
 
 	vkDestroyShaderModule(device, meshVertShader, nullptr);
 	vkDestroyShaderModule(device, texturedMeshShader, nullptr);
@@ -830,6 +831,11 @@ void VulkanRenderer::InitScene()
 	GetMaterial("texturedmesh3")->metallic = 0.5f;
 	GetMaterial("texturedmesh3")->roughness = 0.5f;
 	GetMaterial("texturedmesh3")->ao = 1.0f;
+
+	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
+	GetMaterial("DamagedHelmetMat")->metallic = 0.5f;
+	GetMaterial("DamagedHelmetMat")->roughness = 0.5f;
+	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
 	
 	//create a sampler for the texture
 	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
@@ -842,6 +848,11 @@ void VulkanRenderer::InitScene()
 	LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
 	CreateTexture("texturedmesh3", "vikingroom_diffuse", blockySampler);
 	CreateTexture("texturedmesh2", "empty", blockySampler);
+
+	//DamagedHelmet
+	LoadImage("DamagedHelmet_diffuse", "EngineAssets/DamagedHelmet/Default_albedo.jpg");
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_diffuse", blockySampler);
+
 
 	mainDeletionQueue.PushFunction([=]() {
 		vkDestroySampler(device, blockySampler, nullptr);
