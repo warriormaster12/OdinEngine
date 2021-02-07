@@ -30,6 +30,11 @@ struct Material {
 	float metallic; // float
 	float roughness; // float
 	float ao; // float
+
+	glm::vec3 emissionColor; //vec3
+    float emissionPower; // float
+
+	
 };
 
 struct RenderObject {
@@ -98,6 +103,9 @@ struct GPUMaterialData
 	glm::vec4 metallic; // float
 	glm::vec4 roughness; // float
 	glm::vec4 ao; // float
+
+	glm::vec4 emissionColor; //vec3
+    glm::vec4 emissionPower; // float
 };
 
 struct Light

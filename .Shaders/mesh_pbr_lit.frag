@@ -33,11 +33,15 @@ layout(set = 2, binding = 0) readonly buffer MaterialData{
 	vec4 metallic; // float
 	vec4 roughness; // float
 	vec4 ao; // float
+
+    vec4 emissionColor; //vec3
+    vec4 emissionPower; // float
 } materialData;
 
 layout(set = 2, binding = 1) uniform sampler2D albedoMap;
 layout(set = 2, binding = 2) uniform sampler2D aoMap;
 layout(set = 2, binding = 3) uniform sampler2D normalMap;
+layout(set = 2, binding = 4) uniform sampler2D emissionMap;
 
 
 const float PI = 3.14159265359;
@@ -101,6 +105,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 void main()
 {
 	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
+    vec3 emission = texture(emissionMap, texCoord).rgb;
     float ao = texture(aoMap, texCoord).r;
 
     // this is for objects that have a texture loaded
@@ -137,6 +142,7 @@ void main()
     {
         N = normalize(Normal);
     }
+    emission *= vec3(materialData.emissionColor * 8.0f);
     
     vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
 
@@ -187,7 +193,7 @@ void main()
     // this ambient lighting with environment lighting).
     vec3 ambient = vec3(0.03) * vec3(albedo) * ao;
 
-    vec3 color = ambient + Lo;
+    vec3 color = ambient + Lo + emission;
 
     // HDR tonemapping
     color = color / (color + vec3(1.0));
