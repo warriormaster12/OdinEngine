@@ -954,10 +954,10 @@ size_t VulkanRenderer::PadUniformBufferSize(size_t originalSize)
 
 void VulkanRenderer::InitDescriptors()
 {
-	p_descriptorAllocator = new vkcomponent::DescriptorAllocator{};
+	p_descriptorAllocator = std::make_shared<vkcomponent::DescriptorAllocator>();
 	p_descriptorAllocator->Init(device);
 
-	p_descriptorLayoutCache = new vkcomponent::DescriptorLayoutCache{};
+	p_descriptorLayoutCache = std::make_shared<vkcomponent::DescriptorLayoutCache>();
 	p_descriptorLayoutCache->Init(device);
 	
 	VkDescriptorSetLayoutBinding cameraBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0);

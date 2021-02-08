@@ -110,6 +110,49 @@ void RendererCore::LoadMeshes()
 	cubeMesh.vertices[33].position = {0.5f,  0.5f,  0.5f};
 	cubeMesh.vertices[34].position = {-0.5f,  0.5f,  0.5f};
 	cubeMesh.vertices[35].position = {-0.5f,  0.5f, -0.5f};
+
+	//uv coords
+	cubeMesh.vertices[0].uv = {0.0f, 0.0f};
+	cubeMesh.vertices[1].uv = {1.0f, 0.0f};
+	cubeMesh.vertices[2].uv = {1.0f, 1.0f};
+	cubeMesh.vertices[3].uv = {1.0f, 1.0f};
+	cubeMesh.vertices[4].uv = {0.0f, 1.0f};
+	cubeMesh.vertices[5].uv = {0.0f, 0.0f};
+
+	cubeMesh.vertices[6].uv = {0.0f, 0.0f};
+	cubeMesh.vertices[7].uv = {1.0f, 0.0f};
+	cubeMesh.vertices[8].uv = {1.0f, 1.0f};
+	cubeMesh.vertices[9].uv = {1.0f, 1.0f};
+	cubeMesh.vertices[10].uv = {0.0f, 1.0f};
+	cubeMesh.vertices[11].uv = {0.0f, 0.0f};
+
+	cubeMesh.vertices[12].uv = {1.0f, 0.0f};
+	cubeMesh.vertices[13].uv = {1.0f, 1.0f};
+	cubeMesh.vertices[14].uv = {0.0f, 1.0f};
+	cubeMesh.vertices[15].uv = {0.0f, 1.0f};
+	cubeMesh.vertices[16].uv = {0.0f, 0.0f};
+	cubeMesh.vertices[17].uv = {1.0f, 0.0f};
+
+	cubeMesh.vertices[18].uv = {1.0f, 0.0f};
+	cubeMesh.vertices[19].uv = {1.0f, 1.0f};
+	cubeMesh.vertices[20].uv = {0.0f, 1.0f};
+	cubeMesh.vertices[21].uv = {0.0f, 1.0f};
+	cubeMesh.vertices[22].uv = {0.0f, 0.0f};
+	cubeMesh.vertices[23].uv = {1.0f, 0.0f};
+
+	cubeMesh.vertices[24].uv = {0.0f, 1.0f};
+	cubeMesh.vertices[25].uv = {1.0f, 1.0f};
+	cubeMesh.vertices[26].uv = {1.0f, 0.0f};
+	cubeMesh.vertices[27].uv = {1.0f, 0.0f};
+	cubeMesh.vertices[28].uv = {0.0f, 0.0f};
+	cubeMesh.vertices[29].uv = {0.0f, 1.0f};
+
+	cubeMesh.vertices[30].uv = {0.0f, 1.0f};
+	cubeMesh.vertices[31].uv = {1.0f, 1.0f};
+	cubeMesh.vertices[32].uv = {1.0f, 0.0f};
+	cubeMesh.vertices[33].uv = {1.0f, 0.0f};
+	cubeMesh.vertices[34].uv = {0.0f, 0.0f};
+	cubeMesh.vertices[35].uv = {0.0f, 1.0f};
 	
 
 
