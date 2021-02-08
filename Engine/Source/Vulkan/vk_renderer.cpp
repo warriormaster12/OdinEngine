@@ -655,6 +655,7 @@ void VulkanRenderer::InitPipelines()
 	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh2");
 	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh3");
 	CreateMaterial(texPipeline, texturedPipeLayout, "DamagedHelmetMat");
+	CreateMaterial(texPipeline, texturedPipeLayout, "BarrelMat");
 
 	vkDestroyShaderModule(device, meshVertShader, nullptr);
 	vkDestroyShaderModule(device, texturedMeshShader, nullptr);
@@ -843,16 +844,24 @@ void VulkanRenderer::InitScene()
 
 	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
 	GetMaterial("DamagedHelmetMat")->metallic = 1.0f;
-	GetMaterial("DamagedHelmetMat")->roughness = 0.1f;
+	GetMaterial("DamagedHelmetMat")->roughness = 1.0f;
 	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
 	GetMaterial("DamagedHelmetMat")->emissionColor = glm::vec4(1.0f);
 	GetMaterial("DamagedHelmetMat")->emissionPower = 8.0f;
+
+	GetMaterial("BarrelMat")->albedo = glm::vec4(1.0f);
+	GetMaterial("BarrelMat")->metallic = 1.0f;
+	GetMaterial("BarrelMat")->roughness = 1.0f;
+	GetMaterial("BarrelMat")->ao = 1.0f;
+	GetMaterial("BarrelMat")->emissionColor = glm::vec4(1.0f, 0.3f, 0.0f, 1.0f);
+	GetMaterial("BarrelMat")->emissionPower = 8.0f;
 	
 	//create a sampler for the texture
 	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
 
 	VkSampler blockySampler;
 	vkCreateSampler(device, &samplerInfo, nullptr, &blockySampler);
+
 	LoadImage("empty", "");
 	//empty texture slots
 	CreateTexture("texturedmesh2", "empty", blockySampler);
@@ -868,6 +877,12 @@ void VulkanRenderer::InitScene()
 	CreateTexture("texturedmesh2", "empty", blockySampler, 5);
 	CreateTexture("texturedmesh", "empty", blockySampler, 5);
 	CreateTexture("texturedmesh3", "empty", blockySampler, 5);
+	CreateTexture("texturedmesh2", "empty", blockySampler, 6);
+	CreateTexture("texturedmesh", "empty", blockySampler, 6);
+	CreateTexture("texturedmesh3", "empty", blockySampler, 6);
+	CreateTexture("texturedmesh2", "empty", blockySampler, 7);
+	CreateTexture("texturedmesh", "empty", blockySampler, 7);
+	CreateTexture("texturedmesh3", "empty", blockySampler, 7);
 
 	LoadImage("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
 	CreateTexture("texturedmesh", "empire_diffuse", blockySampler);
@@ -892,6 +907,31 @@ void VulkanRenderer::InitScene()
 	//metallicRoughness
 	LoadImage("DamagedHelmet_metalRoughness", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg");
 	CreateTexture("DamagedHelmetMat", "DamagedHelmet_metalRoughness", blockySampler,5);
+
+	CreateTexture("DamagedHelmetMat", "empty", blockySampler, 6);
+	CreateTexture("DamagedHelmetMat", "empty", blockySampler, 7);
+
+	//Barrel
+	//diffuse
+	LoadImage("barrel_diffuse", "EngineAssets/Textures/ExplosionBarrel Diffuse.png");
+	CreateTexture("BarrelMat", "barrel_diffuse", blockySampler);
+	//ao
+	//LoadImage("DamagedHelmet_ao", "EngineAssets/DamagedHelmet/Default_AO.jpg");
+	CreateTexture("BarrelMat", "empty", blockySampler,2);
+	//normal
+	//LoadImage("DamagedHelmet_normal", "EngineAssets/Textures/Default_normal.jpg");
+	CreateTexture("BarrelMat", "empty", blockySampler,3);
+
+	//emission
+	LoadImage("barrel_emission", "EngineAssets/Textures/ExplosionBarrel Emission.png");
+	CreateTexture("BarrelMat", "barrel_emission", blockySampler,4);
+	//metallicRoughness
+	//LoadImage("DamagedHelmet_metalRoughness", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg");
+	CreateTexture("BarrelMat", "empty", blockySampler,5);
+	LoadImage("barrel_metallic", "EngineAssets/Textures/ExplosionBarrel Metallic.png");
+	CreateTexture("BarrelMat", "barrel_metallic", blockySampler,6);
+	LoadImage("barrel_roughness", "EngineAssets/Textures/ExplosionBarrel Roughness.png");
+	CreateTexture("BarrelMat", "barrel_roughness", blockySampler,7);
 
 
 	mainDeletionQueue.PushFunction([=]() {
@@ -940,7 +980,9 @@ void VulkanRenderer::InitDescriptors()
 	VkDescriptorSetLayoutBinding normalTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3);
 	VkDescriptorSetLayoutBinding emissionTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4);
 	VkDescriptorSetLayoutBinding metalRoughnessTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5);
-	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, diffuseTextureBind, aoTextureBind, normalTextureBind, emissionTextureBind, metalRoughnessTextureBind};
+	VkDescriptorSetLayoutBinding metalTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6);
+	VkDescriptorSetLayoutBinding roughnessTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7);
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, diffuseTextureBind, aoTextureBind, normalTextureBind, emissionTextureBind, metalRoughnessTextureBind, metalTextureBind, roughnessTextureBind };
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 

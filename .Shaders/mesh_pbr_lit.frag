@@ -43,6 +43,8 @@ layout(set = 2, binding = 2) uniform sampler2D aoMap;
 layout(set = 2, binding = 3) uniform sampler2D normalMap;
 layout(set = 2, binding = 4) uniform sampler2D emissionMap;
 layout(set = 2, binding = 5) uniform sampler2D metalRoughnessMap;
+layout(set = 2, binding = 6) uniform sampler2D metallicMap;
+layout(set = 2, binding = 7) uniform sampler2D roughnessMap;
 
 
 const float PI = 3.14159265359;
@@ -108,8 +110,18 @@ void main()
 	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
     vec4 emission = texture(emissionMap, texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
     float ao = texture(aoMap, texCoord).r;
-    float metallic = texture(metalRoughnessMap, texCoord).b;
-    float roughness = texture(metalRoughnessMap, texCoord).g;
+    float metallic;
+    float roughness;
+    if(texture(metalRoughnessMap, texCoord).rgba != vec4(0.0f))
+    {
+        metallic = texture(metalRoughnessMap, texCoord).b;
+        roughness = texture(metalRoughnessMap, texCoord).g;
+    }
+    else
+    {
+        metallic = texture(metallicMap, texCoord).r;
+        roughness = texture(roughnessMap, texCoord).r;
+    }
 
     // this is for objects that have a texture loaded
     if (albedo.a > 0.1f)
@@ -204,8 +216,7 @@ void main()
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
     vec3 ambient = vec3(0.03) * albedo.rgb * ao;
-
-    vec3 color = ambient + Lo + vec3(emission);
+    vec3 color = ambient + emission.rgb + Lo;
 
     // HDR tonemapping
     color = color / (color + vec3(1.0));
