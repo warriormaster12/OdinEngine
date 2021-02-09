@@ -182,6 +182,8 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 
 	InitDescriptors();
 
+	InitSamplers();
+
 	InitPipelines();
 
 	InitScene();
@@ -719,7 +721,7 @@ void VulkanRenderer::LoadImage(std::string texture_name, std::string texture_pat
 	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
 
-	_loadedTextures[texture_name] = inputTextures;
+	loadedTextures[texture_name] = inputTextures;
 
 	mainDeletionQueue.PushFunction([=]() {
 		vkDestroyImageView(device, inputTextures.imageView, nullptr);
@@ -737,7 +739,6 @@ Material* VulkanRenderer::CreateMaterial(VkPipeline pipeline, VkPipelineLayout l
 	mat.pipelineLayout = layout;
 	materials[name] = mat;
 	materialList.push_back(name);
-
 	p_descriptorAllocator->Allocate(&materials[name].materialSet, materialTextureSetLayout);
 
 	{
@@ -755,6 +756,7 @@ Material* VulkanRenderer::CreateMaterial(VkPipeline pipeline, VkPipelineLayout l
 
 	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
 	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
+	AllocateEmptyTextures(name, textureSampler);
 	mainDeletionQueue.PushFunction([=]()
 	{
 		vmaDestroyBuffer(allocator, materials[name].buffer.buffer, materials[name].buffer.allocation);
@@ -855,87 +857,59 @@ void VulkanRenderer::InitScene()
 	GetMaterial("BarrelMat")->ao = 1.0f;
 	GetMaterial("BarrelMat")->emissionColor = glm::vec4(1.0f, 0.3f, 0.0f, 1.0f);
 	GetMaterial("BarrelMat")->emissionPower = 8.0f;
-	
-	//create a sampler for the texture
-	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
-
-	VkSampler blockySampler;
-	vkCreateSampler(device, &samplerInfo, nullptr, &blockySampler);
-
-	LoadImage("empty", "");
-	//empty texture slots
-	CreateTexture("texturedmesh2", "empty", blockySampler);
-	CreateTexture("texturedmesh2", "empty", blockySampler, 2);
-	CreateTexture("texturedmesh", "empty", blockySampler, 2);
-	CreateTexture("texturedmesh3", "empty", blockySampler, 2);
-	CreateTexture("texturedmesh2", "empty", blockySampler, 3);
-	CreateTexture("texturedmesh", "empty", blockySampler, 3);
-	CreateTexture("texturedmesh3", "empty", blockySampler, 3);
-	CreateTexture("texturedmesh2", "empty", blockySampler, 4);
-	CreateTexture("texturedmesh", "empty", blockySampler, 4);
-	CreateTexture("texturedmesh3", "empty", blockySampler, 4);
-	CreateTexture("texturedmesh2", "empty", blockySampler, 5);
-	CreateTexture("texturedmesh", "empty", blockySampler, 5);
-	CreateTexture("texturedmesh3", "empty", blockySampler, 5);
-	CreateTexture("texturedmesh2", "empty", blockySampler, 6);
-	CreateTexture("texturedmesh", "empty", blockySampler, 6);
-	CreateTexture("texturedmesh3", "empty", blockySampler, 6);
-	CreateTexture("texturedmesh2", "empty", blockySampler, 7);
-	CreateTexture("texturedmesh", "empty", blockySampler, 7);
-	CreateTexture("texturedmesh3", "empty", blockySampler, 7);
 
 	LoadImage("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
-	CreateTexture("texturedmesh", "empire_diffuse", blockySampler);
+	CreateTexture("texturedmesh", "empire_diffuse", textureSampler);
 	LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
-	CreateTexture("texturedmesh3", "vikingroom_diffuse", blockySampler);
+	CreateTexture("texturedmesh3", "vikingroom_diffuse", textureSampler);
 
 	//DamagedHelmet
 
 	//diffuse
 	LoadImage("DamagedHelmet_diffuse", "EngineAssets/DamagedHelmet/Default_albedo.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_diffuse", blockySampler);
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_diffuse", textureSampler);
 	//ao
 	LoadImage("DamagedHelmet_ao", "EngineAssets/DamagedHelmet/Default_AO.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_ao", blockySampler,2);
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_ao", textureSampler,2);
 	//normal
 	LoadImage("DamagedHelmet_normal", "EngineAssets/DamagedHelmet/Default_normal.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_normal", blockySampler,3);
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_normal", textureSampler,3);
 
 	//emission
 	LoadImage("DamagedHelmet_emission", "EngineAssets/DamagedHelmet/Default_emissive.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_emission", blockySampler,4);
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_emission", textureSampler,4);
 	//metallicRoughness
 	LoadImage("DamagedHelmet_metalRoughness", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_metalRoughness", blockySampler,5);
+	CreateTexture("DamagedHelmetMat", "DamagedHelmet_metalRoughness", textureSampler,5);
 
-	CreateTexture("DamagedHelmetMat", "empty", blockySampler, 6);
-	CreateTexture("DamagedHelmetMat", "empty", blockySampler, 7);
+	CreateTexture("DamagedHelmetMat", "empty", textureSampler, 6);
+	CreateTexture("DamagedHelmetMat", "empty", textureSampler, 7);
 
 	//Barrel
 	//diffuse
 	LoadImage("barrel_diffuse", "EngineAssets/Textures/ExplosionBarrel Diffuse.png");
-	CreateTexture("BarrelMat", "barrel_diffuse", blockySampler);
+	CreateTexture("BarrelMat", "barrel_diffuse", textureSampler);
 	//ao
 	//LoadImage("DamagedHelmet_ao", "EngineAssets/DamagedHelmet/Default_AO.jpg");
-	CreateTexture("BarrelMat", "empty", blockySampler,2);
+	CreateTexture("BarrelMat", "empty", textureSampler,2);
 	//normal
 	//LoadImage("DamagedHelmet_normal", "EngineAssets/Textures/Default_normal.jpg");
-	CreateTexture("BarrelMat", "empty", blockySampler,3);
+	CreateTexture("BarrelMat", "empty", textureSampler,3);
 
 	//emission
 	LoadImage("barrel_emission", "EngineAssets/Textures/ExplosionBarrel Emission.png");
-	CreateTexture("BarrelMat", "barrel_emission", blockySampler,4);
+	CreateTexture("BarrelMat", "barrel_emission", textureSampler,4);
 	//metallicRoughness
 	//LoadImage("DamagedHelmet_metalRoughness", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg");
-	CreateTexture("BarrelMat", "empty", blockySampler,5);
+	CreateTexture("BarrelMat", "empty", textureSampler,5);
 	LoadImage("barrel_metallic", "EngineAssets/Textures/ExplosionBarrel Metallic.png");
-	CreateTexture("BarrelMat", "barrel_metallic", blockySampler,6);
+	CreateTexture("BarrelMat", "barrel_metallic", textureSampler,6);
 	LoadImage("barrel_roughness", "EngineAssets/Textures/ExplosionBarrel Roughness.png");
-	CreateTexture("BarrelMat", "barrel_roughness", blockySampler,7);
+	CreateTexture("BarrelMat", "barrel_roughness", textureSampler,7);
 
 
 	mainDeletionQueue.PushFunction([=]() {
-		vkDestroySampler(device, blockySampler, nullptr);
+		vkDestroySampler(device, textureSampler, nullptr);
 	});
 }
 
@@ -1107,13 +1081,40 @@ void VulkanRenderer::CreateTexture(std::string materialName, std::string texture
 {
 	Material* texturedMaterial = GetMaterial(materialName);
 
-	//write to the descriptor set so that it points to our empire_diffuse texture
+	//write to the descriptor set so that it points to our input texture
 	VkDescriptorImageInfo imageBufferInfo;
 	imageBufferInfo.sampler = sampler;
-	imageBufferInfo.imageView = _loadedTextures[textureName].imageView;
+	imageBufferInfo.imageView = loadedTextures[textureName].imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, binding);
 	
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
+}
+
+
+void VulkanRenderer::AllocateEmptyTextures(std::string materialName, VkSampler& sampler)
+{
+	LoadImage("empty", "");
+	Material* texturedMaterial = GetMaterial(materialName);
+
+	//write to the descriptor set so that it points to our input texture
+	VkDescriptorImageInfo imageBufferInfo;
+	imageBufferInfo.sampler = sampler;
+	imageBufferInfo.imageView = loadedTextures["empty"].imageView;
+	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	for(int binding=1; binding < 8; binding++)
+	{
+		VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, binding);
+	
+		vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
+	}
+}
+
+void VulkanRenderer::InitSamplers()
+{
+	//create a sampler for the texture
+	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
+
+	vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler);
 }
