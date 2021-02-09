@@ -179,7 +179,7 @@ public:
 
 	//texture hashmap
 	std::unordered_map<std::string, Texture> loadedTextures;
-	void LoadImage(std::string texture_name, std::string texture_path);
+	void LoadImage(const std::string textureName, const std::string texturePath);
 	//initializes everything in the engine
 	void Init(WindowHandler& windowHandler);
 
@@ -223,7 +223,6 @@ public:
 
 	
 private:
-	VkSampler textureSampler;
 
 	void InitVulkan();
 
@@ -245,7 +244,7 @@ private:
 
 	void RecreateSwapchain();
 
-	void CreateTexture(std::string materialName, std::string textureName, VkSampler& sampler, uint32_t binding = 1);
+	void CreateTexture(std::string materialName, const std::string texturePath, VkSampler& sampler, uint32_t binding = 1);
 	//this is done when creating new material
 	void AllocateEmptyTextures(std::string materialName, VkSampler& sampler);
 

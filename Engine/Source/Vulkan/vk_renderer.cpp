@@ -22,6 +22,7 @@ vkcomponent::PipelineBuilder pipelineBuilder;
 VkCommandBuffer cmd;
 uint32_t swapchainImageIndex;
 VkResult drawResult;
+VkSampler textureSampler;
 
 // Utility (pure) functions are put in an anonymous namespace
 
@@ -353,6 +354,7 @@ void VulkanRenderer::InitVulkan()
 	//feats.pipelineStatisticsQuery = true;
 	feats.multiDrawIndirect = true;
 	feats.drawIndirectFirstInstance = true;
+	feats.alphaToOne = true;
 	//feats.samplerAnisotropy = true;
 	selector.set_required_features(feats);
 
@@ -709,27 +711,6 @@ void VulkanRenderer::UploadMesh(Mesh& mesh)
 	vmaDestroyBuffer(allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 }
 
-void VulkanRenderer::LoadImage(std::string texture_name, std::string texture_path)
-{
-	Texture inputTextures;
-	const std::filesystem::path path = texture_path;
-	const std::filesystem::path bin_path = texture_path + ".bin";
-	
-	asset_builder::convert_image(path,bin_path);
-	vkcomponent::LoadImageFromAsset(*this, (texture_path + ".bin").c_str(), &inputTextures.image);
-	
-	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
-	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
-
-	loadedTextures[texture_name] = inputTextures;
-
-	mainDeletionQueue.PushFunction([=]() {
-		vkDestroyImageView(device, inputTextures.imageView, nullptr);
-		vmaDestroyImage(allocator, inputTextures.image.image, inputTextures.image.allocation);
-	});
-
-}
-
 
 
 Material* VulkanRenderer::CreateMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name)
@@ -859,50 +840,34 @@ void VulkanRenderer::InitScene()
 	GetMaterial("BarrelMat")->emissionPower = 8.0f;
 
 	//lost empire
-	LoadImage("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
-	CreateTexture("texturedmesh", "empire_diffuse", textureSampler);
+	CreateTexture("texturedmesh", "EngineAssets/Textures/lost_empire-RGBA.png", textureSampler);
 	//viking room
-	LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
-	CreateTexture("texturedmesh3", "vikingroom_diffuse", textureSampler);
+	CreateTexture("texturedmesh3", "EngineAssets/Textures/viking_room.png", textureSampler);
 
 	//DamagedHelmet
 
 	//diffuse
-	LoadImage("DamagedHelmet_diffuse", "EngineAssets/DamagedHelmet/Default_albedo.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_diffuse", textureSampler);
+	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_albedo.jpg", textureSampler);
 	//ao
-	LoadImage("DamagedHelmet_ao", "EngineAssets/DamagedHelmet/Default_AO.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_ao", textureSampler,2);
+	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_AO.jpg", textureSampler,2);
 	//normal
-	LoadImage("DamagedHelmet_normal", "EngineAssets/DamagedHelmet/Default_normal.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_normal", textureSampler,3);
+	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_normal.jpg", textureSampler,3);
 
 	//emission
-	LoadImage("DamagedHelmet_emission", "EngineAssets/DamagedHelmet/Default_emissive.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_emission", textureSampler,4);
+	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_emissive.jpg", textureSampler,4);
 	//metallicRoughness
-	LoadImage("DamagedHelmet_metalRoughness", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg");
-	CreateTexture("DamagedHelmetMat", "DamagedHelmet_metalRoughness", textureSampler,5);
+	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg", textureSampler,5);
 
 
 	//Barrel
 	//diffuse
-	LoadImage("barrel_diffuse", "EngineAssets/Textures/ExplosionBarrel Diffuse.png");
-	CreateTexture("BarrelMat", "barrel_diffuse", textureSampler);
+	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Diffuse.png", textureSampler);
 	//emission
-	LoadImage("barrel_emission", "EngineAssets/Textures/ExplosionBarrel Emission.png");
-	CreateTexture("BarrelMat", "barrel_emission", textureSampler,4);
+	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Emission.png", textureSampler,4);
 	//Metallic
-	LoadImage("barrel_metallic", "EngineAssets/Textures/ExplosionBarrel Metallic.png");
-	CreateTexture("BarrelMat", "barrel_metallic", textureSampler,6);
+	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Metallic.png", textureSampler,6);
 	//Roughness
-	LoadImage("barrel_roughness", "EngineAssets/Textures/ExplosionBarrel Roughness.png");
-	CreateTexture("BarrelMat", "barrel_roughness", textureSampler,7);
-
-
-	mainDeletionQueue.PushFunction([=]() {
-		vkDestroySampler(device, textureSampler, nullptr);
-	});
+	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Roughness.png", textureSampler,7);
 }
 
 
@@ -1069,14 +1034,38 @@ void VulkanRenderer::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& 
 	vkResetCommandPool(device, uploadContext.commandPool, 0);
 }
 
-void VulkanRenderer::CreateTexture(std::string materialName, std::string textureName, VkSampler& sampler, uint32_t binding /*= 1*/)
+void VulkanRenderer::LoadImage(const std::string textureName, const std::string texturePath)
 {
+	Texture inputTextures;
+	const std::filesystem::path path = texturePath;
+	const std::filesystem::path bin_path = texturePath + ".bin";
+	
+	asset_builder::convert_image(path,bin_path);
+	vkcomponent::LoadImageFromAsset(*this, (texturePath + ".bin").c_str(), &inputTextures.image);
+	
+	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
+
+	loadedTextures[textureName] = inputTextures;
+
+	mainDeletionQueue.PushFunction([=]() {
+		vkDestroyImageView(device, inputTextures.imageView, nullptr);
+		vmaDestroyImage(allocator, inputTextures.image.image, inputTextures.image.allocation);
+	});
+
+}
+
+void VulkanRenderer::CreateTexture(std::string materialName, std::string texturePath, VkSampler& sampler, uint32_t binding /*= 1*/)
+{
+	std::filesystem::path textureName = texturePath; 
+	const std::string processedName = textureName.stem().u8string();
+	LoadImage(processedName, texturePath);
 	Material* texturedMaterial = GetMaterial(materialName);
 
 	//write to the descriptor set so that it points to our input texture
 	VkDescriptorImageInfo imageBufferInfo;
 	imageBufferInfo.sampler = sampler;
-	imageBufferInfo.imageView = loadedTextures[textureName].imageView;
+	imageBufferInfo.imageView = loadedTextures[processedName].imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, binding);
@@ -1109,4 +1098,8 @@ void VulkanRenderer::InitSamplers()
 	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
 
 	vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler);
+
+	mainDeletionQueue.PushFunction([=]() {
+		vkDestroySampler(device, textureSampler, nullptr);
+	});
 }
