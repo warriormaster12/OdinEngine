@@ -858,8 +858,10 @@ void VulkanRenderer::InitScene()
 	GetMaterial("BarrelMat")->emissionColor = glm::vec4(1.0f, 0.3f, 0.0f, 1.0f);
 	GetMaterial("BarrelMat")->emissionPower = 8.0f;
 
+	//lost empire
 	LoadImage("empire_diffuse", "EngineAssets/Textures/lost_empire-RGBA.png");
 	CreateTexture("texturedmesh", "empire_diffuse", textureSampler);
+	//viking room
 	LoadImage("vikingroom_diffuse", "EngineAssets/Textures/viking_room.png");
 	CreateTexture("texturedmesh3", "vikingroom_diffuse", textureSampler);
 
@@ -882,28 +884,18 @@ void VulkanRenderer::InitScene()
 	LoadImage("DamagedHelmet_metalRoughness", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg");
 	CreateTexture("DamagedHelmetMat", "DamagedHelmet_metalRoughness", textureSampler,5);
 
-	CreateTexture("DamagedHelmetMat", "empty", textureSampler, 6);
-	CreateTexture("DamagedHelmetMat", "empty", textureSampler, 7);
 
 	//Barrel
 	//diffuse
 	LoadImage("barrel_diffuse", "EngineAssets/Textures/ExplosionBarrel Diffuse.png");
 	CreateTexture("BarrelMat", "barrel_diffuse", textureSampler);
-	//ao
-	//LoadImage("DamagedHelmet_ao", "EngineAssets/DamagedHelmet/Default_AO.jpg");
-	CreateTexture("BarrelMat", "empty", textureSampler,2);
-	//normal
-	//LoadImage("DamagedHelmet_normal", "EngineAssets/Textures/Default_normal.jpg");
-	CreateTexture("BarrelMat", "empty", textureSampler,3);
-
 	//emission
 	LoadImage("barrel_emission", "EngineAssets/Textures/ExplosionBarrel Emission.png");
 	CreateTexture("BarrelMat", "barrel_emission", textureSampler,4);
-	//metallicRoughness
-	//LoadImage("DamagedHelmet_metalRoughness", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg");
-	CreateTexture("BarrelMat", "empty", textureSampler,5);
+	//Metallic
 	LoadImage("barrel_metallic", "EngineAssets/Textures/ExplosionBarrel Metallic.png");
 	CreateTexture("BarrelMat", "barrel_metallic", textureSampler,6);
+	//Roughness
 	LoadImage("barrel_roughness", "EngineAssets/Textures/ExplosionBarrel Roughness.png");
 	CreateTexture("BarrelMat", "barrel_roughness", textureSampler,7);
 
