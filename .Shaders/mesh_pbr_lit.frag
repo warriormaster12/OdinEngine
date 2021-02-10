@@ -21,6 +21,7 @@ struct Light
 {
 	vec4 lightPositions[2]; // vec3
 	vec4 lightColors[2]; // vec3
+    vec4 radius[2]; //float
 };
 
 layout(set = 0, binding = 1) uniform  SceneData{   
@@ -183,8 +184,8 @@ void main()
         vec3 L = normalize(vec3(sceneData.lightData.lightPositions[i]) - WorldPos);
         vec3 H = normalize(V + L);
         float distance = length(vec3(sceneData.lightData.lightPositions[i]) - WorldPos);
-        float attenuation = 1.0 / (distance * distance);
-        vec3 radiance = vec3(sceneData.lightData.lightColors[i]) * attenuation;
+        float attenuation = float(sceneData.lightData.radius[i]) / (pow(distance, 2.0) + 1.0);
+        vec3 radiance = vec3(sceneData.lightData.lightColors[i])*attenuation;
 
         // Cook-Torrance BRDF
         float NDF = DistributionGGX(N, H, roughness);   

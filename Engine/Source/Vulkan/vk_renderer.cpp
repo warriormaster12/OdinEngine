@@ -767,12 +767,6 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	size_t frameIndex = frameNumber % FRAME_OVERLAP;
 	size_t uniformOffset = PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
 
-	// Static light data, can be moved away
-	sceneParameters.lightData.lightPositions[0] = glm::vec4(glm::vec3(0.0f,  1.0f, 2.0f),0.0f);
-	sceneParameters.lightData.lightColors[0] = glm::vec4(glm::vec3(1.0f),0.0f);
-	sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),0.0f);
-	sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(3.0f),0.0f);
-
 	// Convert material ID to material
 	// TODO: Handle nullptr material, apply default?
 	std::vector<Material> materials;
@@ -868,6 +862,15 @@ void VulkanRenderer::InitScene()
 	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Metallic.png", textureSampler,6);
 	//Roughness
 	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Roughness.png", textureSampler,7);
+
+	// Static light data, can be moved away
+	//TODO: make proper pointlight, spotlight and directional light
+	sceneParameters.lightData.lightPositions[0] = glm::vec4(glm::vec3(0.0f,  1.0f, 2.0f),1.0f);
+	sceneParameters.lightData.lightColors[0] = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
+	sceneParameters.lightData.radius[0] = glm::vec4(1.0f);
+	sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),1.0f);
+	sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
+	sceneParameters.lightData.radius[1] = glm::vec4(10.0f);
 }
 
 
@@ -1084,6 +1087,7 @@ void VulkanRenderer::AllocateEmptyTextures(std::string materialName, VkSampler& 
 	imageBufferInfo.sampler = sampler;
 	imageBufferInfo.imageView = loadedTextures["empty"].imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	//texture descriptor bindings
 	for(int binding=1; binding < 8; binding++)
 	{
 		VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, binding);

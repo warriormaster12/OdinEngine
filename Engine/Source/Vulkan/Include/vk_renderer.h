@@ -112,6 +112,7 @@ struct Light
 {
 	glm::vec4 lightPositions[2]; // vec3
 	glm::vec4 lightColors[2]; // vec3
+	glm::vec4 radius[2]; //float
 };
 
 struct GPUSceneData {
