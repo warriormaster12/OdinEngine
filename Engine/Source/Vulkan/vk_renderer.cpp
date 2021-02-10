@@ -227,7 +227,8 @@ void VulkanRenderer::BeginDraw()
             RecreateSwapchain();
             return;
 	} else if (drawResult != VK_SUCCESS && drawResult != VK_SUBOPTIMAL_KHR) {
-		throw std::runtime_error("failed to acquire swap chain image!");
+		ENGINE_CORE_ERROR("failed to acquire swap chain image!");
+		abort();
 	}
 
 	//naming it cmd for shorter writing
@@ -306,7 +307,8 @@ void VulkanRenderer::EndDraw()
 		p_windowHandler->frameBufferResized = false;
 		RecreateSwapchain();
 	} else if (drawResult != VK_SUCCESS) {
-		throw std::runtime_error("failed to present swap chain image!");
+		ENGINE_CORE_ERROR("failed to present swap chain image!");
+		abort();
 	}
 
 
