@@ -13,7 +13,7 @@ VkCommandBuffer cmd;
 ```
 void* p_examplePointer;
 
-Material pMat;
+Material* pMat;
 ```
 ### Member variables
 ```
