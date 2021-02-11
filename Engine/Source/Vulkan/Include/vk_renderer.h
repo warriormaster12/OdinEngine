@@ -108,15 +108,16 @@ struct GPUMaterialData
     glm::vec4 emissionPower; // float
 };
 
-struct Light
+struct PointLight
 {
-	glm::vec4 lightPositions[2]; // vec3
-	glm::vec4 lightColors[2]; // vec3
-	glm::vec4 radius[2]; //float
+	glm::vec4 position; // vec3
+	glm::vec4 color; // vec3
+    glm::vec4 radius; //float
 };
 
 struct GPUSceneData {
-	Light lightData;
+	glm::vec4 plightCount; //int
+	PointLight pointLights[3];
 };
 
 struct GPUObjectData {

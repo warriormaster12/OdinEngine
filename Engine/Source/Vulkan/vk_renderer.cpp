@@ -134,7 +134,8 @@ namespace {
     {
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
 
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, &descriptorSets.uniform, 1, &descriptorSets.uniformOffset);
+        //vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, &descriptorSets.uniform, 1, &descriptorSets.uniformOffset);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, &descriptorSets.uniform, 0, nullptr);
 
         //object data descriptor
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 1, 1, &descriptorSets.object, 0, &descriptorSets.objectOffset);
@@ -767,7 +768,8 @@ Material* VulkanRenderer::GetMaterial(const std::string& name)
 void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 {
 	size_t frameIndex = frameNumber % FRAME_OVERLAP;
-	size_t uniformOffset = PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
+	//size_t uniformOffset = PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
+	size_t uniformOffset = sizeof(GPUSceneData) * frameIndex;
 
 	// Convert material ID to material
 	// TODO: Handle nullptr material, apply default?
@@ -779,7 +781,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	// Store descriptor set data
 	DescriptorSetData descriptorSets;
 	descriptorSets.uniform = GetCurrentFrame().globalDescriptor;
-	descriptorSets.uniformOffset = uniformOffset;
+	descriptorSets.uniformOffset = 0;
 	descriptorSets.object = GetCurrentFrame().objectDescriptor;
 	descriptorSets.objectOffset = 0;
 
@@ -801,8 +803,8 @@ void VulkanRenderer::InitScene()
 {
 	//TODO: move all of this into higher rendering level
 	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
-	GetMaterial("texturedmesh")->metallic = 1.0f;
-	GetMaterial("texturedmesh")->roughness = 0.25f;
+	GetMaterial("texturedmesh")->metallic = 0.5f;
+	GetMaterial("texturedmesh")->roughness = 0.5f;
 	GetMaterial("texturedmesh")->ao = 1.0f;
 	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 	GetMaterial("texturedmesh")->emissionPower = 1.0f;
@@ -867,12 +869,16 @@ void VulkanRenderer::InitScene()
 
 	// Static light data, can be moved away
 	//TODO: make proper pointlight, spotlight and directional light
-	sceneParameters.lightData.lightPositions[0] = glm::vec4(glm::vec3(0.0f,  1.0f, 2.0f),1.0f);
-	sceneParameters.lightData.lightColors[0] = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
-	sceneParameters.lightData.radius[0] = glm::vec4(1.0f);
-	sceneParameters.lightData.lightPositions[1] = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),1.0f);
-	sceneParameters.lightData.lightColors[1] = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
-	sceneParameters.lightData.radius[1] = glm::vec4(10.0f);
+	sceneParameters.plightCount = glm::vec4(3);
+	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);
+	sceneParameters.pointLights[0].color = glm::vec4(glm::vec3(1.0f,1.0f,1.0f),1.0f);
+	sceneParameters.pointLights[0].radius = glm::vec4(10.0f);
+	sceneParameters.pointLights[1].position = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),1.0f);
+	sceneParameters.pointLights[1].color = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
+	sceneParameters.pointLights[1].radius = glm::vec4(5.0f);
+	sceneParameters.pointLights[2].position = glm::vec4(glm::vec3(4.0f,  1.0f, 7.0f),1.0f);
+	sceneParameters.pointLights[2].color = glm::vec4(glm::vec3(0.0f,0.0f,1.0f),1.0f);
+	sceneParameters.pointLights[2].radius = glm::vec4(15.0f);
 }
 
 
@@ -897,7 +903,8 @@ void VulkanRenderer::InitDescriptors()
 	p_descriptorLayoutCache->Init(device);
 	
 	VkDescriptorSetLayoutBinding cameraBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0);
-	VkDescriptorSetLayoutBinding sceneBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	//VkDescriptorSetLayoutBinding sceneBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	VkDescriptorSetLayoutBinding sceneBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	
 	std::vector<VkDescriptorSetLayoutBinding> bindings = { cameraBind,sceneBind };
 	VkDescriptorSetLayoutCreateInfo _set1 = vkinit::DescriptorLayoutInfo(bindings);
@@ -924,8 +931,9 @@ void VulkanRenderer::InitDescriptors()
 
 	{
 		CreateBufferInfo info;
-		info.allocSize = FRAME_OVERLAP * PadUniformBufferSize(sizeof(GPUSceneData));
-		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		//info.allocSize = FRAME_OVERLAP * PadUniformBufferSize(sizeof(GPUSceneData));
+		info.allocSize = sizeof(GPUSceneData);
+		info.bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 		CreateBuffer(allocator, &sceneParameterBuffer, info);
 	}
@@ -980,7 +988,7 @@ void VulkanRenderer::InitDescriptors()
 		objectBufferInfo.range = sizeof(GPUObjectData) * MAX_OBJECTS;
 
 		VkWriteDescriptorSet cameraWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, frames[i].globalDescriptor,&cameraInfo,0);
-		VkWriteDescriptorSet sceneWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, frames[i].globalDescriptor, &sceneInfo, 1);
+		VkWriteDescriptorSet sceneWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, frames[i].globalDescriptor, &sceneInfo, 1);
 		VkWriteDescriptorSet objectWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, frames[i].objectDescriptor, &objectBufferInfo, 0);
 
 		std::vector <VkWriteDescriptorSet> setWrites = { cameraWrite, sceneWrite, objectWrite};
