@@ -12,7 +12,16 @@ VkCommandBuffer cmd;
 ### Pointers
 ```
 void* p_examplePointer;
+
+Material pMat;
 ```
+### Member variables
+```
+float m_delta;
+
+RenderObject mObject;
+```
+
 
 ## Functions 
 ```
