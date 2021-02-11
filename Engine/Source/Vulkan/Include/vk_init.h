@@ -13,7 +13,7 @@ namespace vkinit {
     
     VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo(VkPrimitiveTopology topology);
 
-    VkPipelineRasterizationStateCreateInfo RasterizationStateCreateInfo(VkPolygonMode polygonMode);
+    VkPipelineRasterizationStateCreateInfo RasterizationStateCreateInfo(VkPolygonMode polygonMode, VkCullModeFlagBits cullMode = VK_CULL_MODE_FRONT_BIT);
 
     VkPipelineMultisampleStateCreateInfo MultisamplingStateCreateInfo();
 
