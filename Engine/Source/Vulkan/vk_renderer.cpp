@@ -869,6 +869,8 @@ void VulkanRenderer::InitScene()
 
 	// Static light data, can be moved away
 	//TODO: make proper pointlight, spotlight and directional light
+	sceneParameters.dLight.color = glm::vec4(1.0f);
+	sceneParameters.dLight.direction = glm::vec4(glm::vec3( -0.2f, -1.0f, -0.3f), 0.0f);
 	sceneParameters.plightCount = glm::vec4(3);
 	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);
 	sceneParameters.pointLights[0].color = glm::vec4(glm::vec3(1.0f,1.0f,1.0f),1.0f);

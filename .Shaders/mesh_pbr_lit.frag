@@ -17,6 +17,10 @@ layout(set = 0, binding = 0) uniform  CameraBuffer{
 	vec4 camPos; // vec3
 } cameraData;
 
+struct DirectionLight{
+    vec4 direction; //vec3
+    vec4 color; //vec3
+};
 struct PointLight
 {
 	vec4 position; // vec3
@@ -26,6 +30,7 @@ struct PointLight
 
 layout(std430, set = 0, binding = 1)  buffer SceneData{ 
     vec4 plightCount; //int
+    DirectionLight dLight;
 	PointLight pointLights[];
 } sceneData;
 
@@ -108,6 +113,8 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 vec3 calcPointLight(int index, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0,  float viewDistance);
 
 // ----------------------------------------------------------------------------
+vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0);
+// ----------------------------------------------------------------------------
 void main()
 {
 	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
@@ -177,10 +184,10 @@ void main()
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, vec3(albedo), metallic);
-    vec3 radianceOut = vec3(0.0f);
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
+    vec3 radianceOut = calcDirLight(sceneData.dLight, N, V, albedo.rgb, roughness, metallic, F0);
     for(int i = 0; i < int(sceneData.plightCount); ++i) 
     {
         // calculate per-light radiance
@@ -244,6 +251,37 @@ vec3 calcPointLight(int index, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 alb
     // vec3 fragToLight = fragPos - position;
     // float shadow = calcPointLightShadows(depthMaps[index], fragToLight, viewDistance);
     
+    // radiance *= (1.0 - shadow);
+
+    return radiance;
+}
+
+vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0)
+{
+    //Variables common to BRDFs
+    vec3 lightDir = normalize(vec3(-light.direction));
+    vec3 halfway  = normalize(lightDir + viewDir);
+    float nDotV = max(dot(normal, viewDir), 0.0);
+    float nDotL = max(dot(normal, lightDir), 0.0);
+    vec3 radianceIn = light.color.rgb;
+
+    //Cook-Torrance BRDF
+    float NDF = DistributionGGX(normal, halfway, rough);
+    float G   = GeometrySmith(nDotV, nDotL, rough);
+    vec3  F   = fresnelSchlick(max(dot(halfway,viewDir), 0.0), F0);
+
+    //Finding specular and diffuse component
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metal;
+
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * nDotV * nDotL;
+    vec3 specular = numerator / max (denominator, 0.0001);
+
+    vec3 radiance = (kD * (albedo / PI) + specular ) * radianceIn * nDotL;
+
+    //shadow isn't supported yet
     // radiance *= (1.0 - shadow);
 
     return radiance;
