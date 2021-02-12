@@ -20,12 +20,14 @@ layout(set = 0, binding = 0) uniform  CameraBuffer{
 struct DirectionLight{
     vec4 direction; //vec3
     vec4 color; //vec3
+    vec4 intensity; //float
 };
 struct PointLight
 {
 	vec4 position; // vec3
 	vec4 color; // vec3
     vec4 radius; //float
+    vec4 intensity; //float
 };
 
 layout(std430, set = 0, binding = 1)  buffer SceneData{ 
@@ -215,7 +217,7 @@ vec3 calcPointLight(int index, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 alb
 {
     //Point light basics
     vec3 position = sceneData.pointLights[index].position.xyz;
-    vec3 color    = 100.0 * sceneData.pointLights[index].color.rgb;
+    vec3 color    = sceneData.pointLights[index].color.rgb * float(sceneData.pointLights[index].intensity);
     float radius  = float(sceneData.pointLights[index].radius);
 
     //Stuff common to the BRDF subfunctions 
@@ -263,7 +265,7 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
     vec3 halfway  = normalize(lightDir + viewDir);
     float nDotV = max(dot(normal, viewDir), 0.0);
     float nDotL = max(dot(normal, lightDir), 0.0);
-    vec3 radianceIn = light.color.rgb;
+    vec3 radianceIn = light.color.rgb * float(light.intensity);
 
     //Cook-Torrance BRDF
     float NDF = DistributionGGX(normal, halfway, rough);

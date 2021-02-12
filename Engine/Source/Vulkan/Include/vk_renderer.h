@@ -111,6 +111,7 @@ struct GPUMaterialData
 struct DirectionLight{
     glm::vec4 direction; //vec3
     glm::vec4 color; //vec3
+	glm::vec4 intensity; //float
 };
 
 struct PointLight
@@ -118,6 +119,7 @@ struct PointLight
 	glm::vec4 position; // vec3
 	glm::vec4 color; // vec3
     glm::vec4 radius; //float
+	glm::vec4 intensity; //float
 };
 
 struct GPUSceneData {
