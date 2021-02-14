@@ -52,7 +52,7 @@ void RendererCore::CleanupRenderer()
 
 void RendererCore::CreateMaterial(const std::string& name)
 {
-	vkRenderer.CreateMaterial(vkRenderer.GetMaterial("defaultMat")->pipeline, vkRenderer.GetMaterial("defaultMat")->pipelineLayout, name);
+	vkRenderer.CreateMaterial(GetMaterial("defaultMat")->pipeline, GetMaterial("defaultMat")->pipelineLayout, name);
 }
 
 Material* RendererCore::GetMaterial(const std::string& name)
@@ -237,7 +237,7 @@ void RendererCore::InitScene()
 	GetMaterial("BarrelMat")->ao = 1.0f;
 	GetMaterial("BarrelMat")->emissionColor = glm::vec4(1.0f, 0.3f, 0.0f, 1.0f);
 	GetMaterial("BarrelMat")->emissionPower = 8.0f;
-	
+
 	RenderObject monkey;
 	monkey.p_mesh = GetMesh("monkey");
 	monkey.p_material = GetMaterial("texturedmesh2");
