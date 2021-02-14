@@ -30,7 +30,7 @@ struct PointLight
     vec4 intensity; //float
 };
 
-layout(std430, set = 0, binding = 1)  buffer SceneData{ 
+layout(std430, set = 0, binding = 1)  readonly buffer SceneData{ 
     vec4 plightCount; //int
     DirectionLight dLight;
 	PointLight pointLights[];

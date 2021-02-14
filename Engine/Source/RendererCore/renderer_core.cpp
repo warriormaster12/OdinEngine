@@ -55,6 +55,11 @@ void RendererCore::CreateMaterial(const std::string& name)
 	vkRenderer.CreateMaterial(vkRenderer.GetMaterial("defaultMat")->pipeline, vkRenderer.GetMaterial("defaultMat")->pipelineLayout, name);
 }
 
+Material* RendererCore::GetMaterial(const std::string& name)
+{
+	return vkRenderer.GetMaterial(name);
+}
+
 Mesh* RendererCore::GetMesh(const std::string& name)
 {
 	auto it = meshes.find(name);
@@ -198,58 +203,93 @@ void RendererCore::LoadMeshes()
 void RendererCore::InitScene()
 {
     LoadMeshes();
+	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
+	GetMaterial("texturedmesh")->metallic = 0.5f;
+	GetMaterial("texturedmesh")->roughness = 0.5f;
+	GetMaterial("texturedmesh")->ao = 1.0f;
+	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
+	GetMaterial("texturedmesh")->emissionPower = 1.0f;
+
+	GetMaterial("texturedmesh2")->albedo = glm::vec4(0.0f,0.0f,0.0f,1.0f);
+	GetMaterial("texturedmesh2")->metallic = 0.5f;
+	GetMaterial("texturedmesh2")->roughness = 0.5f;
+	GetMaterial("texturedmesh2")->ao = 1.0f;
+	GetMaterial("texturedmesh2")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
+	GetMaterial("texturedmesh2")->emissionPower = 1.0f;
+
+	GetMaterial("texturedmesh3")->albedo = glm::vec4(0.5f,0.5f,0.5f,1.0f);
+	GetMaterial("texturedmesh3")->metallic = 0.5f;
+	GetMaterial("texturedmesh3")->roughness = 0.5f;
+	GetMaterial("texturedmesh3")->ao = 1.0f;
+	GetMaterial("texturedmesh3")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
+	GetMaterial("texturedmesh3")->emissionPower = 1.0f;
+
+	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
+	GetMaterial("DamagedHelmetMat")->metallic = 1.0f;
+	GetMaterial("DamagedHelmetMat")->roughness = 1.0f;
+	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
+	GetMaterial("DamagedHelmetMat")->emissionColor = glm::vec4(1.0f);
+	GetMaterial("DamagedHelmetMat")->emissionPower = 8.0f;
+
+	GetMaterial("BarrelMat")->albedo = glm::vec4(1.0f);
+	GetMaterial("BarrelMat")->metallic = 1.0f;
+	GetMaterial("BarrelMat")->roughness = 1.0f;
+	GetMaterial("BarrelMat")->ao = 1.0f;
+	GetMaterial("BarrelMat")->emissionColor = glm::vec4(1.0f, 0.3f, 0.0f, 1.0f);
+	GetMaterial("BarrelMat")->emissionPower = 8.0f;
+	
 	RenderObject monkey;
 	monkey.p_mesh = GetMesh("monkey");
-	monkey.p_material = vkRenderer.GetMaterial("texturedmesh2");
+	monkey.p_material = GetMaterial("texturedmesh2");
 	monkey.transformMatrix =  glm::translate(glm::vec3{ 0,0,0 });
 
 	renderables.push_back(monkey);
 
 	RenderObject monkey2;
 	monkey2.p_mesh = GetMesh("monkey");
-	monkey2.p_material = vkRenderer.GetMaterial("texturedmesh2");
+	monkey2.p_material = GetMaterial("texturedmesh2");
 	monkey2.transformMatrix =  glm::translate(glm::vec3{ 3,2,0 });
 
 	renderables.push_back(monkey2);
 
 	RenderObject monkey3;
 	monkey3.p_mesh = GetMesh("monkey");
-	monkey3.p_material = vkRenderer.GetMaterial("texturedmesh2");
+	monkey3.p_material = GetMaterial("texturedmesh2");
 	monkey3.transformMatrix =  glm::translate(glm::vec3{ -3,2,0 });
 
 	renderables.push_back(monkey3);
 
 	RenderObject map;
 	map.p_mesh = GetMesh("empire");
-	map.p_material = vkRenderer.GetMaterial("texturedmesh");
+	map.p_material = GetMaterial("texturedmesh");
 	map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
 
 	renderables.push_back(map);
 
 	RenderObject viking_room;
 	viking_room.p_mesh = GetMesh("viking_room");
-	viking_room.p_material = vkRenderer.GetMaterial("texturedmesh3");
+	viking_room.p_material = GetMaterial("texturedmesh3");
 	viking_room.transformMatrix = glm::translate(glm::vec3{ 0,1.0f,3.0f }); 
 
 	renderables.push_back(viking_room);
 
 	RenderObject DamagedHelmet;
 	DamagedHelmet.p_mesh = GetMesh("DamagedHelmet");
-	DamagedHelmet.p_material = vkRenderer.GetMaterial("DamagedHelmetMat");
+	DamagedHelmet.p_material = GetMaterial("DamagedHelmetMat");
 	DamagedHelmet.transformMatrix = glm::translate(glm::vec3{ 0,3.0f,-5.0f }); 
 
 	renderables.push_back(DamagedHelmet);
 
 	RenderObject Barrel;
 	Barrel.p_mesh = GetMesh("Barrel");
-	Barrel.p_material = vkRenderer.GetMaterial("BarrelMat");
+	Barrel.p_material = GetMaterial("BarrelMat");
 	Barrel.transformMatrix = glm::translate(glm::vec3{ 0,3.0f,5.0f }); 
 
 	renderables.push_back(Barrel);
 	
 	RenderObject skyBox;
 	skyBox.p_mesh = GetMesh("skyBox");
-	skyBox.p_material = vkRenderer.GetMaterial("texturedmesh2");
+	skyBox.p_material = GetMaterial("texturedmesh2");
 	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
 	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
 	skyBox.transformMatrix = translation * scale;

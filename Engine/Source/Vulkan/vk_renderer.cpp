@@ -818,40 +818,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 void VulkanRenderer::InitScene()
 {
 	//TODO: move all of this into higher rendering level
-	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
-	GetMaterial("texturedmesh")->metallic = 0.5f;
-	GetMaterial("texturedmesh")->roughness = 0.5f;
-	GetMaterial("texturedmesh")->ao = 1.0f;
-	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
-	GetMaterial("texturedmesh")->emissionPower = 1.0f;
-
-	GetMaterial("texturedmesh2")->albedo = glm::vec4(0.0f,0.0f,0.0f,1.0f);
-	GetMaterial("texturedmesh2")->metallic = 0.5f;
-	GetMaterial("texturedmesh2")->roughness = 0.5f;
-	GetMaterial("texturedmesh2")->ao = 1.0f;
-	GetMaterial("texturedmesh2")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
-	GetMaterial("texturedmesh2")->emissionPower = 1.0f;
-
-	GetMaterial("texturedmesh3")->albedo = glm::vec4(0.5f,0.5f,0.5f,1.0f);
-	GetMaterial("texturedmesh3")->metallic = 0.5f;
-	GetMaterial("texturedmesh3")->roughness = 0.5f;
-	GetMaterial("texturedmesh3")->ao = 1.0f;
-	GetMaterial("texturedmesh3")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
-	GetMaterial("texturedmesh3")->emissionPower = 1.0f;
-
-	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
-	GetMaterial("DamagedHelmetMat")->metallic = 1.0f;
-	GetMaterial("DamagedHelmetMat")->roughness = 1.0f;
-	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
-	GetMaterial("DamagedHelmetMat")->emissionColor = glm::vec4(1.0f);
-	GetMaterial("DamagedHelmetMat")->emissionPower = 8.0f;
-
-	GetMaterial("BarrelMat")->albedo = glm::vec4(1.0f);
-	GetMaterial("BarrelMat")->metallic = 1.0f;
-	GetMaterial("BarrelMat")->roughness = 1.0f;
-	GetMaterial("BarrelMat")->ao = 1.0f;
-	GetMaterial("BarrelMat")->emissionColor = glm::vec4(1.0f, 0.3f, 0.0f, 1.0f);
-	GetMaterial("BarrelMat")->emissionPower = 8.0f;
+	
 
 	//lost empire
 	CreateTexture("texturedmesh", "EngineAssets/Textures/lost_empire-RGBA.png", textureSampler);

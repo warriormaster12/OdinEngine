@@ -13,6 +13,7 @@ namespace RendererCore
 
     void LoadMeshes();
     void CreateMaterial(const std::string& name);
+    Material* GetMaterial(const std::string& name);
     Mesh* GetMesh(const std::string& name);
 
     void InitScene();
