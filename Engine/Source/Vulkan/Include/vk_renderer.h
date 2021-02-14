@@ -217,7 +217,7 @@ public:
 	void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 
 	//create material and add it to the map
-	Material* CreateMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
+	Material* CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name);
 
 	//returns nullptr if it cant be found
 	Material* GetMaterial(const std::string& name);
@@ -231,6 +231,7 @@ public:
 
 	WindowHandler* p_windowHandler;
 
+	void InitScene();
 	
 private:
 
@@ -248,15 +249,13 @@ private:
 
 	void InitPipelines();
 
-	void InitScene();
-
 	void InitDescriptors();
 
 	void RecreateSwapchain();
 
 	void CreateTexture(std::string materialName, const std::string texturePath, VkSampler& sampler, uint32_t binding = 1);
 	//this is done when creating new material
-	void AllocateEmptyTextures(std::string materialName, VkSampler& sampler);
+	void AllocateEmptyTextures(const std::string& materialName, VkSampler& sampler);
 
 
 };

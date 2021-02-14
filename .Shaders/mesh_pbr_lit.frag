@@ -136,7 +136,7 @@ void main()
     }
 
     // this is for objects that have a texture loaded
-    if (albedo.a > 0.1f)
+    if (albedo.a > 0.1)
     {
         albedo *= materialData.albedo;
     }
@@ -163,7 +163,7 @@ void main()
     {
         N = normalize(Normal);
     }
-    if(metallic > 0.1f)
+    if(metallic > 0.1)
     {
         metallic *= float(materialData.metallic);
     }
@@ -171,7 +171,7 @@ void main()
     {
         metallic += float(materialData.metallic);
     }
-    if(roughness > 0.1f)
+    if(roughness > 0.1)
     {
         roughness *= float(materialData.roughness);
     }
@@ -190,10 +190,10 @@ void main()
     // reflectance equation
     vec3 Lo = vec3(0.0);
     vec3 radianceOut = calcDirLight(sceneData.dLight, N, V, albedo.rgb, roughness, metallic, F0);
+    float viewDistance = length(vec3(cameraData.camPos) - WorldPos);
     for(int i = 0; i < int(sceneData.plightCount); ++i) 
     {
         // calculate per-light radiance
-        float viewDistance = length(vec3(cameraData.camPos) - WorldPos);
         radianceOut += calcPointLight(i, N, WorldPos, V, albedo.rgb, roughness, metallic, F0, viewDistance);
     }
     

@@ -13,6 +13,12 @@ void RendererCore::InitRenderer()
 {
     windowHandler.CreateWindow(1920, 1080);
     vkRenderer.Init(windowHandler);
+	CreateMaterial("texturedmesh2");
+	CreateMaterial("texturedmesh");
+	CreateMaterial("texturedmesh3");
+	CreateMaterial("DamagedHelmetMat");
+	CreateMaterial("BarrelMat");
+	vkRenderer.InitScene();
     InitScene();
 }
 
@@ -44,6 +50,10 @@ void RendererCore::CleanupRenderer()
     windowHandler.DestroyWindow();
 }
 
+void RendererCore::CreateMaterial(const std::string& name)
+{
+	vkRenderer.CreateMaterial(vkRenderer.GetMaterial("defaultMat")->pipeline, vkRenderer.GetMaterial("defaultMat")->pipelineLayout, name);
+}
 
 Mesh* RendererCore::GetMesh(const std::string& name)
 {

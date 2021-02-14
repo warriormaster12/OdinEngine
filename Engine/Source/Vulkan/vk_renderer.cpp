@@ -186,9 +186,10 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 
 	InitSamplers();
 
+	LoadImage("empty", "");
+
 	InitPipelines();
 
-	InitScene();
 
 	camera.position = { 0.f,0.f,10.f };
 
@@ -658,11 +659,7 @@ void VulkanRenderer::InitPipelines()
 	//build the mesh triangle pipeline
 	pipelineBuilder.pipelineLayout = texturedPipeLayout;
 	VkPipeline texPipeline = pipelineBuilder.BuildPipeline(device, renderPass);
-	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh");
-	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh2");
-	CreateMaterial(texPipeline, texturedPipeLayout, "texturedmesh3");
-	CreateMaterial(texPipeline, texturedPipeLayout, "DamagedHelmetMat");
-	CreateMaterial(texPipeline, texturedPipeLayout, "BarrelMat");
+	CreateMaterial(texPipeline, texturedPipeLayout, "defaultMat");
 
 	vkDestroyShaderModule(device, meshVertShader, nullptr);
 	vkDestroyShaderModule(device, texturedMeshShader, nullptr);
@@ -716,7 +713,7 @@ void VulkanRenderer::UploadMesh(Mesh& mesh)
 
 
 
-Material* VulkanRenderer::CreateMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name)
+Material* VulkanRenderer::CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name)
 {
 	Material mat;
 	mat.pipeline = pipeline;
@@ -770,6 +767,25 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	size_t frameIndex = frameNumber % FRAME_OVERLAP;
 	//size_t uniformOffset = PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
 	size_t uniformOffset = sizeof(GPUSceneData) * frameIndex;
+
+	// Static light data, can be moved away
+	//TODO: make proper pointlight, spotlight and directional light
+	sceneParameters.dLight.intensity = glm::vec4(3.0f);
+	sceneParameters.dLight.color = glm::vec4(1.0f);
+	sceneParameters.dLight.direction = glm::vec4(glm::vec3( -0.2f, -1.0f, -0.3f), 0.0f);
+	sceneParameters.plightCount = glm::vec4(3);
+	sceneParameters.pointLights[0].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);
+	sceneParameters.pointLights[0].color = glm::vec4(glm::vec3(1.0f,1.0f,1.0f),1.0f);
+	sceneParameters.pointLights[0].radius = glm::vec4(10.0f);
+	sceneParameters.pointLights[1].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[1].position = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),1.0f);
+	sceneParameters.pointLights[1].color = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
+	sceneParameters.pointLights[1].radius = glm::vec4(5.0f);
+	sceneParameters.pointLights[2].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[2].position = glm::vec4(glm::vec3(4.0f,  1.0f, 7.0f),1.0f);
+	sceneParameters.pointLights[2].color = glm::vec4(glm::vec3(0.0f,0.0f,1.0f),1.0f);
+	sceneParameters.pointLights[2].radius = glm::vec4(15.0f);
 
 	// Convert material ID to material
 	// TODO: Handle nullptr material, apply default?
@@ -867,24 +883,7 @@ void VulkanRenderer::InitScene()
 	//Roughness
 	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Roughness.png", textureSampler,7);
 
-	// Static light data, can be moved away
-	//TODO: make proper pointlight, spotlight and directional light
-	sceneParameters.dLight.intensity = glm::vec4(2.0f);
-	sceneParameters.dLight.color = glm::vec4(1.0f);
-	sceneParameters.dLight.direction = glm::vec4(glm::vec3( -0.2f, -1.0f, -0.3f), 0.0f);
-	sceneParameters.plightCount = glm::vec4(3);
-	sceneParameters.pointLights[0].intensity = glm::vec4(100.0f);
-	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);
-	sceneParameters.pointLights[0].color = glm::vec4(glm::vec3(1.0f,1.0f,1.0f),1.0f);
-	sceneParameters.pointLights[0].radius = glm::vec4(10.0f);
-	sceneParameters.pointLights[1].intensity = glm::vec4(100.0f);
-	sceneParameters.pointLights[1].position = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),1.0f);
-	sceneParameters.pointLights[1].color = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
-	sceneParameters.pointLights[1].radius = glm::vec4(5.0f);
-	sceneParameters.pointLights[2].intensity = glm::vec4(100.0f);
-	sceneParameters.pointLights[2].position = glm::vec4(glm::vec3(4.0f,  1.0f, 7.0f),1.0f);
-	sceneParameters.pointLights[2].color = glm::vec4(glm::vec3(0.0f,0.0f,1.0f),1.0f);
-	sceneParameters.pointLights[2].radius = glm::vec4(15.0f);
+	
 }
 
 
@@ -938,7 +937,7 @@ void VulkanRenderer::InitDescriptors()
 	{
 		CreateBufferInfo info;
 		//info.allocSize = FRAME_OVERLAP * PadUniformBufferSize(sizeof(GPUSceneData));
-		info.allocSize = sizeof(GPUSceneData);
+		info.allocSize = FRAME_OVERLAP * sizeof(GPUSceneData);
 		info.bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 		CreateBuffer(allocator, &sceneParameterBuffer, info);
@@ -1093,9 +1092,8 @@ void VulkanRenderer::CreateTexture(std::string materialName, std::string texture
 }
 
 
-void VulkanRenderer::AllocateEmptyTextures(std::string materialName, VkSampler& sampler)
+void VulkanRenderer::AllocateEmptyTextures(const std::string& materialName, VkSampler& sampler)
 {
-	LoadImage("empty", "");
 	Material* texturedMaterial = GetMaterial(materialName);
 
 	//write to the descriptor set so that it points to our input texture

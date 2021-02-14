@@ -12,6 +12,7 @@ namespace RendererCore
     void CleanupRenderer();
 
     void LoadMeshes();
+    void CreateMaterial(const std::string& name);
     Mesh* GetMesh(const std::string& name);
 
     void InitScene();
