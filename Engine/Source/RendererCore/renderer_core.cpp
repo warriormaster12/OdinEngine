@@ -259,13 +259,6 @@ void RendererCore::InitScene()
 
 	renderables.push_back(monkey3);
 
-	RenderObject map;
-	map.p_mesh = GetMesh("empire");
-	map.p_material = GetMaterial("texturedmesh");
-	map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
-
-	renderables.push_back(map);
-
 	RenderObject viking_room;
 	viking_room.p_mesh = GetMesh("viking_room");
 	viking_room.p_material = GetMaterial("texturedmesh3");
@@ -294,4 +287,11 @@ void RendererCore::InitScene()
 	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
 	skyBox.transformMatrix = translation * scale;
 	renderables.push_back(skyBox);
+
+	RenderObject map;
+	map.p_mesh = GetMesh("empire");
+	map.p_material = GetMaterial("texturedmesh");
+	map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
+
+	renderables.push_back(map);
 }

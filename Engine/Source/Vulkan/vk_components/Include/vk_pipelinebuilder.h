@@ -15,6 +15,7 @@ namespace vkcomponent
         VkPipelineInputAssemblyStateCreateInfo inputAssembly;
         VkViewport viewport;
         VkRect2D scissor;
+        std::array<float, 4> blendConstant;
         VkPipelineRasterizationStateCreateInfo rasterizer;
         VkPipelineColorBlendAttachmentState colorBlendAttachment;
         VkPipelineMultisampleStateCreateInfo multisampling;

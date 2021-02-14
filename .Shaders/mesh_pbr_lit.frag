@@ -179,6 +179,10 @@ void main()
     {
         roughness += float(materialData.roughness);  
     }
+    if (albedo.a < 0.1)
+    {
+        discard;
+    }
     
     vec3 V = normalize(vec3(cameraData.camPos) - WorldPos);
 

@@ -28,10 +28,14 @@ namespace vkcomponent
         colorBlending.logicOp = VK_LOGIC_OP_COPY;
         colorBlending.attachmentCount = 1;
         colorBlending.pAttachments = &colorBlendAttachment;
+        colorBlending.blendConstants[0] = blendConstant[0];
+        colorBlending.blendConstants[1] = blendConstant[1];
+        colorBlending.blendConstants[2] = blendConstant[2];
+        colorBlending.blendConstants[3] = blendConstant[3];
 
         //build the actual pipeline
         //we now use all of the info structs we have been writing into into this one to create the pipeline
-        std::array <VkDynamicState, 3> dStates = {VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS}; 
+        std::array <VkDynamicState, 2> dStates = {VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR}; 
         VkPipelineDynamicStateCreateInfo dStateInfo = {};
         dStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dStateInfo.dynamicStateCount = dStates.size();

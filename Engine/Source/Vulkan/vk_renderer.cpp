@@ -126,8 +126,6 @@ namespace {
     {
         vkCmdSetViewport(cmd, 0, 1, &pipelineBuilder.viewport);
         vkCmdSetScissor(cmd, 0, 1, &pipelineBuilder.scissor);
-        float blendConstant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        vkCmdSetBlendConstants(cmd, blendConstant);
     }
 
     void BindMaterial(Material* material, const DescriptorSetData& descriptorSets)
@@ -358,7 +356,7 @@ void VulkanRenderer::InitVulkan()
 	//feats.pipelineStatisticsQuery = true;
 	feats.multiDrawIndirect = true;
 	feats.drawIndirectFirstInstance = true;
-	feats.alphaToOne = true;
+	feats.alphaToOne = false;
 	//feats.samplerAnisotropy = true;
 	selector.set_required_features(feats);
 
@@ -627,6 +625,8 @@ void VulkanRenderer::InitPipelines()
 	pipelineBuilder.viewport.height = (float)swapChainObj.actualExtent.height;
 	pipelineBuilder.viewport.minDepth = 0.0f;
 	pipelineBuilder.viewport.maxDepth = 1.0f;
+
+	pipelineBuilder.blendConstant = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	pipelineBuilder.scissor.offset = { 0, 0 };
 	pipelineBuilder.scissor.extent = swapChainObj.actualExtent;

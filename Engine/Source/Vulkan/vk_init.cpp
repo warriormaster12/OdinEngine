@@ -61,7 +61,7 @@ VkPipelineInputAssemblyStateCreateInfo vkinit::InputAssemblyCreateInfo(VkPrimiti
     return info;
 }
 
-VkPipelineRasterizationStateCreateInfo vkinit::RasterizationStateCreateInfo(VkPolygonMode polygonMode, VkCullModeFlagBits cullMode /* VK_CULL_MODE_FRONT_BIT*/)
+VkPipelineRasterizationStateCreateInfo vkinit::RasterizationStateCreateInfo(VkPolygonMode polygonMode, VkCullModeFlagBits cullMode /* VK_CULL_MODE_BACK_BIT*/)
 {
     VkPipelineRasterizationStateCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -75,7 +75,7 @@ VkPipelineRasterizationStateCreateInfo vkinit::RasterizationStateCreateInfo(VkPo
     info.lineWidth = 1.0f;
     //select cull mode
     info.cullMode = cullMode;
-    info.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     //no depth bias
     info.depthBiasEnable = VK_FALSE;
     info.depthBiasConstantFactor = 0.0f;
@@ -96,8 +96,8 @@ VkPipelineMultisampleStateCreateInfo vkinit::MultisamplingStateCreateInfo()
     info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
     info.minSampleShading = 1.0f;
     info.pSampleMask = nullptr;
-    info.alphaToCoverageEnable = VK_TRUE;
-    info.alphaToOneEnable = VK_TRUE;
+    info.alphaToCoverageEnable = VK_FALSE;
+    info.alphaToOneEnable = VK_FALSE;
     return info;
 }
 
@@ -105,13 +105,13 @@ VkPipelineColorBlendAttachmentState vkinit::ColorBlendAttachmentState() {
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.blendEnable = VK_FALSE;
     colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
     colorBlendAttachment.srcAlphaBlendFactor =  VK_BLEND_FACTOR_SRC_ALPHA;
     colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
     return colorBlendAttachment;
 }
 
