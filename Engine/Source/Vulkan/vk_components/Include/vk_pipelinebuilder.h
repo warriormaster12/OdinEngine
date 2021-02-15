@@ -4,6 +4,7 @@
 #include "logger.h"
 
 #include <vector>
+#include <array>
 
 namespace vkcomponent
 {
