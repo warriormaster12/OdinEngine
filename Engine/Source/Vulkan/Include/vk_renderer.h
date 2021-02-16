@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
+#include <memory>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -256,7 +257,6 @@ private:
 	void CreateTexture(std::string materialName, const std::string texturePath, VkSampler& sampler, uint32_t binding = 1);
 	//this is done when creating new material
 	void AllocateEmptyTextures(const std::string& materialName, VkSampler& sampler);
-
 
 };
 
