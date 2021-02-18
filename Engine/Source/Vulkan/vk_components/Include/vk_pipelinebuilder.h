@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <array>
+#include "vk_shaderhandler.h"
 
 namespace vkcomponent
 {
@@ -23,5 +24,13 @@ namespace vkcomponent
         VkPipelineLayout pipelineLayout;
         VkPipelineDepthStencilStateCreateInfo depthStencil;
         VkPipeline BuildPipeline(VkDevice& device, VkRenderPass& pass);
+
+        void SetShader(ShaderEffect* effect);
     };
+
+    struct ShaderPass {
+		ShaderEffect* effect{ nullptr };
+		VkPipeline pipeline{ VK_NULL_HANDLE };
+		VkPipelineLayout layout{ VK_NULL_HANDLE };
+	};
 }

@@ -73,4 +73,12 @@ namespace vkcomponent
             return newPipeline;
         }
     }
+
+    void PipelineBuilder::SetShader(ShaderEffect* effect)
+    {
+        shaderStages.clear();
+        effect->FillStages(shaderStages);
+
+        pipelineLayout = effect->builtLayout;
+    }
 }

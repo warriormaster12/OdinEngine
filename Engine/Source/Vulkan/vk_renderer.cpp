@@ -198,6 +198,7 @@ void VulkanRenderer::CleanUp()
 		
 	vkDeviceWaitIdle(device);
 	
+
 	swapDeletionQueue.Flush();
 	mainDeletionQueue.Flush();
 
@@ -579,34 +580,27 @@ void VulkanRenderer::InitSyncStructures()
 
 void VulkanRenderer::InitPipelines()
 {
-	VkShaderModule texturedMeshShader;
+	//VkShaderModule texturedMeshShader;
+	vkcomponent::ShaderModule texturedMeshShader;
 	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, device))
 	{
 		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
 	}
 
-	VkShaderModule meshVertShader;
+	//VkShaderModule meshVertShader;
+	vkcomponent::ShaderModule meshVertShader;
 	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, device))
 	{
 		ENGINE_CORE_ERROR("Error when building the mesh vertex shader module");
 	}
 
-	
-	//build the stage-create-info for both vertex and fragment stages. This lets the pipeline know the shader modules per stage
-	pipelineBuilder.shaderStages.push_back(
-		vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, meshVertShader));
-	pipelineBuilder.shaderStages.push_back(
-		vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, texturedMeshShader));
-
-	//we start from  the normal mesh layout
-	VkPipelineLayoutCreateInfo textured_pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
-		
-	VkDescriptorSetLayout texturedSetLayouts[] = { globalSetLayout, objectSetLayout, materialTextureSetLayout };
-	textured_pipeline_layout_info.setLayoutCount = 3;
-	textured_pipeline_layout_info.pSetLayouts = texturedSetLayouts;
+	vkcomponent::ShaderEffect* defaultEffect = new vkcomponent::ShaderEffect();
+	defaultEffect->AddStage(&meshVertShader, VK_SHADER_STAGE_VERTEX_BIT);
+	defaultEffect->AddStage(&texturedMeshShader, VK_SHADER_STAGE_FRAGMENT_BIT);
+	defaultEffect->ReflectLayout(device, nullptr, 0);
 
 	VkPipelineLayout texturedPipeLayout;
-	VK_CHECK(vkCreatePipelineLayout(device, &textured_pipeline_layout_info, nullptr, &texturedPipeLayout));
+	texturedPipeLayout = defaultEffect->builtLayout;
 
 	//hook the push constants layout
 	pipelineBuilder.pipelineLayout = texturedPipeLayout;
@@ -657,14 +651,16 @@ void VulkanRenderer::InitPipelines()
 
 	
 	//build the mesh triangle pipeline
+	pipelineBuilder.SetShader(defaultEffect);
 	pipelineBuilder.pipelineLayout = texturedPipeLayout;
 	VkPipeline texPipeline = pipelineBuilder.BuildPipeline(device, renderPass);
 	CreateMaterial(texPipeline, texturedPipeLayout, "defaultMat");
 
-	vkDestroyShaderModule(device, meshVertShader, nullptr);
-	vkDestroyShaderModule(device, texturedMeshShader, nullptr);
+	vkDestroyShaderModule(device, meshVertShader.module, nullptr);
+	vkDestroyShaderModule(device, texturedMeshShader.module, nullptr);
 
 	mainDeletionQueue.PushFunction([=]() {
+		defaultEffect->FlushLayout();
 		vkDestroyPipeline(device, texPipeline, nullptr);
 		vkDestroyPipelineLayout(device, texturedPipeLayout, nullptr);
 	});

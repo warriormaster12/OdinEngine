@@ -32,6 +32,7 @@ target_include_directories(VulkanEngine.x86_64 PUBLIC
     Engine/Source/Third-Party/stb_image/
     Engine/Source/Third-Party/tinyobjloader/
     Engine/Source/Third-Party/Vma/
+    Engine/Source/Third-Party/spirv-reflect/Include/
 )
 
 
