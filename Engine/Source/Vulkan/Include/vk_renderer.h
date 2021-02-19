@@ -173,8 +173,8 @@ public:
 	
 	VmaAllocator allocator; //vma lib allocator
 
-	std::shared_ptr<vkcomponent::DescriptorAllocator> p_descriptorAllocator;
-	std::shared_ptr<vkcomponent::DescriptorLayoutCache> p_descriptorLayoutCache;
+	vkcomponent::DescriptorAllocator* p_descriptorAllocator;
+	vkcomponent::DescriptorLayoutCache* p_descriptorLayoutCache;
 
 
 	VkDescriptorSetLayout globalSetLayout{};

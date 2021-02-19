@@ -864,10 +864,10 @@ size_t VulkanRenderer::PadUniformBufferSize(size_t originalSize)
 
 void VulkanRenderer::InitDescriptors()
 {
-	p_descriptorAllocator = std::make_shared<vkcomponent::DescriptorAllocator>();
+	p_descriptorAllocator = new vkcomponent::DescriptorAllocator{};
 	p_descriptorAllocator->Init(device);
 
-	p_descriptorLayoutCache = std::make_shared<vkcomponent::DescriptorLayoutCache>();
+	p_descriptorLayoutCache = new vkcomponent::DescriptorLayoutCache{};
 	p_descriptorLayoutCache->Init(device);
 	
 	VkDescriptorSetLayoutBinding cameraBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0);
@@ -955,12 +955,14 @@ void VulkanRenderer::InitDescriptors()
 		objectBufferInfo.offset = 0;
 		objectBufferInfo.range = sizeof(GPUObjectData) * MAX_OBJECTS;
 
-		VkWriteDescriptorSet cameraWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, frames[i].globalDescriptor,&cameraInfo,0);
-		VkWriteDescriptorSet sceneWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, frames[i].globalDescriptor, &sceneInfo, 1);
-		VkWriteDescriptorSet objectWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, frames[i].objectDescriptor, &objectBufferInfo, 0);
+		vkcomponent::DescriptorBuilder::Begin(p_descriptorLayoutCache, frames[i].p_dynamicDescriptorAllocator)
+		.BindBuffer(0, &cameraInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+		.BindBuffer(1, &sceneInfo, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+		.Build(frames[i].globalDescriptor);
 
-		std::vector <VkWriteDescriptorSet> setWrites = { cameraWrite, sceneWrite, objectWrite};
-		vkUpdateDescriptorSets(device, setWrites.size(), setWrites.data(), 0, nullptr);
+		vkcomponent::DescriptorBuilder::Begin(p_descriptorLayoutCache, frames[i].p_dynamicDescriptorAllocator)
+		.BindBuffer(0, &objectBufferInfo, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+		.Build(frames[i].objectDescriptor);
 
 		mainDeletionQueue.PushFunction([=]()
 		{
