@@ -7,6 +7,8 @@
 #include <array>
 #include "vk_shaderhandler.h"
 
+
+class VulkanRenderer;
 namespace vkcomponent
 {
     class PipelineBuilder {
@@ -33,4 +35,6 @@ namespace vkcomponent
 		VkPipeline pipeline{ VK_NULL_HANDLE };
 		VkPipelineLayout layout{ VK_NULL_HANDLE };
 	};
+
+    ShaderEffect* BuildEffect(VulkanRenderer* p_renderer, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides={});
 }

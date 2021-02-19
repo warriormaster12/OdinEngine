@@ -595,15 +595,11 @@ void VulkanRenderer::InitPipelines()
 	}
 
 	vkcomponent::ShaderEffect* defaultEffect = new vkcomponent::ShaderEffect();
-	defaultEffect->AddStage(&meshVertShader, VK_SHADER_STAGE_VERTEX_BIT);
-	defaultEffect->AddStage(&texturedMeshShader, VK_SHADER_STAGE_FRAGMENT_BIT);
-	defaultEffect->ReflectLayout(device, nullptr, 0);
-
-	VkPipelineLayout texturedPipeLayout;
-	texturedPipeLayout = defaultEffect->builtLayout;
+	std::vector<vkcomponent::ShaderModule> shaderModules = {meshVertShader, texturedMeshShader};
+	defaultEffect = vkcomponent::BuildEffect(this, shaderModules);
 
 	//hook the push constants layout
-	pipelineBuilder.pipelineLayout = texturedPipeLayout;
+	pipelineBuilder.pipelineLayout = defaultEffect->builtLayout;
 
 	//vertex input controls how to read vertices from vertex buffers. We arent using it yet
 	pipelineBuilder.vertexInputInfo = vkinit::VertexInputStateCreateInfo();
@@ -652,9 +648,8 @@ void VulkanRenderer::InitPipelines()
 	
 	//build the mesh triangle pipeline
 	pipelineBuilder.SetShader(defaultEffect);
-	pipelineBuilder.pipelineLayout = texturedPipeLayout;
 	VkPipeline texPipeline = pipelineBuilder.BuildPipeline(device, renderPass);
-	CreateMaterial(texPipeline, texturedPipeLayout, "defaultMat");
+	CreateMaterial(texPipeline, pipelineBuilder.pipelineLayout, "defaultMat");
 
 	vkDestroyShaderModule(device, meshVertShader.module, nullptr);
 	vkDestroyShaderModule(device, texturedMeshShader.module, nullptr);
@@ -662,7 +657,7 @@ void VulkanRenderer::InitPipelines()
 	mainDeletionQueue.PushFunction([=]() {
 		defaultEffect->FlushLayout();
 		vkDestroyPipeline(device, texPipeline, nullptr);
-		vkDestroyPipelineLayout(device, texturedPipeLayout, nullptr);
+		vkDestroyPipelineLayout(device,  pipelineBuilder.pipelineLayout, nullptr);
 	});
 }
 

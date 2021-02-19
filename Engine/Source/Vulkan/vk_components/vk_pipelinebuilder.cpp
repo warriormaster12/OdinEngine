@@ -1,6 +1,7 @@
 #include "Include/vk_pipelinebuilder.h"
 #include <iostream>
 #include <array>
+#include "vk_renderer.h"
 
 
 namespace vkcomponent
@@ -80,5 +81,26 @@ namespace vkcomponent
         effect->FillStages(shaderStages);
 
         pipelineLayout = effect->builtLayout;
+    }
+
+    ShaderEffect* BuildEffect(VulkanRenderer* p_renderer, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides/*={}*/)
+    {
+        //textured defaultlit shader
+        ShaderEffect* effect = new ShaderEffect();
+        
+        effect->AddStage(&shaders[0], VK_SHADER_STAGE_VERTEX_BIT);
+        if (shaders.size() >= 1)
+        {
+            effect->AddStage(&shaders[1], VK_SHADER_STAGE_FRAGMENT_BIT);
+        }
+        if(overrides.size() != 0)
+        {
+            effect->ReflectLayout(p_renderer->device, overrides.data(), overrides.size());
+        }
+        else
+        {
+            effect->ReflectLayout(p_renderer->device, nullptr, 0);
+        }
+        return effect; 
     }
 }
