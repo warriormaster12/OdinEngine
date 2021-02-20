@@ -22,7 +22,6 @@ vkcomponent::PipelineBuilder pipelineBuilder;
 VkCommandBuffer cmd;
 uint32_t swapchainImageIndex;
 VkResult drawResult;
-VkSampler textureSampler;
 
 // Utility (pure) functions are put in an anonymous namespace
 
@@ -170,34 +169,24 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 {
 	p_windowHandler = &windowHandler;
 	InitVulkan();
-	swapChainObj.InitSwapchain(p_windowHandler->p_window);
-
+	InitSwapchain();
 	InitDefaultRenderpass();
-
 	InitFramebuffers();
-
 	InitCommands();
-
 	InitSyncStructures();
-
 	InitDescriptors();
-
 	InitSamplers();
-
 	LoadImage("empty", "");
-
 	InitPipelines();
-
 
 	camera.position = { 0.f,0.f,10.f };
 
 	ENGINE_CORE_INFO("vulkan intialized");
 }
+
 void VulkanRenderer::CleanUp()
 {	
-		
 	vkDeviceWaitIdle(device);
-	
 
 	swapDeletionQueue.Flush();
 	mainDeletionQueue.Flush();
@@ -262,6 +251,7 @@ void VulkanRenderer::BeginDraw()
 	vkCmdBeginRenderPass(cmd, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 }
+
 void VulkanRenderer::EndDraw()
 {
 	//finalize the render pass
@@ -317,17 +307,202 @@ void VulkanRenderer::EndDraw()
 	frameNumber++;
 }
 
-FrameData& VulkanRenderer::GetCurrentFrame()
+void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 {
-	return frames[frameNumber % FRAME_OVERLAP];
+	size_t frameIndex = frameNumber % FRAME_OVERLAP;
+	//size_t uniformOffset = PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
+	size_t uniformOffset = sizeof(GPUSceneData) * frameIndex;
+
+	// Static light data, can be moved away
+	//TODO: make proper pointlight, spotlight and directional light
+	sceneParameters.dLight.intensity = glm::vec4(3.0f);
+	sceneParameters.dLight.color = glm::vec4(1.0f);
+	sceneParameters.dLight.direction = glm::vec4(glm::vec3( -0.2f, -1.0f, -0.3f), 0.0f);
+	sceneParameters.plightCount = glm::vec4(3);
+	sceneParameters.pointLights[0].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);
+	sceneParameters.pointLights[0].color = glm::vec4(glm::vec3(1.0f,1.0f,1.0f),1.0f);
+	sceneParameters.pointLights[0].radius = glm::vec4(10.0f);
+	sceneParameters.pointLights[1].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[1].position = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),1.0f);
+	sceneParameters.pointLights[1].color = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
+	sceneParameters.pointLights[1].radius = glm::vec4(5.0f);
+	sceneParameters.pointLights[2].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[2].position = glm::vec4(glm::vec3(4.0f,  1.0f, 7.0f),1.0f);
+	sceneParameters.pointLights[2].color = glm::vec4(glm::vec3(0.0f,0.0f,1.0f),1.0f);
+	sceneParameters.pointLights[2].radius = glm::vec4(15.0f);
+
+	// Convert material ID to material
+	// TODO: Handle nullptr material, apply default?
+	std::vector<Material> materials;
+	materials.reserve(materialList.size());
+	for (const std::string& materialName : materialList)
+		materials.push_back(*GetMaterial(materialName));
+
+	// Store descriptor set data
+	DescriptorSetData descriptorSets;
+	descriptorSets.uniform = GetCurrentFrame().globalDescriptor;
+	descriptorSets.uniformOffset = 0;
+	descriptorSets.object = GetCurrentFrame().objectDescriptor;
+	descriptorSets.objectOffset = 0;
+
+	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera);
+	UploadSceneData(allocator, sceneParameterBuffer.allocation, sceneParameters, uniformOffset);
+	UploadObjectData(allocator, GetCurrentFrame().objectBuffer.allocation, objects);
+	
+	UploadMaterialData(allocator, materials);
+
+	UploadDrawCalls(allocator, GetCurrentFrame().indirectDrawBuffer.allocation, objects);
+
+	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);
+	IssueDrawCalls(cmd, GetCurrentFrame().indirectDrawBuffer.buffer, drawCalls);
 }
 
-
-FrameData& VulkanRenderer::GetLastFrame()
+void VulkanRenderer::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function)
 {
-	return frames[(frameNumber -1) % 2];
+	//allocate the default command buffer that we will use for the instant commands
+	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::CommandBufferAllocateInfo(uploadContext.commandPool, 1);
+
+    VkCommandBuffer cmd;
+	VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocInfo, &cmd));
+
+	//begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
+	VkCommandBufferBeginInfo cmdBeginInfo = vkinit::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
+
+    //execute the function
+	function(cmd);
+
+	VK_CHECK(vkEndCommandBuffer(cmd));
+
+	VkSubmitInfo submit = vkinit::SubmitInfo(&cmd);
+
+
+	//submit command buffer to the queue and execute it.
+	// _uploadFence will now block until the graphic commands finish execution
+	VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submit, uploadContext.uploadFence));
+
+	vkWaitForFences(device, 1, &uploadContext.uploadFence, true, 9999999999);
+	vkResetFences(device, 1, &uploadContext.uploadFence);
+
+    //clear the command pool. This will free the command buffer too
+	vkResetCommandPool(device, uploadContext.commandPool, 0);
 }
 
+void VulkanRenderer::EnqueueCleanup(std::function<void()>&& function)
+{
+	mainDeletionQueue.PushFunction([=]() { function(); });
+}
+
+void VulkanRenderer::UploadMesh(Mesh& mesh)
+{
+	const size_t BUFFER_SIZE = mesh.vertices.size() * sizeof(Vertex);
+
+	AllocatedBuffer stagingBuffer;
+	{
+		CreateBufferInfo info;
+		info.allocSize = BUFFER_SIZE;
+		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+		CreateBuffer(allocator, &stagingBuffer, info);
+	}
+
+	//copy vertex data
+	UploadVectorData(allocator, stagingBuffer.allocation, mesh.vertices);
+
+	{
+		CreateBufferInfo info;
+		info.allocSize = BUFFER_SIZE;
+		info.bufferUsage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
+		CreateBuffer(allocator, &mesh.vertexBuffer, info);
+	}
+
+	//add the destruction of triangle mesh buffer to the deletion queue
+	EnqueueCleanup([=]() {
+		vmaDestroyBuffer(allocator, mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
+	});
+
+	ImmediateSubmit([=](VkCommandBuffer cmd) {
+		VkBufferCopy copy;
+		copy.dstOffset = 0;
+		copy.srcOffset = 0;
+		copy.size = BUFFER_SIZE;
+		vkCmdCopyBuffer(cmd, stagingBuffer.buffer, mesh.vertexBuffer.buffer, 1, & copy);
+	});
+
+	vmaDestroyBuffer(allocator, stagingBuffer.buffer, stagingBuffer.allocation);
+}
+
+void VulkanRenderer::CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name)
+{
+	Material mat;
+	mat.pipeline = pipeline;
+	mat.pipelineLayout = layout;
+	materials[name] = mat;
+	materialList.push_back(name);
+	p_descriptorAllocator->Allocate(&materials[name].materialSet, materialTextureSetLayout);
+
+	{
+		CreateBufferInfo info;
+		info.allocSize = sizeof(GPUMaterialData);
+		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		CreateBuffer(allocator, &materials[name].buffer, info);
+	}
+
+	VkDescriptorBufferInfo materialBufferInfo;
+	materialBufferInfo.buffer = materials[name].buffer.buffer;
+	materialBufferInfo.offset = 0;
+	materialBufferInfo.range = sizeof(GPUMaterialData);
+
+	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
+	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
+	AllocateEmptyTextures(name, textureSampler);
+	EnqueueCleanup([=]() {
+		vmaDestroyBuffer(allocator, materials[name].buffer.buffer, materials[name].buffer.allocation);
+	});
+}
+
+Material* VulkanRenderer::GetMaterial(const std::string& name)
+{
+	//search for the object, and return nullpointer if not found
+	auto it = materials.find(name);
+	if (it == materials.end()) {
+		return nullptr;
+	}
+	else {
+		return &it->second;
+	}
+}
+
+void VulkanRenderer::CreateTexture(std::string materialName, std::string texturePath, uint32_t index)
+{
+	Material* texturedMaterial = GetMaterial(materialName);
+	if (texturedMaterial == nullptr)
+	{
+		ENGINE_CORE_ERROR("Could not load texture for non-existent material: {}", materialName);
+		return;
+	}
+
+	std::filesystem::path textureName = texturePath; 
+	const std::string processedName = textureName.stem().u8string();
+	LoadImage(processedName, texturePath);
+
+	//write to the descriptor set so that it points to our input texture
+	VkDescriptorImageInfo imageBufferInfo;
+	imageBufferInfo.sampler = textureSampler;
+	imageBufferInfo.imageView = loadedTextures[processedName].imageView;
+	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	// +1: binding 0 is used for material data (uniform data)
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, index + 1);
+	
+	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
+}
+
+/* Private functions */
 
 void VulkanRenderer::InitVulkan()
 {
@@ -394,25 +569,9 @@ void VulkanRenderer::InitVulkan()
 	ENGINE_CORE_INFO("The gpu has a minimum buffer alignement of {0}", gpuProperties.limits.minUniformBufferOffsetAlignment);
 }
 
-void VulkanRenderer::RecreateSwapchain()
-{	
-	vkDeviceWaitIdle(device);
-	swapDeletionQueue.Flush();
-	int width = 0, height = 0;
-	glfwGetFramebufferSize(p_windowHandler->p_window, &width, &height);
-	while (width == 0 || height == 0) {
-		glfwGetFramebufferSize(p_windowHandler->p_window, &width, &height);
-		glfwWaitEvents();
-	}
-
+void VulkanRenderer::InitSwapchain()
+{
 	swapChainObj.InitSwapchain(p_windowHandler->p_window);
-
-	InitFramebuffers();	
-
-	//update parts of the pipeline that change dynamically
-	pipelineBuilder.viewport.width = (float)swapChainObj.actualExtent.width;
-	pipelineBuilder.viewport.height = (float)swapChainObj.actualExtent.height;
-	pipelineBuilder.scissor.extent = swapChainObj.actualExtent;
 }
 
 void VulkanRenderer::InitDefaultRenderpass()
@@ -485,7 +644,7 @@ void VulkanRenderer::InitDefaultRenderpass()
 	render_pass_info.pDependencies = &dependency;
 	
 	VK_CHECK(vkCreateRenderPass(device, &render_pass_info, nullptr, &renderPass));
-	mainDeletionQueue.PushFunction([=]() {
+	EnqueueCleanup([=]() {
 		vkDestroyRenderPass(device, renderPass, nullptr);
 	});
 }
@@ -525,14 +684,14 @@ void VulkanRenderer::InitCommands()
 		VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::CommandBufferAllocateInfo(frames[i].commandPool, 1);
 
 		VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocInfo, &frames[i].mainCommandBuffer));
-		mainDeletionQueue.PushFunction([=]() {
+		EnqueueCleanup([=]() {
 			vkDestroyCommandPool(device, frames[i].commandPool, nullptr);
 		});
 	}
 	VkCommandPoolCreateInfo uploadCommandPoolInfo = vkinit::CommandPoolCreateInfo(graphicsQueueFamily);
 	//create pool for upload context
 	VK_CHECK(vkCreateCommandPool(device, &uploadCommandPoolInfo, nullptr, &uploadContext.commandPool));
-	mainDeletionQueue.PushFunction([=]() {
+	EnqueueCleanup([=]() {
 		vkDestroyCommandPool(device, uploadContext.commandPool, nullptr);
 	});
 }
@@ -552,7 +711,7 @@ void VulkanRenderer::InitSyncStructures()
 		VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &frames[i].renderFence));
 
 		//enqueue the destruction of the fence
-		mainDeletionQueue.PushFunction([=]() {
+		EnqueueCleanup([=]() {
 			vkDestroyFence(device, frames[i].renderFence, nullptr);
 			});
 
@@ -561,7 +720,7 @@ void VulkanRenderer::InitSyncStructures()
 		VK_CHECK(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frames[i].renderSemaphore));
 
 		//enqueue the destruction of semaphores
-		mainDeletionQueue.PushFunction([=]() {
+		EnqueueCleanup([=]() {
 			vkDestroySemaphore(device, frames[i].presentSemaphore, nullptr);
 			vkDestroySemaphore(device, frames[i].renderSemaphore, nullptr);
 			});
@@ -571,291 +730,11 @@ void VulkanRenderer::InitSyncStructures()
 
 	VK_CHECK(vkCreateFence(device, &uploadFenceCreateInfo, nullptr, &uploadContext.uploadFence));
 
-	mainDeletionQueue.PushFunction([=]() {
+	EnqueueCleanup([=]() {
 		vkDestroyFence(device, uploadContext.uploadFence, nullptr);
 	});
 
 }
-
-
-void VulkanRenderer::InitPipelines()
-{
-	//VkShaderModule texturedMeshShader;
-	vkcomponent::ShaderModule texturedMeshShader;
-	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, device))
-	{
-		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
-	}
-
-	//VkShaderModule meshVertShader;
-	vkcomponent::ShaderModule meshVertShader;
-	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, device))
-	{
-		ENGINE_CORE_ERROR("Error when building the mesh vertex shader module");
-	}
-
-	vkcomponent::ShaderEffect* defaultEffect = new vkcomponent::ShaderEffect();
-	std::vector<vkcomponent::ShaderModule> shaderModules = {meshVertShader, texturedMeshShader};
-	defaultEffect = vkcomponent::BuildEffect(this, shaderModules);
-
-	//hook the push constants layout
-	pipelineBuilder.pipelineLayout = defaultEffect->builtLayout;
-
-	//vertex input controls how to read vertices from vertex buffers. We arent using it yet
-	pipelineBuilder.vertexInputInfo = vkinit::VertexInputStateCreateInfo();
-
-	//input assembly is the configuration for drawing triangle lists, strips, or individual points.
-	//we are just going to draw triangle list
-	pipelineBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-
-	//build viewport and scissor from the swapchain extents
-	pipelineBuilder.viewport.x = 0.0f;
-	pipelineBuilder.viewport.y = 0.0f;
-	pipelineBuilder.viewport.width = (float)swapChainObj.actualExtent.width;
-	pipelineBuilder.viewport.height = (float)swapChainObj.actualExtent.height;
-	pipelineBuilder.viewport.minDepth = 0.0f;
-	pipelineBuilder.viewport.maxDepth = 1.0f;
-
-	pipelineBuilder.blendConstant = {0.0f, 0.0f, 0.0f, 0.0f};
-
-	pipelineBuilder.scissor.offset = { 0, 0 };
-	pipelineBuilder.scissor.extent = swapChainObj.actualExtent;
-
-	//configure the rasterizer to draw filled triangles
-	pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
-
-	//we dont use multisampling, so just run the default one
-	pipelineBuilder.multisampling = vkinit::MultisamplingStateCreateInfo();
-
-	//a single blend attachment with no blending and writing to RGBA
-	pipelineBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
-
-
-	//default depthtesting
-	pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
-
-	//build the mesh pipeline
-
-	VertexInputDescription vertexDescription = Vertex::GetVertexDescription();
-
-	//connect the pipeline builder vertex input info to the one we get from Vertex
-	pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
-	pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
-
-	pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
-	pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
-
-	
-	//build the mesh triangle pipeline
-	pipelineBuilder.SetShader(defaultEffect);
-	VkPipeline texPipeline = pipelineBuilder.BuildPipeline(device, renderPass);
-	CreateMaterial(texPipeline, pipelineBuilder.pipelineLayout, "defaultMat");
-
-	vkDestroyShaderModule(device, meshVertShader.module, nullptr);
-	vkDestroyShaderModule(device, texturedMeshShader.module, nullptr);
-
-	mainDeletionQueue.PushFunction([=]() {
-		defaultEffect->FlushLayout();
-		vkDestroyPipeline(device, texPipeline, nullptr);
-		vkDestroyPipelineLayout(device,  pipelineBuilder.pipelineLayout, nullptr);
-	});
-}
-
-
-void VulkanRenderer::UploadMesh(Mesh& mesh)
-{
-	const size_t BUFFER_SIZE = mesh.vertices.size() * sizeof(Vertex);
-
-	AllocatedBuffer stagingBuffer;
-	{
-		CreateBufferInfo info;
-		info.allocSize = BUFFER_SIZE;
-		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
-		CreateBuffer(allocator, &stagingBuffer, info);
-	}
-
-	//copy vertex data
-	UploadVectorData(allocator, stagingBuffer.allocation, mesh.vertices);
-
-	{
-		CreateBufferInfo info;
-		info.allocSize = BUFFER_SIZE;
-		info.bufferUsage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-		info.memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
-		CreateBuffer(allocator, &mesh.vertexBuffer, info);
-	}
-
-	//add the destruction of triangle mesh buffer to the deletion queue
-	mainDeletionQueue.PushFunction([=]() {
-		vmaDestroyBuffer(allocator, mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
-	});
-
-	ImmediateSubmit([=](VkCommandBuffer cmd) {
-		VkBufferCopy copy;
-		copy.dstOffset = 0;
-		copy.srcOffset = 0;
-		copy.size = BUFFER_SIZE;
-		vkCmdCopyBuffer(cmd, stagingBuffer.buffer, mesh.vertexBuffer.buffer, 1, & copy);
-	});
-
-	vmaDestroyBuffer(allocator, stagingBuffer.buffer, stagingBuffer.allocation);
-}
-
-
-
-Material* VulkanRenderer::CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name)
-{
-	Material mat;
-	mat.pipeline = pipeline;
-	mat.pipelineLayout = layout;
-	materials[name] = mat;
-	materialList.push_back(name);
-	p_descriptorAllocator->Allocate(&materials[name].materialSet, materialTextureSetLayout);
-
-	{
-		CreateBufferInfo info;
-		info.allocSize = sizeof(GPUMaterialData);
-		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-		CreateBuffer(allocator, &materials[name].buffer, info);
-	}
-
-	VkDescriptorBufferInfo materialBufferInfo;
-	materialBufferInfo.buffer = materials[name].buffer.buffer;
-	materialBufferInfo.offset = 0;
-	materialBufferInfo.range = sizeof(GPUMaterialData);
-
-	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
-	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
-	AllocateEmptyTextures(name, textureSampler);
-	mainDeletionQueue.PushFunction([=]()
-	{
-		vmaDestroyBuffer(allocator, materials[name].buffer.buffer, materials[name].buffer.allocation);
-	});
-
-	return &materials[name];
-}
-
-Material* VulkanRenderer::GetMaterial(const std::string& name)
-{
-	//search for the object, and return nullpointer if not found
-	auto it = materials.find(name);
-	if (it == materials.end()) {
-		return nullptr;
-	}
-	else {
-		return &it->second;
-	}
-}
-
-
-
-
-
-void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
-{
-	size_t frameIndex = frameNumber % FRAME_OVERLAP;
-	//size_t uniformOffset = PadUniformBufferSize(sizeof(GPUSceneData)) * frameIndex;
-	size_t uniformOffset = sizeof(GPUSceneData) * frameIndex;
-
-	// Static light data, can be moved away
-	//TODO: make proper pointlight, spotlight and directional light
-	sceneParameters.dLight.intensity = glm::vec4(3.0f);
-	sceneParameters.dLight.color = glm::vec4(1.0f);
-	sceneParameters.dLight.direction = glm::vec4(glm::vec3( -0.2f, -1.0f, -0.3f), 0.0f);
-	sceneParameters.plightCount = glm::vec4(3);
-	sceneParameters.pointLights[0].intensity = glm::vec4(100.0f);
-	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);
-	sceneParameters.pointLights[0].color = glm::vec4(glm::vec3(1.0f,1.0f,1.0f),1.0f);
-	sceneParameters.pointLights[0].radius = glm::vec4(10.0f);
-	sceneParameters.pointLights[1].intensity = glm::vec4(100.0f);
-	sceneParameters.pointLights[1].position = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),1.0f);
-	sceneParameters.pointLights[1].color = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
-	sceneParameters.pointLights[1].radius = glm::vec4(5.0f);
-	sceneParameters.pointLights[2].intensity = glm::vec4(100.0f);
-	sceneParameters.pointLights[2].position = glm::vec4(glm::vec3(4.0f,  1.0f, 7.0f),1.0f);
-	sceneParameters.pointLights[2].color = glm::vec4(glm::vec3(0.0f,0.0f,1.0f),1.0f);
-	sceneParameters.pointLights[2].radius = glm::vec4(15.0f);
-
-	// Convert material ID to material
-	// TODO: Handle nullptr material, apply default?
-	std::vector<Material> materials;
-	materials.reserve(materialList.size());
-	for (const std::string& materialName : materialList)
-		materials.push_back(*GetMaterial(materialName));
-
-	// Store descriptor set data
-	DescriptorSetData descriptorSets;
-	descriptorSets.uniform = GetCurrentFrame().globalDescriptor;
-	descriptorSets.uniformOffset = 0;
-	descriptorSets.object = GetCurrentFrame().objectDescriptor;
-	descriptorSets.objectOffset = 0;
-
-	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera);
-	UploadSceneData(allocator, sceneParameterBuffer.allocation, sceneParameters, uniformOffset);
-	UploadObjectData(allocator, GetCurrentFrame().objectBuffer.allocation, objects);
-	
-	UploadMaterialData(allocator, materials);
-
-	UploadDrawCalls(allocator, GetCurrentFrame().indirectDrawBuffer.allocation, objects);
-
-	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);
-	IssueDrawCalls(cmd, GetCurrentFrame().indirectDrawBuffer.buffer, drawCalls);
-}
-
-
-
-void VulkanRenderer::InitScene()
-{
-	//TODO: move all of this into higher rendering level
-	
-
-	//lost empire
-	CreateTexture("texturedmesh", "EngineAssets/Textures/lost_empire-RGBA.png", textureSampler);
-	//viking room
-	CreateTexture("texturedmesh3", "EngineAssets/Textures/viking_room.png", textureSampler);
-
-	//DamagedHelmet
-
-	//diffuse
-	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_albedo.jpg", textureSampler);
-	//ao
-	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_AO.jpg", textureSampler,2);
-	//normal
-	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_normal.jpg", textureSampler,3);
-
-	//emission
-	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_emissive.jpg", textureSampler,4);
-	//metallicRoughness
-	CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg", textureSampler,5);
-
-
-	//Barrel
-	//diffuse
-	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Diffuse.png", textureSampler);
-	//emission
-	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Emission.png", textureSampler,4);
-	//Metallic
-	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Metallic.png", textureSampler,6);
-	//Roughness
-	CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Roughness.png", textureSampler,7);
-
-	
-}
-
-
-size_t VulkanRenderer::PadUniformBufferSize(size_t originalSize)
-{
-	// Calculate required alignment based on minimum device offset alignment
-	size_t minUboAlignment = gpuProperties.limits.minUniformBufferOffsetAlignment;
-	size_t alignedSize = originalSize;
-	if (minUboAlignment > 0) {
-		alignedSize = (alignedSize + minUboAlignment - 1) & ~(minUboAlignment - 1);
-	}
-	return alignedSize;
-}
-
 
 void VulkanRenderer::InitDescriptors()
 {
@@ -959,7 +838,7 @@ void VulkanRenderer::InitDescriptors()
 		.BindBuffer(0, &objectBufferInfo, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
 		.Build(frames[i].objectDescriptor);
 
-		mainDeletionQueue.PushFunction([=]()
+		EnqueueCleanup([=]()
 		{
 			vmaDestroyBuffer(allocator, frames[i].objectBuffer.buffer, frames[i].objectBuffer.allocation);
 			vmaDestroyBuffer(allocator, frames[i].indirectDrawBuffer.buffer, frames[i].indirectDrawBuffer.allocation);
@@ -967,7 +846,7 @@ void VulkanRenderer::InitDescriptors()
 		});
 	}
 
-	mainDeletionQueue.PushFunction([=]() {
+	EnqueueCleanup([=]() {
 		vmaDestroyBuffer(allocator, sceneParameterBuffer.buffer, sceneParameterBuffer.allocation);
 		for (auto& frame : frames)
 		{
@@ -979,37 +858,120 @@ void VulkanRenderer::InitDescriptors()
 	
 }
 
-
-void VulkanRenderer::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function)
+void VulkanRenderer::InitSamplers()
 {
-	//allocate the default command buffer that we will use for the instant commands
-	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::CommandBufferAllocateInfo(uploadContext.commandPool, 1);
+	//create a sampler for the texture
+	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
 
-    VkCommandBuffer cmd;
-	VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocInfo, &cmd));
+	vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler);
 
-	//begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
-	VkCommandBufferBeginInfo cmdBeginInfo = vkinit::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	EnqueueCleanup([=]() {
+		vkDestroySampler(device, textureSampler, nullptr);
+	});
+}
 
-	VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
+void VulkanRenderer::InitPipelines()
+{
+	//VkShaderModule texturedMeshShader;
+	vkcomponent::ShaderModule texturedMeshShader;
+	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, device))
+	{
+		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
+	}
 
-    //execute the function
-	function(cmd);
+	//VkShaderModule meshVertShader;
+	vkcomponent::ShaderModule meshVertShader;
+	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, device))
+	{
+		ENGINE_CORE_ERROR("Error when building the mesh vertex shader module");
+	}
 
-	VK_CHECK(vkEndCommandBuffer(cmd));
+	vkcomponent::ShaderEffect* defaultEffect = new vkcomponent::ShaderEffect();
+	std::vector<vkcomponent::ShaderModule> shaderModules = {meshVertShader, texturedMeshShader};
+	defaultEffect = vkcomponent::BuildEffect(device, shaderModules);
 
-	VkSubmitInfo submit = vkinit::SubmitInfo(&cmd);
+	//hook the push constants layout
+	pipelineBuilder.pipelineLayout = defaultEffect->builtLayout;
+
+	//vertex input controls how to read vertices from vertex buffers. We arent using it yet
+	pipelineBuilder.vertexInputInfo = vkinit::VertexInputStateCreateInfo();
+
+	//input assembly is the configuration for drawing triangle lists, strips, or individual points.
+	//we are just going to draw triangle list
+	pipelineBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+	//build viewport and scissor from the swapchain extents
+	pipelineBuilder.viewport.x = 0.0f;
+	pipelineBuilder.viewport.y = 0.0f;
+	pipelineBuilder.viewport.width = (float)swapChainObj.actualExtent.width;
+	pipelineBuilder.viewport.height = (float)swapChainObj.actualExtent.height;
+	pipelineBuilder.viewport.minDepth = 0.0f;
+	pipelineBuilder.viewport.maxDepth = 1.0f;
+
+	pipelineBuilder.blendConstant = {0.0f, 0.0f, 0.0f, 0.0f};
+
+	pipelineBuilder.scissor.offset = { 0, 0 };
+	pipelineBuilder.scissor.extent = swapChainObj.actualExtent;
+
+	//configure the rasterizer to draw filled triangles
+	pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
+
+	//we dont use multisampling, so just run the default one
+	pipelineBuilder.multisampling = vkinit::MultisamplingStateCreateInfo();
+
+	//a single blend attachment with no blending and writing to RGBA
+	pipelineBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
 
 
-	//submit command buffer to the queue and execute it.
-	// _uploadFence will now block until the graphic commands finish execution
-	VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submit, uploadContext.uploadFence));
+	//default depthtesting
+	pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
 
-	vkWaitForFences(device, 1, &uploadContext.uploadFence, true, 9999999999);
-	vkResetFences(device, 1, &uploadContext.uploadFence);
+	//build the mesh pipeline
 
-    //clear the command pool. This will free the command buffer too
-	vkResetCommandPool(device, uploadContext.commandPool, 0);
+	VertexInputDescription vertexDescription = Vertex::GetVertexDescription();
+
+	//connect the pipeline builder vertex input info to the one we get from Vertex
+	pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
+	pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
+
+	pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
+	pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
+
+	
+	//build the mesh triangle pipeline
+	pipelineBuilder.SetShader(defaultEffect);
+	VkPipeline texPipeline = pipelineBuilder.BuildPipeline(device, renderPass);
+	CreateMaterial(texPipeline, pipelineBuilder.pipelineLayout, "defaultMat");
+
+	vkDestroyShaderModule(device, meshVertShader.module, nullptr);
+	vkDestroyShaderModule(device, texturedMeshShader.module, nullptr);
+
+	EnqueueCleanup([=]() {
+		defaultEffect->FlushLayout();
+		vkDestroyPipeline(device, texPipeline, nullptr);
+		vkDestroyPipelineLayout(device,  pipelineBuilder.pipelineLayout, nullptr);
+	});
+}
+
+void VulkanRenderer::RecreateSwapchain()
+{	
+	vkDeviceWaitIdle(device);
+	swapDeletionQueue.Flush();
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(p_windowHandler->p_window, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(p_windowHandler->p_window, &width, &height);
+		glfwWaitEvents();
+	}
+
+	swapChainObj.InitSwapchain(p_windowHandler->p_window);
+
+	InitFramebuffers();	
+
+	//update parts of the pipeline that change dynamically
+	pipelineBuilder.viewport.width = (float)swapChainObj.actualExtent.width;
+	pipelineBuilder.viewport.height = (float)swapChainObj.actualExtent.height;
+	pipelineBuilder.scissor.extent = swapChainObj.actualExtent;
 }
 
 void VulkanRenderer::LoadImage(const std::string textureName, const std::string texturePath)
@@ -1026,31 +988,12 @@ void VulkanRenderer::LoadImage(const std::string textureName, const std::string 
 
 	loadedTextures[textureName] = inputTextures;
 
-	mainDeletionQueue.PushFunction([=]() {
+	EnqueueCleanup([=]() {
 		vkDestroyImageView(device, inputTextures.imageView, nullptr);
 		vmaDestroyImage(allocator, inputTextures.image.image, inputTextures.image.allocation);
 	});
 
 }
-
-void VulkanRenderer::CreateTexture(std::string materialName, std::string texturePath, VkSampler& sampler, uint32_t binding /*= 1*/)
-{
-	std::filesystem::path textureName = texturePath; 
-	const std::string processedName = textureName.stem().u8string();
-	LoadImage(processedName, texturePath);
-	Material* texturedMaterial = GetMaterial(materialName);
-
-	//write to the descriptor set so that it points to our input texture
-	VkDescriptorImageInfo imageBufferInfo;
-	imageBufferInfo.sampler = sampler;
-	imageBufferInfo.imageView = loadedTextures[processedName].imageView;
-	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, binding);
-	
-	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
-}
-
 
 void VulkanRenderer::AllocateEmptyTextures(const std::string& materialName, VkSampler& sampler)
 {
@@ -1061,8 +1004,9 @@ void VulkanRenderer::AllocateEmptyTextures(const std::string& materialName, VkSa
 	imageBufferInfo.sampler = sampler;
 	imageBufferInfo.imageView = loadedTextures["empty"].imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
 	//texture descriptor bindings
-	for(int binding=1; binding < 8; binding++)
+	for(size_t binding = 1; binding < 8; binding++)
 	{
 		VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, binding);
 	
@@ -1070,14 +1014,3 @@ void VulkanRenderer::AllocateEmptyTextures(const std::string& materialName, VkSa
 	}
 }
 
-void VulkanRenderer::InitSamplers()
-{
-	//create a sampler for the texture
-	VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST);
-
-	vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler);
-
-	mainDeletionQueue.PushFunction([=]() {
-		vkDestroySampler(device, textureSampler, nullptr);
-	});
-}

@@ -29,7 +29,7 @@ namespace {
         dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
         //allocate and create the image
-        vmaCreateImage(renderer.allocator, &dimg_info, &dimg_allocinfo, &outImage->image, &outImage->allocation, nullptr);
+        vmaCreateImage(renderer.GetAllocator(), &dimg_info, &dimg_allocinfo, &outImage->image, &outImage->allocation, nullptr);
 
         //transition image to transfer-receiver	
         renderer.ImmediateSubmit([&](VkCommandBuffer cmd) {
@@ -117,16 +117,16 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 		info.allocSize = imageSize;
 		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
-		CreateBuffer(renderer.allocator, &stagingBuffer, info);
+		CreateBuffer(renderer.GetAllocator(), &stagingBuffer, info);
 	}
 
-	UploadArrayData(renderer.allocator, stagingBuffer.allocation, pixels, imageSize);
+	UploadArrayData(renderer.GetAllocator(), stagingBuffer.allocation, pixels, imageSize);
     //we no longer need the loaded data, so we can free the pixels as they are now in the staging buffer
 	stbi_image_free(pixels);
 
     UploadImage(texWidth, texHeight, image_format, renderer, stagingBuffer, outImage);
 
-	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
+	vmaDestroyBuffer(renderer.GetAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 
 	ENGINE_CORE_INFO("Texture loaded succesfully {0}", p_filename);
 
@@ -170,18 +170,18 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 		info.allocSize = imageSize;
 		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
-		CreateBuffer(renderer.allocator, &stagingBuffer, info);
+		CreateBuffer(renderer.GetAllocator(), &stagingBuffer, info);
 	}
 
 	// Note: vmaMapMemory allocates memory for data and vmaUnmapMemory deallocates memory
 	void* data;
-	vmaMapMemory(renderer.allocator, stagingBuffer.allocation, &data);
+	vmaMapMemory(renderer.GetAllocator(), stagingBuffer.allocation, &data);
 	assets::unpack_texture(&textureInfo, file.binaryBlob.data(), file.binaryBlob.size(), (char*)data);	
-	vmaUnmapMemory(renderer.allocator, stagingBuffer.allocation);	
+	vmaUnmapMemory(renderer.GetAllocator(), stagingBuffer.allocation);	
 
 	UploadImage(textureInfo.pixelsize[0], textureInfo.pixelsize[1], image_format, renderer, stagingBuffer, outImage);
 
-	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
+	vmaDestroyBuffer(renderer.GetAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 	
 	return true;
 }
@@ -203,13 +203,13 @@ void vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage)
 		info.allocSize = imageSize;
 		info.bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
-		CreateBuffer(renderer.allocator, &stagingBuffer, info);
+		CreateBuffer(renderer.GetAllocator(), &stagingBuffer, info);
 	}
 
     // copy pixel data to buffer
-	UploadArrayData(renderer.allocator, stagingBuffer.allocation, pixelData, 4);
+	UploadArrayData(renderer.GetAllocator(), stagingBuffer.allocation, pixelData, 4);
     UploadImage(texWidth, texHeight, image_format, renderer, stagingBuffer, outImage);
 
-	vmaDestroyBuffer(renderer.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
+	vmaDestroyBuffer(renderer.GetAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 }
 

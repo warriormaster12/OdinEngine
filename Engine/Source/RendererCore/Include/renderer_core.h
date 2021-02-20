@@ -11,13 +11,15 @@ namespace RendererCore
     void RendererEvents();
     void CleanupRenderer();
 
+    void InitScene();
     void LoadMeshes();
+    void LoadTextures();
+    void LoadMaterials();
+    void LoadRenderables();
+
     void CreateMaterial(const std::string& name);
     Material* GetMaterial(const std::string& name);
     Mesh* GetMesh(const std::string& name);
-
-    void InitScene();
-
 
     WindowHandler GetWindowHandler();
 
