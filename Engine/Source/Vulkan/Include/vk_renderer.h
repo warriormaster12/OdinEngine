@@ -193,6 +193,7 @@ public:
 	 * The added functions are called in FIFO order.
 	 * 
 	 * @param function The function to call during cleanup
+	 * @param p_override optional argument that allows you to choose which queue should be used. By default it is main
 	 */
 	void EnqueueCleanup(std::function<void()>&& function, vkcomponent::DeletionQueue* p_override = nullptr);
 
