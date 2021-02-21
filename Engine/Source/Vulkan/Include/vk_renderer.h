@@ -194,7 +194,7 @@ public:
 	 * 
 	 * @param function The function to call during cleanup
 	 */
-	void EnqueueCleanup(std::function<void()>&& function);
+	void EnqueueCleanup(std::function<void()>&& function, vkcomponent::DeletionQueue* p_override = nullptr);
 
 	/*********************************************************************/
 	/* Things that will be moved out of the renderer in the near future. */

@@ -390,9 +390,16 @@ void VulkanRenderer::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& 
 	vkResetCommandPool(device, uploadContext.commandPool, 0);
 }
 
-void VulkanRenderer::EnqueueCleanup(std::function<void()>&& function)
+void VulkanRenderer::EnqueueCleanup(std::function<void()>&& function, vkcomponent::DeletionQueue* p_override /*= nullptr*/)
 {
-	mainDeletionQueue.PushFunction([=]() { function(); });
+	if (p_override == nullptr)
+	{
+		mainDeletionQueue.PushFunction([=]() { function(); });
+	}
+	else
+	{
+		p_override->PushFunction([=]() { function(); });
+	}
 }
 
 void VulkanRenderer::UploadMesh(Mesh& mesh)
