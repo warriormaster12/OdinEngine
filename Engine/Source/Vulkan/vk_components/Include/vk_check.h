@@ -1,5 +1,5 @@
 #pragma once 
-#include "../../../Logger/Include/logger.h"
+#include "logger.h"
 
 namespace vkcomponent
 {

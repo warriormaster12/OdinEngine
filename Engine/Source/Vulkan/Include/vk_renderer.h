@@ -10,7 +10,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "vk_swapchain.h"
-#include "vk_deletionqueue.h"
+#include "function_queuer.h"
 #include "vk_descriptors.h"
 #include "vk_mesh.h"
 
@@ -74,7 +74,7 @@ struct FrameData {
 	VkSemaphore presentSemaphore, renderSemaphore;
 	VkFence renderFence;
 
-	vkcomponent::DeletionQueue frameDeletionQueue;
+	FunctionQueuer frameDeletionQueue;
 
 	VkCommandPool commandPool;
 	VkCommandBuffer mainCommandBuffer;
@@ -195,7 +195,7 @@ public:
 	 * @param function The function to call during cleanup
 	 * @param p_override optional argument that allows you to choose which queue should be used. By default it is main
 	 */
-	void EnqueueCleanup(std::function<void()>&& function, vkcomponent::DeletionQueue* p_override = nullptr);
+	void EnqueueCleanup(std::function<void()>&& function, FunctionQueuer* p_override = nullptr);
 
 	/*********************************************************************/
 	/* Things that will be moved out of the renderer in the near future. */
@@ -279,8 +279,8 @@ private:
 	VkRenderPass renderPass;
 	std::vector<VkFramebuffer> framebuffers;
 
-    vkcomponent::DeletionQueue mainDeletionQueue;
-	vkcomponent::DeletionQueue swapDeletionQueue;
+    FunctionQueuer mainDeletionQueue;
+	FunctionQueuer swapDeletionQueue;
 
 	VmaAllocator allocator; //vma lib allocator
 	vkcomponent::DescriptorAllocator* p_descriptorAllocator;

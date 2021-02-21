@@ -18,7 +18,8 @@ target_include_directories(VulkanEngine.x86_64 PUBLIC
     Engine/Source/Asset_Manager/Include/
     Engine/Source/Camera/Include/
     Engine/Source/Editor/Include/
-    Engine/Source/Logger/Include/
+    Engine/Source/Helpers/Logger/Include/
+    Engine/Source/Helpers/Queuer/
     Engine/Source/Vulkan/Include/
     Engine/Source/Vulkan/vk_components/Include/
     Engine/Source/Main/Include/

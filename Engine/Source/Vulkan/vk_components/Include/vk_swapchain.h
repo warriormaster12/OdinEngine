@@ -1,8 +1,8 @@
 #pragma once 
 
-#include "../../Include/vk_types.h"
-#include "../../Include/vk_init.h"
-#include "vk_deletionqueue.h"
+#include "vk_types.h"
+#include "vk_init.h"
+#include "function_queuer.h"
 #include "vk_check.h"
 #include <iostream>
 #define GLFW_INCLUDE_VULKAN
@@ -14,7 +14,7 @@ namespace vkcomponent
     class SwapChain
     {
     public:
-        SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, DeletionQueue& deletionQueue);
+        SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, FunctionQueuer& deletionQueue);
         VkSwapchainKHR swapchain; // from other articles
 
         // image format expected by the windowing system
@@ -39,6 +39,6 @@ namespace vkcomponent
         VkPhysicalDevice* p_chosenGPU;
         VkDevice* p_device;
         VmaAllocator* p_allocator;
-        DeletionQueue* p_deletionQueue;
+        FunctionQueuer* p_deletionQueue;
     };
 }

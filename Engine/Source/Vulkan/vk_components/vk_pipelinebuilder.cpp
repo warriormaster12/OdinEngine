@@ -75,7 +75,7 @@ namespace vkcomponent
         }
     }
 
-    void PipelineBuilder::SetShader(ShaderEffect* effect)
+    void PipelineBuilder::SetShaders(ShaderEffect* effect)
     {
         shaderStages.clear();
         effect->FillStages(shaderStages);
@@ -102,5 +102,23 @@ namespace vkcomponent
             effect->ReflectLayout(device, nullptr, 0);
         }
         return effect; 
+    }
+
+    ShaderPass* BuildShader(VkDevice& device, VkRenderPass renderPass, PipelineBuilder& builder, ShaderEffect* effect)
+    {
+        std::unique_ptr<ShaderPass> pass = std::make_unique<ShaderPass>();
+
+        pass->effect = effect;
+        pass->layout = effect->builtLayout;
+
+        PipelineBuilder pipbuilder = builder;
+
+        pipbuilder.SetShaders(effect);
+
+        pass->pipeline = pipbuilder.BuildPipeline(device, renderPass);
+
+        pass->effect->FlushShaders(device);
+
+        return pass.get();
     }
 }

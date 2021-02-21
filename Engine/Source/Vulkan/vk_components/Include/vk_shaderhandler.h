@@ -36,6 +36,7 @@ namespace vkcomponent
 
         void ReflectLayout(VkDevice& device, ReflectionOverrides* overrides, int overrideCount);
         void FlushLayout();
+        void FlushShaders(VkDevice& device);
 
         void FillStages(std::vector<VkPipelineShaderStageCreateInfo>& pipelineStages);
         VkPipelineLayout builtLayout;

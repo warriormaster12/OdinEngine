@@ -4,10 +4,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "vk_deletionqueue.h"
+#include "function_queuer.h"
 
 
-vkcomponent::DeletionQueue descriptorDeletionQueue;
+FunctionQueuer descriptorDeletionQueue;
 bool glslangInitialized = false;
   
 TBuiltInResource vkcomponent::HandleResources()
@@ -328,6 +328,14 @@ void vkcomponent::ShaderEffect::FillStages(std::vector<VkPipelineShaderStageCrea
 	{
 		pipelineStages.push_back(vkinit::PipelineShaderStageCreateInfo(s.stage, s.shaderModule->module));
 	}
+}
+
+void vkcomponent::ShaderEffect::FlushShaders(VkDevice& device)
+{
+    for(auto& currentStage : stages)
+    {
+        vkDestroyShaderModule(device, currentStage.shaderModule->module, nullptr);
+    }
 }
 
 

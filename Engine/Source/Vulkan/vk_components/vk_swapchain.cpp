@@ -1,7 +1,7 @@
 #include "Include/vk_swapchain.h"
 #include "VkBootstrap.h"
 
-vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, DeletionQueue& deletionQueue)
+vkcomponent::SwapChain::SwapChain(VkPhysicalDevice& chosenGPU, VkDevice& device, VmaAllocator& allocator, FunctionQueuer& deletionQueue)
 {
 	p_chosenGPU = &chosenGPU;
 	p_device = &device;

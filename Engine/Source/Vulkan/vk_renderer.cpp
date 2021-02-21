@@ -390,7 +390,7 @@ void VulkanRenderer::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& 
 	vkResetCommandPool(device, uploadContext.commandPool, 0);
 }
 
-void VulkanRenderer::EnqueueCleanup(std::function<void()>&& function, vkcomponent::DeletionQueue* p_override /*= nullptr*/)
+void VulkanRenderer::EnqueueCleanup(std::function<void()>&& function, FunctionQueuer* p_override /*= nullptr*/)
 {
 	if (p_override == nullptr)
 	{
@@ -946,12 +946,9 @@ void VulkanRenderer::InitPipelines()
 
 	
 	//build the mesh triangle pipeline
-	pipelineBuilder.SetShader(defaultEffect);
-	VkPipeline texPipeline = pipelineBuilder.BuildPipeline(device, renderPass);
+	vkcomponent::ShaderPass* defaultPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, defaultEffect);
+	VkPipeline texPipeline = defaultPass->pipeline;
 	CreateMaterial(texPipeline, pipelineBuilder.pipelineLayout, "defaultMat");
-
-	vkDestroyShaderModule(device, meshVertShader.module, nullptr);
-	vkDestroyShaderModule(device, texturedMeshShader.module, nullptr);
 
 	EnqueueCleanup([=]() {
 		defaultEffect->FlushLayout();

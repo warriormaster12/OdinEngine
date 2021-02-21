@@ -27,7 +27,7 @@ namespace vkcomponent
         VkPipelineDepthStencilStateCreateInfo depthStencil;
         VkPipeline BuildPipeline(VkDevice& device, VkRenderPass& pass);
 
-        void SetShader(ShaderEffect* effect);
+        void SetShaders(ShaderEffect* effect);
     };
 
     struct ShaderPass {
@@ -37,4 +37,5 @@ namespace vkcomponent
 	};
 
     ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides={});
+    ShaderPass* BuildShader(VkDevice& device, VkRenderPass renderPass,PipelineBuilder& builder, ShaderEffect* effect);
 }
