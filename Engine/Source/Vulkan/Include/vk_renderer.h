@@ -147,39 +147,149 @@ constexpr unsigned int FRAME_OVERLAP = 2;
 
 class VulkanRenderer {
 public:
-	int frameNumber {0};
-	int selectedShader{ 0 };
+	/**
+	 * Initializes the Vulkan renderer.
+	 * 
+	 * @param windowHandler The window handler object
+	 */
+	void Init(WindowHandler& windowHandler);
 
+	/**
+	 * Destroys and cleans up the Vulkan renderer.
+	 */
+	void CleanUp();
+
+	/**
+	 * Starts a new frame draw. 
+	 * 
+	 * Must be called at the start of the frame and before DrawObjects() and EndDraw().
+	 */
+	void BeginDraw();
+
+	/**
+	 * Ends the current frame draw. 
+	 * 
+	 * Must be called at the end of the frame and before the next BeginDraw().
+	 */
+	void EndDraw();
+
+	/**
+	 * Draws a set of objects. 
+	 * 
+	 * @param objects A vector of objects to draw
+	 */
+	void DrawObjects(const std::vector<RenderObject>& objects);
+	
+	/**
+	 * Executes a function and submits the command buffer immediately.
+	 * 
+	 * @param function The function that is used to add and modify the command buffer
+	 */
+	void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
+
+	/**
+	 * Adds a function to be called during cleanup. 
+	 * 
+	 * The added functions are called in FIFO order.
+	 * 
+	 * @param function The function to call during cleanup
+	 */
+	void EnqueueCleanup(std::function<void()>&& function);
+
+	/*********************************************************************/
+	/* Things that will be moved out of the renderer in the near future. */
+	/*********************************************************************/
+
+	/**
+	 * Loads a mesh. 
+	 * 
+	 * Initializes the vertex and, in the future, index buffer for the mesh. It also enqueues 
+	 * the deletion of those buffers when CleanUp() is called.
+	 * 
+	 * @param mesh The mesh to load
+	 */
+	void UploadMesh(Mesh& mesh);
+
+	/*
+	 * Creates a default material and stores it by name. 
+	 * 
+	 * This will create the necessary bindings and store the material by the name. Note that 
+	 * the material stores the pipeline (for now). This means that you will need to create a 
+	 * duplicate material for each pipeline. 
+	 * 
+	 * In the future, pipelines will move into their own storage and this function will 
+	 * take in material parameters.
+	 * 
+	 * @param pipeline The pipeline to use this material in
+	 * @param layout The layout of the pipeline
+	 * @param name The name to store it as
+	 */
+	void CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name);
+
+	/**
+	 * Gets a material by its name. 
+	 * 
+	 * @param name The name of the material
+	 * @return A pointer to the material or nullptr if it could not be found
+	 */
+	Material* GetMaterial(const std::string& name);
+
+	/**
+	 * Loads a texture from the disk and binds it to a material.
+	 * 
+	 * @param materialName The name of the material to bind the texture to
+	 * @param texturePath The path to the texture file
+	 * @param index The material texture index.
+	 * index=0: Albedo texture
+	 * index=1: Ambient Occlusion map
+	 * index=2: Normal map
+	 * index=3: Emission map
+	 * index=4: Metallic roughness map
+	 * index=5: Metallic map
+	 * index=6: Roughness map
+	 */
+	void CreateTexture(std::string materialName, const std::string texturePath, uint32_t index);
+
+	Camera& GetCamera() { return camera; }
+	const VmaAllocator& GetAllocator() const { return allocator; }
+
+	VkInstance& GetInstance() { return instance; }
+	VkPhysicalDevice& GetPhysicalDevice() { return chosenGPU; }
+	VkDevice& GetDevice() { return device; }
+	VkQueue& GetGraphicsQueue() { return graphicsQueue; }
+	VkRenderPass& GetRenderPass() { return renderPass; }
+
+	uint32_t GetWidth() const { return swapChainObj.actualExtent.width; }
+	uint32_t GetHeight() const { return swapChainObj.actualExtent.height; }
+	
+private:
+	int frameNumber{0};
+	int selectedShader{0};
+	WindowHandler* p_windowHandler;
 
 	VkInstance instance;
 	VkDebugUtilsMessengerEXT debugMessenger;
 	VkPhysicalDevice chosenGPU;
 	VkDevice device;
-
 	VkPhysicalDeviceProperties gpuProperties;
-
 	FrameData frames[FRAME_OVERLAP];
-	
 	VkQueue graphicsQueue;
 	uint32_t graphicsQueueFamily;
-	
 	VkRenderPass renderPass;
-
 	std::vector<VkFramebuffer> framebuffers;
-	
 
     vkcomponent::DeletionQueue mainDeletionQueue;
 	vkcomponent::DeletionQueue swapDeletionQueue;
-	
-	VmaAllocator allocator; //vma lib allocator
 
+	VmaAllocator allocator; //vma lib allocator
 	vkcomponent::DescriptorAllocator* p_descriptorAllocator;
 	vkcomponent::DescriptorLayoutCache* p_descriptorLayoutCache;
-
 
 	VkDescriptorSetLayout globalSetLayout{};
 	VkDescriptorSetLayout objectSetLayout{};
 	VkDescriptorSetLayout materialTextureSetLayout{};
+
+	VkSampler textureSampler;
 
 	GPUSceneData sceneParameters;
 	AllocatedBuffer sceneParameterBuffer;
@@ -187,79 +297,28 @@ public:
 	vkcomponent::SwapChain swapChainObj{chosenGPU, device, allocator, swapDeletionQueue};
 	Camera camera{swapChainObj};
 
-	//texture hashmap
+	UploadContext uploadContext;
+
 	std::unordered_map<std::string, Texture> loadedTextures;
-	void LoadImage(const std::string textureName, const std::string texturePath);
-	//initializes everything in the engine
-	void Init(WindowHandler& windowHandler);
-
-	//shuts down the engine
-	void CleanUp();
-
-
-	//run main loop
-	void BeginDraw();
-	void EndDraw();
-
-	void UploadMesh(Mesh& mesh);
-	
-	FrameData& GetCurrentFrame();
-	FrameData& GetLastFrame();
-
-	//default array of renderable objects
-
 	std::unordered_map<std::string, Material> materials;
 	std::vector<std::string> materialList; 
 
-	UploadContext uploadContext;
-
-	//functions
-	void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
-
-	//create material and add it to the map
-	Material* CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name);
-
-	//returns nullptr if it cant be found
-	Material* GetMaterial(const std::string& name);
-
-	
-
-	//our draw function
-	void DrawObjects(const std::vector<RenderObject>& p_objects);
-
-	size_t PadUniformBufferSize(size_t originalSize);
-
-	WindowHandler* p_windowHandler;
-
-	void InitScene();
-	
-private:
-
 	void InitVulkan();
-
+	void InitSwapchain();
 	void InitDefaultRenderpass();
-
 	void InitFramebuffers();
-
 	void InitCommands();
-
 	void InitSyncStructures();
-
-	void InitSamplers();
-
-	void InitPipelines();
-
 	void InitDescriptors();
-
+	void InitSamplers();
+	void InitPipelines();
 	void RecreateSwapchain();
 
-	void CreateTexture(std::string materialName, const std::string texturePath, VkSampler& sampler, uint32_t binding = 1);
+	FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
+	FrameData& GetLastFrame() { return frames[(frameNumber - 1) % FRAME_OVERLAP]; }
+
+	void LoadImage(const std::string textureName, const std::string texturePath);
 	//this is done when creating new material
 	void AllocateEmptyTextures(const std::string& materialName, VkSampler& sampler);
-
-
 };
-
-
-
 

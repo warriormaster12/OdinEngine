@@ -13,12 +13,6 @@ void RendererCore::InitRenderer()
 {
     windowHandler.CreateWindow(1920, 1080);
     vkRenderer.Init(windowHandler);
-	CreateMaterial("texturedmesh2");
-	CreateMaterial("texturedmesh");
-	CreateMaterial("texturedmesh3");
-	CreateMaterial("DamagedHelmetMat");
-	CreateMaterial("BarrelMat");
-	vkRenderer.InitScene();
     InitScene();
 }
 
@@ -29,7 +23,7 @@ void RendererCore::UpdateRenderer()
     deltaTime = elapsed_seconds.count() * 1000.f;
     start = std::chrono::system_clock::now();
    
-    vkRenderer.camera.UpdateCamera(deltaTime);
+    vkRenderer.GetCamera().UpdateCamera(deltaTime);
     vkRenderer.BeginDraw();
 
     vkRenderer.DrawObjects(renderables);
@@ -40,7 +34,7 @@ void RendererCore::UpdateRenderer()
 
 void RendererCore::RendererEvents()
 {
-    vkRenderer.camera.ProcessInputEvent(windowHandler);
+    vkRenderer.GetCamera().ProcessInputEvent(windowHandler);
     
 }
 
@@ -76,6 +70,15 @@ WindowHandler RendererCore::GetWindowHandler()
 	return windowHandler;
 }
 
+
+void RendererCore::InitScene()
+{
+    LoadMeshes();
+	LoadMaterials();
+	LoadTextures();
+	// Must be called after the load functions above
+	LoadRenderables();
+}
 
 void RendererCore::LoadMeshes()
 {
@@ -200,9 +203,15 @@ void RendererCore::LoadMeshes()
 	meshes["Barrel"] = Barrel;
 }
 
-void RendererCore::InitScene()
+void RendererCore::LoadMaterials()
 {
-    LoadMeshes();
+	CreateMaterial("texturedmesh2");
+	CreateMaterial("texturedmesh");
+	CreateMaterial("texturedmesh3");
+	CreateMaterial("DamagedHelmetMat");
+	CreateMaterial("BarrelMat");
+
+	// TODO: Configure through one function call
 	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
 	GetMaterial("texturedmesh")->metallic = 0.5f;
 	GetMaterial("texturedmesh")->roughness = 0.5f;
@@ -237,7 +246,44 @@ void RendererCore::InitScene()
 	GetMaterial("BarrelMat")->ao = 1.0f;
 	GetMaterial("BarrelMat")->emissionColor = glm::vec4(1.0f, 0.3f, 0.0f, 1.0f);
 	GetMaterial("BarrelMat")->emissionPower = 8.0f;
+}
 
+void RendererCore::LoadTextures()
+{
+	//lost empire
+	vkRenderer.CreateTexture("texturedmesh", "EngineAssets/Textures/lost_empire-RGBA.png", 0);
+	//viking room
+	vkRenderer.CreateTexture("texturedmesh3", "EngineAssets/Textures/viking_room.png", 0);
+
+	//DamagedHelmet
+
+	//diffuse
+	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_albedo.jpg", 0);
+	//ao
+	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_AO.jpg", 1);
+	//normal
+	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_normal.jpg", 2);
+
+	//emission
+	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_emissive.jpg", 3);
+	//metallicRoughness
+	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg", 4);
+
+
+	//Barrel
+	//diffuse
+	vkRenderer.CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Diffuse.png", 0);
+	//emission
+	vkRenderer.CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Emission.png", 3);
+	//Metallic
+	vkRenderer.CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Metallic.png", 5);
+	//Roughness
+	vkRenderer.CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Roughness.png", 6);
+}
+
+
+void RendererCore::LoadRenderables()
+{
 	RenderObject monkey;
 	monkey.p_mesh = GetMesh("monkey");
 	monkey.p_material = GetMaterial("texturedmesh2");

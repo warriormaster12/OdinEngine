@@ -83,7 +83,7 @@ namespace vkcomponent
         pipelineLayout = effect->builtLayout;
     }
 
-    ShaderEffect* BuildEffect(VulkanRenderer* p_renderer, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides/*={}*/)
+    ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides/*={}*/)
     {
         //textured defaultlit shader
         ShaderEffect* effect = new ShaderEffect();
@@ -95,11 +95,11 @@ namespace vkcomponent
         }
         if(overrides.size() != 0)
         {
-            effect->ReflectLayout(p_renderer->device, overrides.data(), overrides.size());
+            effect->ReflectLayout(device, overrides.data(), overrides.size());
         }
         else
         {
-            effect->ReflectLayout(p_renderer->device, nullptr, 0);
+            effect->ReflectLayout(device, nullptr, 0);
         }
         return effect; 
     }

@@ -34,7 +34,7 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 		pool_info.pPoolSizes = poolSizes;
 
 		VkDescriptorPool imguiPool;
-		VK_CHECK(vkCreateDescriptorPool(renderer.device, &pool_info, nullptr, &imguiPool));
+		VK_CHECK(vkCreateDescriptorPool(renderer.GetDevice(), &pool_info, nullptr, &imguiPool));
 
 
 		// 2: initialize imgui library
@@ -93,15 +93,15 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 
 		//this initializes imgui for Vulkan
 		ImGui_ImplVulkan_InitInfo init_info = {};
-		init_info.Instance = renderer.instance;
-		init_info.PhysicalDevice = renderer.chosenGPU;
-		init_info.Device = renderer.device;
-		init_info.Queue = renderer.graphicsQueue;
+		init_info.Instance = renderer.GetInstance();
+		init_info.PhysicalDevice = renderer.GetPhysicalDevice();
+		init_info.Device = renderer.GetDevice();
+		init_info.Queue = renderer.GetGraphicsQueue();
 		init_info.DescriptorPool = imguiPool;
 		init_info.MinImageCount = 3;
 		init_info.ImageCount = 3;
 
-		ImGui_ImplVulkan_Init(&init_info, renderer.renderPass);
+		ImGui_ImplVulkan_Init(&init_info, renderer.GetRenderPass());
 
 		//execute a gpu command to upload imgui font textures
 		renderer.ImmediateSubmit([&](VkCommandBuffer cmd) {
@@ -112,10 +112,10 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 
 		//add the destroy the imgui created structures
-		renderer.mainDeletionQueue.PushFunction([=]() {
+		renderer.EnqueueCleanup([=]() {
 			ImGui_ImplVulkan_Shutdown();
-			vkDestroyDescriptorPool(renderer.device, imguiPool, nullptr);
-			});
+			vkDestroyDescriptorPool(init_info.Device, imguiPool, nullptr);
+        });
 	}
 }
 
