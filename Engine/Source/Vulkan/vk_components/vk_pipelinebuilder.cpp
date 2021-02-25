@@ -106,7 +106,7 @@ namespace vkcomponent
 
     ShaderPass* BuildShader(VkDevice& device, VkRenderPass renderPass, PipelineBuilder& builder, ShaderEffect* effect)
     {
-        std::unique_ptr<ShaderPass> pass = std::make_unique<ShaderPass>();
+        ShaderPass* pass = new ShaderPass;
 
         pass->effect = effect;
         pass->layout = effect->builtLayout;
@@ -119,6 +119,8 @@ namespace vkcomponent
 
         pass->effect->FlushShaders(device);
 
-        return pass.get();
+        return pass;
+
+        delete pass;
     }
 }

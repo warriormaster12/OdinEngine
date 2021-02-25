@@ -947,13 +947,12 @@ void VulkanRenderer::InitPipelines()
 	
 	//build the mesh triangle pipeline
 	vkcomponent::ShaderPass* defaultPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, defaultEffect);
-	VkPipeline texPipeline = defaultPass->pipeline;
-	CreateMaterial(texPipeline, pipelineBuilder.pipelineLayout, "defaultMat");
+	CreateMaterial(defaultPass->pipeline, defaultPass->layout, "defaultMat");
 
 	EnqueueCleanup([=]() {
 		defaultEffect->FlushLayout();
-		vkDestroyPipeline(device, texPipeline, nullptr);
-		vkDestroyPipelineLayout(device,  pipelineBuilder.pipelineLayout, nullptr);
+		vkDestroyPipeline(device, defaultPass->pipeline, nullptr);
+		vkDestroyPipelineLayout(device,  defaultPass->layout, nullptr);
 	});
 }
 
