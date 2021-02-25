@@ -102,6 +102,8 @@ namespace vkcomponent
             effect->ReflectLayout(device, nullptr, 0);
         }
         return effect; 
+        
+        delete effect;
     }
 
     ShaderPass* BuildShader(VkDevice& device, VkRenderPass renderPass, PipelineBuilder& builder, ShaderEffect* effect)

@@ -87,47 +87,47 @@ void RendererCore::LoadMeshes()
 	cubeMesh.vertices.resize(105);
 
 	//vertex positions
-	cubeMesh.vertices[0].position = {  -0.5f, -0.5f, -0.5f};
-	cubeMesh.vertices[1].position = {  0.5f, -0.5f, -0.5f};
-	cubeMesh.vertices[2].position = {  0.5f,  0.5f, -0.5f};
-	cubeMesh.vertices[3].position = {  0.5f,  0.5f, -0.5f};
-	cubeMesh.vertices[4].position = { -0.5f,  0.5f, -0.5f};
-	cubeMesh.vertices[5].position = {  -0.5f, -0.5f, -0.5f};
+	cubeMesh.vertices[0].position = {  -1.0f,  1.0f, -1.0f};
+	cubeMesh.vertices[1].position = {  -1.0f, -1.0f, -1.0f};
+	cubeMesh.vertices[2].position = {  1.0f, -1.0f, -1.0f};
+	cubeMesh.vertices[3].position = {  1.0f, -1.0f, -1.0f};
+	cubeMesh.vertices[4].position = {  1.0f,  1.0f, -1.0f};
+	cubeMesh.vertices[5].position = {  -1.0f,  1.0f, -1.0f};
 
-	cubeMesh.vertices[6].position = {-0.5f, -0.5f,  0.5f};  
-	cubeMesh.vertices[7].position = {0.5f, -0.5f,  0.5f};
-	cubeMesh.vertices[8].position = {0.5f,  0.5f,  0.5f};
-	cubeMesh.vertices[9].position = {0.5f,  0.5f,  0.5f};
-	cubeMesh.vertices[10].position = {-0.5f,  0.5f,  0.5f};
-	cubeMesh.vertices[11].position = {-0.5f, -0.5f,  0.5f};
+	cubeMesh.vertices[6].position = {-1.0f, -1.0f,  1.0f};  
+	cubeMesh.vertices[7].position = {-1.0f, -1.0f, -1.0f};
+	cubeMesh.vertices[8].position = {-1.0f,  1.0f, -1.0f};
+	cubeMesh.vertices[9].position = {-1.0f,  1.0f, -1.0f};
+	cubeMesh.vertices[10].position = {-1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[11].position = {-1.0f, -1.0f,  1.0f};
 
-	cubeMesh.vertices[12].position = {-0.5f,  0.5f,  0.5f};
-	cubeMesh.vertices[13].position = {-0.5f,  0.5f, -0.5f};
-	cubeMesh.vertices[14].position = {-0.5f, -0.5f, -0.5f};
-	cubeMesh.vertices[15].position = {-0.5f, -0.5f, -0.5f};
-	cubeMesh.vertices[16].position = {-0.5f, -0.5f,  0.5f};
-	cubeMesh.vertices[17].position = {-0.5f,  0.5f,  0.5f};
+	cubeMesh.vertices[12].position = {1.0f, -1.0f, -1.0f};
+	cubeMesh.vertices[13].position = {1.0f, -1.0f,  1.0f};
+	cubeMesh.vertices[14].position = {1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[15].position = {1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[16].position = {1.0f,  1.0f, -1.0f};
+	cubeMesh.vertices[17].position = {1.0f, -1.0f, -1.0f};
 
-	cubeMesh.vertices[18].position = {0.5f,  0.5f,  0.5f};
-	cubeMesh.vertices[19].position = {0.5f,  0.5f, -0.5f};
-	cubeMesh.vertices[20].position = {0.5f, -0.5f, -0.5f};
-	cubeMesh.vertices[21].position = {0.5f, -0.5f, -0.5f};
-	cubeMesh.vertices[22].position = {0.5f, -0.5f,  0.5f};
-	cubeMesh.vertices[23].position = {0.5f,  0.5f,  0.5f};
+	cubeMesh.vertices[18].position = {-1.0f, -1.0f,  1.0f};
+	cubeMesh.vertices[19].position = {-1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[20].position = {1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[21].position = {1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[22].position = {1.0f, -1.0f,  1.0f};
+	cubeMesh.vertices[23].position = {-1.0f, -1.0f,  1.0f};
 
-	cubeMesh.vertices[24].position = {-0.5f, -0.5f, -0.5f};
-	cubeMesh.vertices[25].position = {0.5f, -0.5f, -0.5f};
-	cubeMesh.vertices[26].position = {0.5f, -0.5f,  0.5f};
-	cubeMesh.vertices[27].position = {0.5f, -0.5f,  0.5f};
-	cubeMesh.vertices[28].position = {-0.5f, -0.5f,  0.5f};
-	cubeMesh.vertices[29].position = {-0.5f, -0.5f, -0.5f};
+	cubeMesh.vertices[24].position = {-1.0f,  1.0f, -1.0f};
+	cubeMesh.vertices[25].position = {1.0f,  1.0f, -1.0f};
+	cubeMesh.vertices[26].position = {1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[27].position = {1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[28].position = {-1.0f,  1.0f,  1.0f};
+	cubeMesh.vertices[29].position = {-1.0f,  1.0f, -1.0f};
 
-	cubeMesh.vertices[30].position = {-0.5f,  0.5f, -0.5f};
-	cubeMesh.vertices[31].position = {0.5f,  0.5f, -0.5f};
-	cubeMesh.vertices[32].position = {0.5f,  0.5f,  0.5f};
-	cubeMesh.vertices[33].position = {0.5f,  0.5f,  0.5f};
-	cubeMesh.vertices[34].position = {-0.5f,  0.5f,  0.5f};
-	cubeMesh.vertices[35].position = {-0.5f,  0.5f, -0.5f};
+	cubeMesh.vertices[30].position = {-1.0f, -1.0f, -1.0f};
+	cubeMesh.vertices[31].position = {-1.0f, -1.0f,  1.0f};
+	cubeMesh.vertices[32].position = { 1.0f, -1.0f, -1.0f};
+	cubeMesh.vertices[33].position = {1.0f, -1.0f, -1.0f};
+	cubeMesh.vertices[34].position = {-1.0f, -1.0f,  1.0f};
+	cubeMesh.vertices[35].position = {1.0f, -1.0f,  1.0f};
 
 	//uv coords
 	cubeMesh.vertices[0].uv = {0.0f, 0.0f};

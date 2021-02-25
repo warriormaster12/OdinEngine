@@ -899,6 +899,8 @@ void VulkanRenderer::InitPipelines()
 
 	//hook the push constants layout
 	pipelineBuilder.pipelineLayout = defaultEffect->builtLayout;
+	//we have copied layout to builder so now we can flush old one
+	defaultEffect->FlushLayout();
 
 	//vertex input controls how to read vertices from vertex buffers. We arent using it yet
 	pipelineBuilder.vertexInputInfo = vkinit::VertexInputStateCreateInfo();
@@ -950,7 +952,6 @@ void VulkanRenderer::InitPipelines()
 	CreateMaterial(defaultPass->pipeline, defaultPass->layout, "defaultMat");
 
 	EnqueueCleanup([=]() {
-		defaultEffect->FlushLayout();
 		vkDestroyPipeline(device, defaultPass->pipeline, nullptr);
 		vkDestroyPipelineLayout(device,  defaultPass->layout, nullptr);
 	});
