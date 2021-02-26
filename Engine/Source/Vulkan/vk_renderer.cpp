@@ -492,7 +492,7 @@ void VulkanRenderer::CreateTexture(const std::string& materialName, const std::v
 		ENGINE_CORE_ERROR("Could not load texture for non-existent material: {}", materialName);
 		return;
 	}
-	std::vector<VkDescriptorImageInfo> imageBufferInfo;
+	std::vector <VkDescriptorImageInfo> imageBufferInfo;
 	imageBufferInfo.resize(texturePaths.size());
 	for(int i = 0; i < texturePaths.size(); i++)
 	{
@@ -506,9 +506,8 @@ void VulkanRenderer::CreateTexture(const std::string& materialName, const std::v
 		imageBufferInfo[i].imageView = loadedTextures[processedName].imageView;
 		imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
-	ENGINE_CORE_ERROR(imageBufferInfo.size());
 	// +1: binding 0 is used for material data (uniform data)
-	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo.data(), 1, imageBufferInfo.size());
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo.data(), 1, texturePaths.size());
 	
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
 }

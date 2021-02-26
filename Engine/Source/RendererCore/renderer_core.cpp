@@ -253,10 +253,23 @@ void RendererCore::LoadTextures()
 	//lost empire
 	std::vector<std::string> lostEmpireTextures = {
 		"EngineAssets/Textures/lost_empire-RGBA.png"
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
 	};
 	vkRenderer.CreateTexture("texturedmesh", lostEmpireTextures, 0);
 	std::vector<std::string> vikingRoomTextures = {
-		"EngineAssets/Textures/viking_room.png"
+		"EngineAssets/Textures/viking_room.png",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
 	};
 	//viking room
 	vkRenderer.CreateTexture("texturedmesh3", vikingRoomTextures, 0);
@@ -269,7 +282,7 @@ void RendererCore::LoadTextures()
 		"EngineAssets/DamagedHelmet/Default_AO.jpg",
 		"EngineAssets/DamagedHelmet/Default_metalRoughness.jpg",
 		"",
-		""
+		"",
 	};
 	vkRenderer.CreateTexture("DamagedHelmetMat", DamagedHelmetTextures, 0);
 	//Barrel
@@ -281,7 +294,7 @@ void RendererCore::LoadTextures()
 		"",
 		"",
 		"EngineAssets/Textures/ExplosionBarrel Metallic.png",
-		"EngineAssets/Textures/ExplosionBarrel Roughness.png"
+		"EngineAssets/Textures/ExplosionBarrel Roughness.png",
 	};
 	vkRenderer.CreateTexture("BarrelMat", BarrelTextures, 0);
 }

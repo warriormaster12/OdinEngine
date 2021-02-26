@@ -136,7 +136,7 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 
 bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_filename, AllocatedImage* outImage)
 {
-	if (p_filename == nullptr)
+	if (p_filename == "")
 	{
 		ENGINE_CORE_WARN("Failed to load image asset: Filename is null");
 		LoadEmpty(renderer, outImage);

@@ -115,19 +115,19 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
 void main()
 {
 	vec4 albedo =  pow(texture(albedoMap[0], texCoord).rgba, vec4(2.2));
-    vec4 emission = texture(albedoMap[3], texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
-    float ao = texture(albedoMap[4], texCoord).r;
+    vec4 emission = texture(albedoMap[2], texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
+    float ao = texture(albedoMap[3], texCoord).r;
     float metallic;
     float roughness;
-    if(texture(albedoMap[5], texCoord).rgba != vec4(0.0f))
+    if(texture(albedoMap[4], texCoord).rgba != vec4(0.0))
     {
-        metallic = texture(albedoMap[5], texCoord).b;
-        roughness = texture(albedoMap[5], texCoord).g;
+        metallic = texture(albedoMap[4], texCoord).b;
+        roughness = texture(albedoMap[4], texCoord).g;
     }
     else
     {
-        metallic = texture(albedoMap[6], texCoord).r;
-        roughness = texture(albedoMap[7], texCoord).r;
+        metallic = texture(albedoMap[5], texCoord).r;
+        roughness = texture(albedoMap[6], texCoord).r;
     }
 
     // this is for objects that have a texture loaded
@@ -149,7 +149,7 @@ void main()
     {
         ao += float(materialData.ao);
     }
-    vec3 N = texture(albedoMap[1], texCoord).xyz;
+    vec3 N;
     if(N.x > 0.1f || N.y > 0.1f || N.z > 0.1f)
     {
         N = getNormalFromMap();
