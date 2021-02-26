@@ -251,34 +251,39 @@ void RendererCore::LoadMaterials()
 void RendererCore::LoadTextures()
 {
 	//lost empire
-	vkRenderer.CreateTexture("texturedmesh", "EngineAssets/Textures/lost_empire-RGBA.png", 0);
+	std::vector<std::string> lostEmpireTextures = {
+		"EngineAssets/Textures/lost_empire-RGBA.png"
+	};
+	vkRenderer.CreateTexture("texturedmesh", lostEmpireTextures, 0);
+	std::vector<std::string> vikingRoomTextures = {
+		"EngineAssets/Textures/viking_room.png"
+	};
 	//viking room
-	vkRenderer.CreateTexture("texturedmesh3", "EngineAssets/Textures/viking_room.png", 0);
+	vkRenderer.CreateTexture("texturedmesh3", vikingRoomTextures, 0);
 
 	//DamagedHelmet
-
-	//diffuse
-	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_albedo.jpg", 0);
-	//ao
-	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_AO.jpg", 1);
-	//normal
-	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_normal.jpg", 2);
-
-	//emission
-	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_emissive.jpg", 3);
-	//metallicRoughness
-	vkRenderer.CreateTexture("DamagedHelmetMat", "EngineAssets/DamagedHelmet/Default_metalRoughness.jpg", 4);
-
-
+	std::vector<std::string> DamagedHelmetTextures = {
+		"EngineAssets/DamagedHelmet/Default_albedo.jpg",
+		"EngineAssets/DamagedHelmet/Default_normal.jpg",
+		"EngineAssets/DamagedHelmet/Default_emissive.jpg",
+		"EngineAssets/DamagedHelmet/Default_AO.jpg",
+		"EngineAssets/DamagedHelmet/Default_metalRoughness.jpg",
+		"",
+		""
+	};
+	vkRenderer.CreateTexture("DamagedHelmetMat", DamagedHelmetTextures, 0);
 	//Barrel
 	//diffuse
-	vkRenderer.CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Diffuse.png", 0);
-	//emission
-	vkRenderer.CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Emission.png", 3);
-	//Metallic
-	vkRenderer.CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Metallic.png", 5);
-	//Roughness
-	vkRenderer.CreateTexture("BarrelMat", "EngineAssets/Textures/ExplosionBarrel Roughness.png", 6);
+	std::vector<std::string> BarrelTextures = {
+		"EngineAssets/Textures/ExplosionBarrel Diffuse.png",
+		"",
+		"EngineAssets/Textures/ExplosionBarrel Emission.png",
+		"",
+		"",
+		"EngineAssets/Textures/ExplosionBarrel Metallic.png",
+		"EngineAssets/Textures/ExplosionBarrel Roughness.png"
+	};
+	vkRenderer.CreateTexture("BarrelMat", BarrelTextures, 0);
 }
 
 

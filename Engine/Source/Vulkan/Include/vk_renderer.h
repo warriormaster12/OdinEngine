@@ -249,7 +249,7 @@ public:
 	 * index=5: Metallic map
 	 * index=6: Roughness map
 	 */
-	void CreateTexture(std::string materialName, const std::string texturePath, uint32_t index);
+	void CreateTexture(const std::string& materialName, const std::vector<std::string>& texturePaths, uint32_t index);
 
 	Camera& GetCamera() { return camera; }
 	const VmaAllocator& GetAllocator() const { return allocator; }

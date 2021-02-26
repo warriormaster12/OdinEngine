@@ -46,20 +46,15 @@ layout(set = 2, binding = 0) uniform MaterialData{
     vec4 emissionPower; // float
 } materialData;
 
-layout(set = 2, binding = 1) uniform sampler2D albedoMap;
-layout(set = 2, binding = 2) uniform sampler2D aoMap;
-layout(set = 2, binding = 3) uniform sampler2D normalMap;
-layout(set = 2, binding = 4) uniform sampler2D emissionMap;
-layout(set = 2, binding = 5) uniform sampler2D metalRoughnessMap;
-layout(set = 2, binding = 6) uniform sampler2D metallicMap;
-layout(set = 2, binding = 7) uniform sampler2D roughnessMap;
+layout(set = 2, binding = 1) uniform sampler2D albedoMap[8];
+
 
 
 
 const float PI = 3.14159265359;
 vec3 getNormalFromMap()
 {
-    vec3 tangentNormal = texture(normalMap, texCoord).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = texture(albedoMap[1], texCoord).xyz * 2.0 - 1.0;
 
     vec3 Q1  = dFdx(WorldPos);
     vec3 Q2  = dFdy(WorldPos);
@@ -119,20 +114,20 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
 // ----------------------------------------------------------------------------
 void main()
 {
-	vec4 albedo =  pow(texture(albedoMap, texCoord).rgba, vec4(2.2));
-    vec4 emission = texture(emissionMap, texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
-    float ao = texture(aoMap, texCoord).r;
+	vec4 albedo =  pow(texture(albedoMap[0], texCoord).rgba, vec4(2.2));
+    vec4 emission = texture(albedoMap[3], texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
+    float ao = texture(albedoMap[4], texCoord).r;
     float metallic;
     float roughness;
-    if(texture(metalRoughnessMap, texCoord).rgba != vec4(0.0f))
+    if(texture(albedoMap[5], texCoord).rgba != vec4(0.0f))
     {
-        metallic = texture(metalRoughnessMap, texCoord).b;
-        roughness = texture(metalRoughnessMap, texCoord).g;
+        metallic = texture(albedoMap[5], texCoord).b;
+        roughness = texture(albedoMap[5], texCoord).g;
     }
     else
     {
-        metallic = texture(metallicMap, texCoord).r;
-        roughness = texture(roughnessMap, texCoord).r;
+        metallic = texture(albedoMap[6], texCoord).r;
+        roughness = texture(albedoMap[7], texCoord).r;
     }
 
     // this is for objects that have a texture loaded
@@ -154,7 +149,7 @@ void main()
     {
         ao += float(materialData.ao);
     }
-    vec3 N = texture(normalMap, texCoord).xyz;
+    vec3 N = texture(albedoMap[1], texCoord).xyz;
     if(N.x > 0.1f || N.y > 0.1f || N.z > 0.1f)
     {
         N = getNormalFromMap();

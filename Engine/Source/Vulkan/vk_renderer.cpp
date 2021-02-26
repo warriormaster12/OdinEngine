@@ -466,7 +466,7 @@ void VulkanRenderer::CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layo
 
 	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
 	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
-	AllocateEmptyTextures(name, textureSampler);
+	//AllocateEmptyTextures(name, textureSampler);
 	EnqueueCleanup([=]() {
 		vmaDestroyBuffer(allocator, materials[name].buffer.buffer, materials[name].buffer.allocation);
 	});
@@ -484,7 +484,7 @@ Material* VulkanRenderer::GetMaterial(const std::string& name)
 	}
 }
 
-void VulkanRenderer::CreateTexture(std::string materialName, std::string texturePath, uint32_t index)
+void VulkanRenderer::CreateTexture(const std::string& materialName, const std::vector<std::string>& texturePaths, uint32_t index)
 {
 	Material* texturedMaterial = GetMaterial(materialName);
 	if (texturedMaterial == nullptr)
@@ -492,19 +492,23 @@ void VulkanRenderer::CreateTexture(std::string materialName, std::string texture
 		ENGINE_CORE_ERROR("Could not load texture for non-existent material: {}", materialName);
 		return;
 	}
+	std::vector<VkDescriptorImageInfo> imageBufferInfo;
+	imageBufferInfo.resize(texturePaths.size());
+	for(int i = 0; i < texturePaths.size(); i++)
+	{
+		std::filesystem::path textureName = texturePaths[i]; 
+		const std::string processedName = textureName.stem().u8string();
+		LoadImage(processedName, texturePaths[i]);
 
-	std::filesystem::path textureName = texturePath; 
-	const std::string processedName = textureName.stem().u8string();
-	LoadImage(processedName, texturePath);
-
-	//write to the descriptor set so that it points to our input texture
-	VkDescriptorImageInfo imageBufferInfo;
-	imageBufferInfo.sampler = textureSampler;
-	imageBufferInfo.imageView = loadedTextures[processedName].imageView;
-	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
+		//write to the descriptor set so that it points to our input texture
+		
+		imageBufferInfo[i].sampler = textureSampler;
+		imageBufferInfo[i].imageView = loadedTextures[processedName].imageView;
+		imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+	ENGINE_CORE_ERROR(imageBufferInfo.size());
 	// +1: binding 0 is used for material data (uniform data)
-	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, index + 1);
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo.data(), 1, imageBufferInfo.size());
 	
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
 }
@@ -532,7 +536,7 @@ void VulkanRenderer::InitVulkan()
 	
 
 	//use vkbootstrap to select a gpu. 
-	//We want a gpu that can write to the SDL surface and supports vulkan 1.2
+	//We want a gpu that can write to the GLFW surface and supports vulkan 1.2
 	vkb::PhysicalDeviceSelector selector{ vkb_inst };
 	VkPhysicalDeviceFeatures feats{};
 
@@ -767,14 +771,9 @@ void VulkanRenderer::InitDescriptors()
 
 
 	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	VkDescriptorSetLayoutBinding diffuseTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-	VkDescriptorSetLayoutBinding aoTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
-	VkDescriptorSetLayoutBinding normalTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3);
-	VkDescriptorSetLayoutBinding emissionTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4);
-	VkDescriptorSetLayoutBinding metalRoughnessTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5);
-	VkDescriptorSetLayoutBinding metalTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6);
-	VkDescriptorSetLayoutBinding roughnessTextureBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7);
-	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, diffuseTextureBind, aoTextureBind, normalTextureBind, emissionTextureBind, metalRoughnessTextureBind, metalTextureBind, roughnessTextureBind };
+	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 7);
+	
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, TexturesBind};
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
@@ -1009,12 +1008,9 @@ void VulkanRenderer::AllocateEmptyTextures(const std::string& materialName, VkSa
 	imageBufferInfo.imageView = loadedTextures["empty"].imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	//texture descriptor bindings
-	for(size_t binding = 1; binding < 8; binding++)
-	{
-		VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, binding);
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, &imageBufferInfo, 1);
 	
-		vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
-	}
+	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
+
 }
 
