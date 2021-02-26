@@ -258,6 +258,8 @@ void RendererCore::LoadTextures()
 		"",
 		"",
 		"",
+		"",
+		"",
 		""
 	};
 	vkRenderer.CreateTextures("texturedmesh", lostEmpireTextures);
@@ -283,6 +285,7 @@ void RendererCore::LoadTextures()
 		"EngineAssets/DamagedHelmet/Default_metalRoughness.jpg",
 		"",
 		"",
+		""
 	};
 	vkRenderer.CreateTextures("DamagedHelmetMat", DamagedHelmetTextures);
 	//Barrel
@@ -295,6 +298,7 @@ void RendererCore::LoadTextures()
 		"",
 		"EngineAssets/Textures/ExplosionBarrel Metallic.png",
 		"EngineAssets/Textures/ExplosionBarrel Roughness.png",
+		""
 	};
 	vkRenderer.CreateTextures("BarrelMat", BarrelTextures);
 	std::vector<std::string> emptyTextures = {
@@ -305,6 +309,7 @@ void RendererCore::LoadTextures()
 		"",
 		"",
 		"",
+		""
 	};
 	vkRenderer.CreateTextures("texturedmesh2", emptyTextures);
 }

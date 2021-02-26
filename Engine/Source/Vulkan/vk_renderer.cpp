@@ -486,7 +486,6 @@ Material* VulkanRenderer::GetMaterial(const std::string& name)
 
 void VulkanRenderer::CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths)
 {
-	ENGINE_CORE_ERROR(texturePaths.size());
 	Material* texturedMaterial = GetMaterial(materialName);
 	if (texturedMaterial == nullptr)
 	{

@@ -52,9 +52,9 @@ layout(set = 2, binding = 1) uniform sampler2D textureMaps[8];
 
 
 const float PI = 3.14159265359;
-vec3 getNormalFromMap()
+vec3 getNormalFromMap(vec3 NormalMap)
 {
-    vec3 tangentNormal = texture(textureMaps[1], texCoord).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = NormalMap * 2.0 - 1.0;
 
     vec3 Q1  = dFdx(WorldPos);
     vec3 Q2  = dFdy(WorldPos);
@@ -152,7 +152,7 @@ void main()
     vec3 N;
     if(N.x > 0.1f || N.y > 0.1f || N.z > 0.1f)
     {
-        N = getNormalFromMap();
+        N = getNormalFromMap(texture(textureMaps[1], texCoord).xyz);
     }
     else
     {
