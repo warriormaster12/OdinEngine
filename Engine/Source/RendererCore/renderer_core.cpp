@@ -260,7 +260,7 @@ void RendererCore::LoadTextures()
 		"",
 		""
 	};
-	vkRenderer.CreateTexture("texturedmesh", lostEmpireTextures, 0);
+	vkRenderer.CreateTextures("texturedmesh", lostEmpireTextures);
 	std::vector<std::string> vikingRoomTextures = {
 		"EngineAssets/Textures/viking_room.png",
 		"",
@@ -269,10 +269,10 @@ void RendererCore::LoadTextures()
 		"",
 		"",
 		"",
-		""
+		"",
 	};
 	//viking room
-	vkRenderer.CreateTexture("texturedmesh3", vikingRoomTextures, 0);
+	vkRenderer.CreateTextures("texturedmesh3", vikingRoomTextures);
 
 	//DamagedHelmet
 	std::vector<std::string> DamagedHelmetTextures = {
@@ -284,7 +284,7 @@ void RendererCore::LoadTextures()
 		"",
 		"",
 	};
-	vkRenderer.CreateTexture("DamagedHelmetMat", DamagedHelmetTextures, 0);
+	vkRenderer.CreateTextures("DamagedHelmetMat", DamagedHelmetTextures);
 	//Barrel
 	//diffuse
 	std::vector<std::string> BarrelTextures = {
@@ -296,7 +296,17 @@ void RendererCore::LoadTextures()
 		"EngineAssets/Textures/ExplosionBarrel Metallic.png",
 		"EngineAssets/Textures/ExplosionBarrel Roughness.png",
 	};
-	vkRenderer.CreateTexture("BarrelMat", BarrelTextures, 0);
+	vkRenderer.CreateTextures("BarrelMat", BarrelTextures);
+	std::vector<std::string> emptyTextures = {
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+	};
+	vkRenderer.CreateTextures("texturedmesh2", emptyTextures);
 }
 
 

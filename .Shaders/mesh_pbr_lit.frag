@@ -46,7 +46,7 @@ layout(set = 2, binding = 0) uniform MaterialData{
     vec4 emissionPower; // float
 } materialData;
 
-layout(set = 2, binding = 1) uniform sampler2D albedoMap[8];
+layout(set = 2, binding = 1) uniform sampler2D textureMaps[8];
 
 
 
@@ -54,7 +54,7 @@ layout(set = 2, binding = 1) uniform sampler2D albedoMap[8];
 const float PI = 3.14159265359;
 vec3 getNormalFromMap()
 {
-    vec3 tangentNormal = texture(albedoMap[1], texCoord).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = texture(textureMaps[1], texCoord).xyz * 2.0 - 1.0;
 
     vec3 Q1  = dFdx(WorldPos);
     vec3 Q2  = dFdy(WorldPos);
@@ -114,20 +114,20 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
 // ----------------------------------------------------------------------------
 void main()
 {
-	vec4 albedo =  pow(texture(albedoMap[0], texCoord).rgba, vec4(2.2));
-    vec4 emission = texture(albedoMap[2], texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
-    float ao = texture(albedoMap[3], texCoord).r;
+	vec4 albedo =  pow(texture(textureMaps[0], texCoord).rgba, vec4(2.2));
+    vec4 emission = texture(textureMaps[2], texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
+    float ao = texture(textureMaps[3], texCoord).r;
     float metallic;
     float roughness;
-    if(texture(albedoMap[4], texCoord).rgba != vec4(0.0))
+    if(texture(textureMaps[4], texCoord).rgba != vec4(0.0))
     {
-        metallic = texture(albedoMap[4], texCoord).b;
-        roughness = texture(albedoMap[4], texCoord).g;
+        metallic = texture(textureMaps[4], texCoord).b;
+        roughness = texture(textureMaps[4], texCoord).g;
     }
     else
     {
-        metallic = texture(albedoMap[5], texCoord).r;
-        roughness = texture(albedoMap[6], texCoord).r;
+        metallic = texture(textureMaps[5], texCoord).r;
+        roughness = texture(textureMaps[6], texCoord).r;
     }
 
     // this is for objects that have a texture loaded

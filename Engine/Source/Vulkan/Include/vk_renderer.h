@@ -239,17 +239,17 @@ public:
 	 * Loads a texture from the disk and binds it to a material.
 	 * 
 	 * @param materialName The name of the material to bind the texture to
-	 * @param texturePath The path to the texture file
-	 * @param index The material texture index.
+	 * @param texturePaths an array of all texture paths
+	 * Each texturePath index is a specific texture type
 	 * index=0: Albedo texture
-	 * index=1: Ambient Occlusion map
-	 * index=2: Normal map
-	 * index=3: Emission map
+	 * index=1: Normal map
+	 * index=2: Emission map
+	 * index=3: Ao Map
 	 * index=4: Metallic roughness map
 	 * index=5: Metallic map
 	 * index=6: Roughness map
 	 */
-	void CreateTexture(const std::string& materialName, const std::vector<std::string>& texturePaths, uint32_t index);
+	void CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths);
 
 	Camera& GetCamera() { return camera; }
 	const VmaAllocator& GetAllocator() const { return allocator; }
