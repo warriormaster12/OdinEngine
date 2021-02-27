@@ -30,6 +30,7 @@ namespace vkcomponent {
 
 		void ResetPools();
 		bool Allocate(VkDescriptorSet* p_set, VkDescriptorSetLayout layout);
+		bool AllocateVariableSet(VkDescriptorSet* p_set, VkDescriptorSetLayout layout, const uint32_t& counts = 1);
 		
 		void Init(VkDevice newDevice);
 

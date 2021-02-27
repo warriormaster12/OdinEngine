@@ -89,6 +89,64 @@ namespace vkcomponent {
 
 		return false;
 	}
+	bool DescriptorAllocator::AllocateVariableSet(VkDescriptorSet* p_set, VkDescriptorSetLayout layout, const uint32_t& counts /*= 1*/)
+	{
+		if (currentPool == VK_NULL_HANDLE)
+		{
+			currentPool = GrabPool();
+			usedPools.push_back(currentPool);
+		}
+
+		VkDescriptorSetVariableDescriptorCountAllocateInfo setCountsInfo = {};
+		setCountsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
+		setCountsInfo.descriptorSetCount = 1;
+		setCountsInfo.pDescriptorCounts = &counts;
+
+		VkDescriptorSetAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.pNext = &setCountsInfo;
+
+		allocInfo.pSetLayouts = &layout;
+		allocInfo.descriptorPool = currentPool;
+		allocInfo.descriptorSetCount = 1;		
+		
+
+		VkResult allocResult = vkAllocateDescriptorSets(device, &allocInfo, p_set);
+		bool needReallocate = false;
+
+		switch (allocResult) {
+		case VK_SUCCESS:
+			//all good, return
+			return true;
+
+			break;
+		case VK_ERROR_FRAGMENTED_POOL:
+		case VK_ERROR_OUT_OF_POOL_MEMORY:
+			//reallocate pool
+			needReallocate = true;
+			break;
+		default:
+			//unrecoverable error
+			return false;
+		}
+		
+		if (needReallocate)
+		{
+			//allocate a new pool and retry
+			currentPool = GrabPool();
+			usedPools.push_back(currentPool);
+
+			allocResult = vkAllocateDescriptorSets(device, &allocInfo, p_set);
+
+			//if it still fails then we have big issues
+			if (allocResult == VK_SUCCESS)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	void DescriptorAllocator::Init(VkDevice newDevice)
 	{

@@ -401,6 +401,7 @@ void vkcomponent::ShaderEffect::ReflectLayout(VkDevice& device, ReflectionOverri
 			layout.create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			layout.create_info.bindingCount = refl_set.binding_count;
 			layout.create_info.pBindings = layout.bindings.data();
+            layout.create_info.flags = 0;
 
 			set_layouts.push_back(layout);
 		}

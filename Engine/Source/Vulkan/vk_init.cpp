@@ -334,18 +334,27 @@ VkWriteDescriptorSet vkinit::WriteDescriptorImage(VkDescriptorType type, VkDescr
 	return write;
 }
 
-VkDescriptorSetLayoutCreateInfo vkinit::DescriptorLayoutInfo(std::vector<VkDescriptorSetLayoutBinding>& bindings)
+VkDescriptorSetLayoutCreateInfo vkinit::DescriptorLayoutInfo(std::vector<VkDescriptorSetLayoutBinding>& bindings, const void* bindingFlags /*= nullptr*/)
 {
     VkDescriptorSetLayoutCreateInfo setinfo = {};
 	setinfo.bindingCount = bindings.size();
 	setinfo.flags = 0;
-	setinfo.pNext = nullptr;
+	setinfo.pNext = bindingFlags;
 	setinfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	setinfo.pBindings = bindings.data();
 
     return setinfo;
 }
 
+ VkDescriptorSetLayoutBindingFlagsCreateInfo vkinit::DescriptorLayoutBindingFlagsInfo(std::vector<VkDescriptorBindingFlags> flags)
+ {
+    VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{};
+    bindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+    bindingFlags.bindingCount = flags.size();
+    bindingFlags.pBindingFlags = flags.data();
+
+    return bindingFlags;
+ }
 
 
 

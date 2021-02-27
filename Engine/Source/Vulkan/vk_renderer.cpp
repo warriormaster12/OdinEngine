@@ -164,7 +164,7 @@ namespace {
 }
 
 
-constexpr bool bUseValidationLayers = false;
+constexpr bool bUseValidationLayers = true;
 void VulkanRenderer::Init(WindowHandler& windowHandler)
 {
 	p_windowHandler = &windowHandler;
@@ -449,7 +449,7 @@ void VulkanRenderer::CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layo
 	mat.pipelineLayout = layout;
 	materials[name] = mat;
 	materialList.push_back(name);
-	p_descriptorAllocator->Allocate(&materials[name].materialSet, materialTextureSetLayout);
+	p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, 7);
 
 	{
 		CreateBufferInfo info;
@@ -492,8 +492,7 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 		ENGINE_CORE_ERROR("Could not load texture for non-existent material: {}", materialName);
 		return;
 	}
-	std::vector <VkDescriptorImageInfo> imageBufferInfo;
-	imageBufferInfo.resize(texturePaths.size());
+	VkDescriptorImageInfo imageBufferInfo[texturePaths.size()];
 	for(int i = 0; i < texturePaths.size(); i++)
 	{
 		std::filesystem::path textureName = texturePaths[i]; 
@@ -516,7 +515,7 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 		}
 	}
 	// +1: binding 0 is used for material data (uniform data)
-	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo.data(), 1, imageBufferInfo.size());
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo, 1, texturePaths.size());
 	
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
 }
@@ -552,7 +551,17 @@ void VulkanRenderer::InitVulkan()
 	feats.multiDrawIndirect = true;
 	feats.drawIndirectFirstInstance = true;
 	feats.alphaToOne = false;
+	
 	//feats.samplerAnisotropy = true;
+
+	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+	descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+
+	descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+	descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+	descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+	descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+
 	selector.set_required_features(feats);
 
 	vkb::PhysicalDevice physicalDevice = selector
@@ -563,8 +572,7 @@ void VulkanRenderer::InitVulkan()
 	//create the final vulkan device
 
 	vkb::DeviceBuilder deviceBuilder{ physicalDevice };
-
-	vkb::Device vkbDevice = deviceBuilder.build().value();
+	vkb::Device vkbDevice = deviceBuilder.add_pNext(&descriptorIndexingFeatures).build().value();
 	// Get the VkDevice handle used in the rest of a vulkan application
 	device = vkbDevice.device;
 	chosenGPU = physicalDevice.physical_device;
@@ -779,10 +787,12 @@ void VulkanRenderer::InitDescriptors()
 
 
 	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 8);
+	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 7);
 	
 	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, TexturesBind};
-	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
+	std::vector<VkDescriptorBindingFlags> flags = {VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT};
+	VkDescriptorSetLayoutBindingFlagsCreateInfo info = vkinit::DescriptorLayoutBindingFlagsInfo(flags);
+	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings, &info);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
 	{

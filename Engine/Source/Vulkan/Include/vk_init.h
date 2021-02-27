@@ -49,6 +49,8 @@ namespace vkinit {
     
     VkWriteDescriptorSet WriteDescriptorImage(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo* p_imageInfo, uint32_t binding, uint32_t descriptorCount = 1);
 
-    VkDescriptorSetLayoutCreateInfo DescriptorLayoutInfo(std::vector<VkDescriptorSetLayoutBinding>& bindings);
+    VkDescriptorSetLayoutCreateInfo DescriptorLayoutInfo(std::vector<VkDescriptorSetLayoutBinding>& bindings, const void* bindingFlags = nullptr);
+    
+    VkDescriptorSetLayoutBindingFlagsCreateInfo DescriptorLayoutBindingFlagsInfo(const std::vector<VkDescriptorBindingFlags> flags);
 }
 
