@@ -164,7 +164,7 @@ namespace {
 }
 
 
-constexpr bool bUseValidationLayers = true;
+constexpr bool bUseValidationLayers = false;
 void VulkanRenderer::Init(WindowHandler& windowHandler)
 {
 	p_windowHandler = &windowHandler;
@@ -498,13 +498,22 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 	{
 		std::filesystem::path textureName = texturePaths[i]; 
 		const std::string processedName = textureName.stem().u8string();
-		LoadImage(processedName, texturePaths[i]);
+		if(texturePaths[i] != "")
+		{
+			LoadImage(processedName, texturePaths[i]);
 
-		//write to the descriptor set so that it points to our input texture
-		
-		imageBufferInfo[i].sampler = textureSampler;
-		imageBufferInfo[i].imageView = loadedTextures[processedName].imageView;
-		imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			//write to the descriptor set so that it points to our input texture
+			
+			imageBufferInfo[i].sampler = textureSampler;
+			imageBufferInfo[i].imageView = loadedTextures[processedName].imageView;
+			imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
+		else
+		{
+			imageBufferInfo[i].sampler = textureSampler;
+			imageBufferInfo[i].imageView = loadedTextures["empty"].imageView;
+			imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
 	}
 	// +1: binding 0 is used for material data (uniform data)
 	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo.data(), 1, imageBufferInfo.size());
