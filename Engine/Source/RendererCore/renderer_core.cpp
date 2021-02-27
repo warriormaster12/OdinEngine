@@ -250,6 +250,7 @@ void RendererCore::LoadMaterials()
 
 void RendererCore::LoadTextures()
 {
+	vkRenderer.InitSamplers();
 	//lost empire
 	std::vector<std::string> lostEmpireTextures = {
 		"EngineAssets/Textures/lost_empire-RGBA.png"

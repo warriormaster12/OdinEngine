@@ -46,7 +46,8 @@ layout(set = 2, binding = 0) uniform MaterialData{
     vec4 emissionPower; // float
 } materialData;
 
-layout(set = 2, binding = 1) uniform sampler2D textureMaps[8];
+layout(set = 2, binding = 1) uniform sampler samp;
+layout(set = 2, binding = 2) uniform texture2D textureMaps[8];
 
 
 
@@ -114,20 +115,20 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
 // ----------------------------------------------------------------------------
 void main()
 {
-	vec4 albedo =  pow(texture(textureMaps[0], texCoord).rgba, vec4(2.2));
-    vec4 emission = texture(textureMaps[2], texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
-    float ao = texture(textureMaps[3], texCoord).r;
+	vec4 albedo =  pow(texture(sampler2D(textureMaps[0], samp), texCoord).rgba, vec4(2.2));
+    vec4 emission = texture(sampler2D(textureMaps[2],samp), texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
+    float ao = texture(sampler2D(textureMaps[3],samp), texCoord).r;
     float metallic;
     float roughness;
-    if(texture(textureMaps[4], texCoord).rgba != vec4(0.0))
+    if(texture(sampler2D(textureMaps[4], samp), texCoord).rgba != vec4(0.0))
     {
-        metallic = texture(textureMaps[4], texCoord).b;
-        roughness = texture(textureMaps[4], texCoord).g;
+        metallic = texture(sampler2D(textureMaps[4], samp), texCoord).b;
+        roughness = texture(sampler2D(textureMaps[4], samp), texCoord).g;
     }
     else
     {
-        metallic = texture(textureMaps[5], texCoord).r;
-        roughness = texture(textureMaps[6], texCoord).r;
+        metallic = texture(sampler2D(textureMaps[5], samp), texCoord).r;
+        roughness = texture(sampler2D(textureMaps[6], samp), texCoord).r;
     }
 
     // this is for objects that have a texture loaded
@@ -152,7 +153,7 @@ void main()
     vec3 N;
     if(N.x > 0.1f || N.y > 0.1f || N.z > 0.1f)
     {
-        N = getNormalFromMap(texture(textureMaps[1], texCoord).xyz);
+        N = getNormalFromMap(texture(sampler2D(textureMaps[1],samp), texCoord).xyz);
     }
     else
     {
