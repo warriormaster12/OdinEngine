@@ -234,7 +234,6 @@ public:
 	 * @return A pointer to the material or nullptr if it could not be found
 	 */
 	Material* GetMaterial(const std::string& name);
-	void InitSamplers();
 
 	/**
 	 * Loads a texture from the disk and binds it to a material.
@@ -312,6 +311,7 @@ private:
 	void InitCommands();
 	void InitSyncStructures();
 	void InitDescriptors();
+	void InitSamplers();
 	void InitPipelines();
 	void RecreateSwapchain();
 

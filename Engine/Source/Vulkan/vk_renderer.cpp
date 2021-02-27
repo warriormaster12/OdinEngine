@@ -175,6 +175,8 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 	InitCommands();
 	InitSyncStructures();
 	InitDescriptors();
+	InitSamplers();
+	LoadImage("empty", "");
 	InitPipelines();
 
 	camera.position = { 0.f,0.f,10.f };
@@ -500,12 +502,12 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 
 		//write to the descriptor set so that it points to our input texture
 		
-		imageBufferInfo[i].sampler = nullptr;
+		imageBufferInfo[i].sampler = textureSampler;
 		imageBufferInfo[i].imageView = loadedTextures[processedName].imageView;
 		imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 	// +1: binding 0 is used for material data (uniform data)
-	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, texturedMaterial->materialSet, imageBufferInfo.data(), 2, imageBufferInfo.size());
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo.data(), 1, imageBufferInfo.size());
 	
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
 }
@@ -768,10 +770,9 @@ void VulkanRenderer::InitDescriptors()
 
 
 	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	VkDescriptorSetLayoutBinding samplerBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 8);
+	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 8);
 	
-	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, samplerBind,TexturesBind};
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, TexturesBind};
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
@@ -869,14 +870,6 @@ void VulkanRenderer::InitSamplers()
 
 	vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler);
 
-	VkDescriptorImageInfo samplerDInfo{};
-	samplerDInfo.sampler = textureSampler;
-
-	for(auto currentMat : materialList)
-	{
-		VkWriteDescriptorSet outputSampler = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_SAMPLER, GetMaterial(currentMat)->materialSet, &samplerDInfo, 1);
-		vkUpdateDescriptorSets(device, 1, &outputSampler, 0, nullptr);
-	}
 	EnqueueCleanup([=]() {
 		vkDestroySampler(device, textureSampler, nullptr);
 	});
