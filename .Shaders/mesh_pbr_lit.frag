@@ -151,7 +151,7 @@ void main()
     {
         ao += float(materialData.ao);
     }
-    vec3 N;
+    vec3 N = texture(textureMaps[nonuniformEXT(1)], texCoord).xyz;
     if(N.x > 0.1f || N.y > 0.1f || N.z > 0.1f)
     {
         N = getNormalFromMap(texture(textureMaps[nonuniformEXT(1)], texCoord).xyz);

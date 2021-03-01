@@ -98,7 +98,7 @@ namespace vkcomponent {
 		}
 
 		VkDescriptorSetVariableDescriptorCountAllocateInfo setCountsInfo = {};
-		setCountsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+		setCountsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
 		setCountsInfo.descriptorSetCount = 1;
 		setCountsInfo.pDescriptorCounts = &counts;
 
