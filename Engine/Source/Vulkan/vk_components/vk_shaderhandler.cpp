@@ -144,6 +144,26 @@ EShLanguage vkcomponent::GetShaderStage(const std::string& stage)
     }
 }
 
+VkShaderStageFlagBits vkcomponent::GetShaderStageVk(const std::string& stage)
+{
+    if (stage == "vert") {
+        return VK_SHADER_STAGE_VERTEX_BIT;
+    } else if (stage == "tesc") {
+        return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+    } else if (stage == "tese") {
+        return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+    } else if (stage == "geom") {
+        return VK_SHADER_STAGE_GEOMETRY_BIT;
+    } else if (stage == "frag") {
+        return VK_SHADER_STAGE_FRAGMENT_BIT;
+    } else if (stage == "comp") {
+        return VK_SHADER_STAGE_COMPUTE_BIT;
+    } else {
+        assert(0 && "Unknown shader stage");
+        return VK_SHADER_STAGE_ALL;
+    }
+}
+
 const std::string vkcomponent::CompileGLSL(const std::string& filename)
 {
     std::string SpirV_filename = filename + ".spv";
@@ -308,8 +328,11 @@ bool vkcomponent::LoadShaderModule(const char* p_filePath, ShaderModule* p_outSh
 	if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
 		return false;
 	}
+    std::string spirvName = p_filePath;
+    std::string glslShaderName = spirvName.substr(0, spirvName.find_last_of("."));
     p_outShaderModule->code = std::move(buffer);
 	p_outShaderModule->module = shaderModule;
+    p_outShaderModule->stage = GetShaderStageVk(GetSuffix(glslShaderName));
 	return true;
 }
     

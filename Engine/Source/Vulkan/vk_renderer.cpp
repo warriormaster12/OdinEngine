@@ -512,7 +512,7 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 			imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		}
 	}
-	ENGINE_CORE_ERROR("total texture paths: {}", texturePaths.size());
+	ENGINE_CORE_INFO("total texture paths: {}", texturePaths.size());
 	// +1: binding 0 is used for material data (uniform data)
 	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo, 1, texturePaths.size());
 	

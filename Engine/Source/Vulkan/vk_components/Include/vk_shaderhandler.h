@@ -12,6 +12,7 @@ namespace vkcomponent
     struct ShaderModule {
         std::vector<uint32_t> code;
         VkShaderModule module;
+        VkShaderStageFlagBits stage;
     };
 
     //loads a shader module from a spir-v file. Returns false if it errors
@@ -20,6 +21,7 @@ namespace vkcomponent
     
     std::string GetSuffix(const std::string& name);
     EShLanguage GetShaderStage(const std::string& stage);
+    VkShaderStageFlagBits GetShaderStageVk(const std::string& stage);
     const std::string CompileGLSL(const std::string& filename);
     std::string GetFilePath(const std::string& str);
 

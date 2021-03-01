@@ -87,19 +87,10 @@ namespace vkcomponent
     {
         //textured defaultlit shader
         ShaderEffect* effect = new ShaderEffect();
-        effect->AddStage(&shaders[0], VK_SHADER_STAGE_VERTEX_BIT);
-        if (shaders.size() >= 1)
+        for(int i = 0; i < shaders.size(); i++)
         {
-            effect->AddStage(&shaders[1], VK_SHADER_STAGE_FRAGMENT_BIT);
+            effect->AddStage(&shaders[i], shaders[i].stage);
         }
-        // if(overrides.size() != 0)
-        // {
-        //     effect->ReflectLayout(device, overrides.data(), overrides.size());
-        // }
-        // else
-        // {
-        //     effect->ReflectLayout(device, nullptr, 0);
-        // }
         VK_CHECK(vkCreatePipelineLayout(device, &info, nullptr, &effect->builtLayout));
         return effect; 
         
