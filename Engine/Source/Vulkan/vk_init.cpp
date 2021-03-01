@@ -346,7 +346,7 @@ VkDescriptorSetLayoutCreateInfo vkinit::DescriptorLayoutInfo(std::vector<VkDescr
     return setinfo;
 }
 
- VkDescriptorSetLayoutBindingFlagsCreateInfo vkinit::DescriptorLayoutBindingFlagsInfo(std::vector<VkDescriptorBindingFlags> flags)
+ VkDescriptorSetLayoutBindingFlagsCreateInfo vkinit::DescriptorLayoutBindingFlagsInfo(std::vector<VkDescriptorBindingFlagsEXT> flags)
  {
     VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{};
     bindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;

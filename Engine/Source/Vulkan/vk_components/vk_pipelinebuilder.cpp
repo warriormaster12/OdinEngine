@@ -83,24 +83,24 @@ namespace vkcomponent
         pipelineLayout = effect->builtLayout;
     }
 
-    ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides/*={}*/)
+    ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info)
     {
         //textured defaultlit shader
         ShaderEffect* effect = new ShaderEffect();
-        
         effect->AddStage(&shaders[0], VK_SHADER_STAGE_VERTEX_BIT);
         if (shaders.size() >= 1)
         {
             effect->AddStage(&shaders[1], VK_SHADER_STAGE_FRAGMENT_BIT);
         }
-        if(overrides.size() != 0)
-        {
-            effect->ReflectLayout(device, overrides.data(), overrides.size());
-        }
-        else
-        {
-            effect->ReflectLayout(device, nullptr, 0);
-        }
+        // if(overrides.size() != 0)
+        // {
+        //     effect->ReflectLayout(device, overrides.data(), overrides.size());
+        // }
+        // else
+        // {
+        //     effect->ReflectLayout(device, nullptr, 0);
+        // }
+        VK_CHECK(vkCreatePipelineLayout(device, &info, nullptr, &effect->builtLayout));
         return effect; 
         
         delete effect;

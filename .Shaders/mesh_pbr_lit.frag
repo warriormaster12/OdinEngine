@@ -1,6 +1,8 @@
 //glsl version 4.5
 #version 450
 
+#extension GL_EXT_nonuniform_qualifier : require
+
 //shader input
 layout (location = 0) in vec3 inColor;
 layout (location = 1) in vec2 texCoord;
@@ -114,20 +116,20 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
 // ----------------------------------------------------------------------------
 void main()
 {
-	vec4 albedo =  pow(texture(textureMaps[0], texCoord).rgba, vec4(2.2));
-    vec4 emission = texture(textureMaps[2], texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
-    float ao = texture(textureMaps[3], texCoord).r;
+	vec4 albedo =  pow(texture(textureMaps[nonuniformEXT(0)], texCoord).rgba, vec4(2.2));
+    vec4 emission = texture(textureMaps[nonuniformEXT(2)], texCoord).rgba * materialData.emissionColor * float(materialData.emissionPower);
+    float ao = texture(textureMaps[nonuniformEXT(3)], texCoord).r;
     float metallic;
     float roughness;
-    if(texture(textureMaps[4], texCoord).rgba != vec4(0.0))
+    if(texture(textureMaps[nonuniformEXT(4)], texCoord).rgba != vec4(0.0))
     {
-        metallic = texture(textureMaps[4], texCoord).b;
-        roughness = texture(textureMaps[4], texCoord).g;
+        metallic = texture(textureMaps[nonuniformEXT(4)], texCoord).b;
+        roughness = texture(textureMaps[nonuniformEXT(4)], texCoord).g;
     }
     else
     {
-        metallic = texture(textureMaps[5], texCoord).r;
-        roughness = texture(textureMaps[6], texCoord).r;
+        metallic = texture(textureMaps[nonuniformEXT(5)], texCoord).r;
+        roughness = texture(textureMaps[nonuniformEXT(6)], texCoord).r;
     }
 
     // this is for objects that have a texture loaded
@@ -152,7 +154,7 @@ void main()
     vec3 N;
     if(N.x > 0.1f || N.y > 0.1f || N.z > 0.1f)
     {
-        N = getNormalFromMap(texture(textureMaps[1], texCoord).xyz);
+        N = getNormalFromMap(texture(textureMaps[nonuniformEXT(1)], texCoord).xyz);
     }
     else
     {

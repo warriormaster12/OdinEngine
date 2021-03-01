@@ -98,17 +98,17 @@ namespace vkcomponent {
 		}
 
 		VkDescriptorSetVariableDescriptorCountAllocateInfo setCountsInfo = {};
-		setCountsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
+		setCountsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
 		setCountsInfo.descriptorSetCount = 1;
 		setCountsInfo.pDescriptorCounts = &counts;
 
 		VkDescriptorSetAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.pNext = &setCountsInfo;
 
 		allocInfo.pSetLayouts = &layout;
 		allocInfo.descriptorPool = currentPool;
-		allocInfo.descriptorSetCount = 1;		
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pNext = &setCountsInfo;		
 		
 
 		VkResult allocResult = vkAllocateDescriptorSets(device, &allocInfo, p_set);

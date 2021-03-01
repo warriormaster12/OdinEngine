@@ -51,6 +51,6 @@ namespace vkinit {
 
     VkDescriptorSetLayoutCreateInfo DescriptorLayoutInfo(std::vector<VkDescriptorSetLayoutBinding>& bindings, const void* bindingFlags = nullptr);
     
-    VkDescriptorSetLayoutBindingFlagsCreateInfo DescriptorLayoutBindingFlagsInfo(const std::vector<VkDescriptorBindingFlags> flags);
+    VkDescriptorSetLayoutBindingFlagsCreateInfo DescriptorLayoutBindingFlagsInfo(const std::vector<VkDescriptorBindingFlagsEXT> flags);
 }
 

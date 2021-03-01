@@ -36,6 +36,7 @@ namespace vkcomponent
 		VkPipelineLayout layout{ VK_NULL_HANDLE };
 	};
 
-    ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides={});
+    //ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides={});
+    ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info);
     ShaderPass* BuildShader(VkDevice& device, VkRenderPass renderPass,PipelineBuilder& builder, ShaderEffect* effect);
 }

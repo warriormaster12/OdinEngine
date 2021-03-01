@@ -502,7 +502,6 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 			LoadImage(processedName, texturePaths[i]);
 
 			//write to the descriptor set so that it points to our input texture
-			
 			imageBufferInfo[i].sampler = textureSampler;
 			imageBufferInfo[i].imageView = loadedTextures[processedName].imageView;
 			imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -554,8 +553,8 @@ void VulkanRenderer::InitVulkan()
 	
 	//feats.samplerAnisotropy = true;
 
-	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-	descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+	VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures{};
+	descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 
 	descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
 	descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
@@ -790,7 +789,7 @@ void VulkanRenderer::InitDescriptors()
 	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 7);
 	
 	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, TexturesBind};
-	std::vector<VkDescriptorBindingFlags> flags = {VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT};
+	std::vector<VkDescriptorBindingFlagsEXT> flags = {0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT};
 	VkDescriptorSetLayoutBindingFlagsCreateInfo info = vkinit::DescriptorLayoutBindingFlagsInfo(flags);
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings, &info);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
@@ -912,7 +911,11 @@ void VulkanRenderer::InitPipelines()
 
 	vkcomponent::ShaderEffect* defaultEffect = new vkcomponent::ShaderEffect();
 	std::vector<vkcomponent::ShaderModule> shaderModules = {meshVertShader, texturedMeshShader};
-	defaultEffect = vkcomponent::BuildEffect(device, shaderModules);
+	std::array<VkDescriptorSetLayout, 3> layouts= {globalSetLayout, objectSetLayout, materialTextureSetLayout};
+	VkPipelineLayoutCreateInfo meshpipInfo = vkinit::PipelineLayoutCreateInfo();
+	meshpipInfo.pSetLayouts = layouts.data();
+	meshpipInfo.setLayoutCount = layouts.size();
+	defaultEffect = vkcomponent::BuildEffect(device, shaderModules, meshpipInfo);
 
 	//hook the push constants layout
 	pipelineBuilder.pipelineLayout = defaultEffect->builtLayout;
