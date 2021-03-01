@@ -319,7 +319,5 @@ private:
 	FrameData& GetLastFrame() { return frames[(frameNumber - 1) % FRAME_OVERLAP]; }
 
 	void LoadImage(const std::string textureName, const std::string texturePath);
-	//this is done when creating new material
-	void AllocateEmptyTextures(const std::string& materialName, VkSampler& sampler);
 };
 
