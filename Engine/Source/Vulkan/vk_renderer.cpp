@@ -972,9 +972,43 @@ void VulkanRenderer::InitPipelines()
 	vkcomponent::ShaderPass* defaultPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, defaultEffect);
 	CreateMaterial(defaultPass->pipeline, defaultPass->layout, "defaultMat");
 
+	//VkShaderModule skyFragShader;
+	vkcomponent::ShaderModule skyFragShader;
+	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_frag.frag").c_str(), &skyFragShader, device))
+	{
+		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
+	}
+
+	//VkShaderModule skyVertShader;
+	vkcomponent::ShaderModule skyVertShader;
+	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_vert.vert").c_str(), &skyVertShader, device))
+	{
+		ENGINE_CORE_ERROR("Error when building the mesh vertex shader module");
+	}
+
+	vkcomponent::ShaderEffect* skyEffect = new vkcomponent::ShaderEffect();
+	std::vector<vkcomponent::ShaderModule> skyShaderModules = {skyVertShader, skyFragShader};
+	std::array<VkDescriptorSetLayout, 1> skyLayouts= {globalSetLayout};
+	VkPipelineLayoutCreateInfo skypipInfo = meshpipInfo;
+	meshpipInfo.pSetLayouts = skyLayouts.data();
+	meshpipInfo.setLayoutCount = skyLayouts.size();
+	skyEffect = vkcomponent::BuildEffect(device, skyShaderModules, skypipInfo);
+
+	//hook the push constants layout
+	pipelineBuilder.pipelineLayout = skyEffect->builtLayout;
+	//we have copied layout to builder so now we can flush old one
+	skyEffect->FlushLayout();
+	pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
+	//pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS);
+	vkcomponent::ShaderPass* skyPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, skyEffect);
+	CreateMaterial(skyPass->pipeline, skyPass->layout, "skyMat");
+
+
 	EnqueueCleanup([=]() {
 		vkDestroyPipeline(device, defaultPass->pipeline, nullptr);
 		vkDestroyPipelineLayout(device,  defaultPass->layout, nullptr);
+		vkDestroyPipeline(device, skyPass->pipeline, nullptr);
+		vkDestroyPipelineLayout(device,  skyPass->layout, nullptr);
 	});
 }
 

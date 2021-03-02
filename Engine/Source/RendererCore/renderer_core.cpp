@@ -312,6 +312,7 @@ void RendererCore::LoadTextures()
 
 void RendererCore::LoadRenderables()
 {
+
 	RenderObject monkey;
 	monkey.p_mesh = GetMesh("monkey");
 	monkey.p_material = GetMaterial("texturedmesh2");
@@ -353,14 +354,6 @@ void RendererCore::LoadRenderables()
 	Barrel.transformMatrix = glm::translate(glm::vec3{ 0,3.0f,5.0f }); 
 
 	renderables.push_back(Barrel);
-	
-	RenderObject skyBox;
-	skyBox.p_mesh = GetMesh("skyBox");
-	skyBox.p_material = GetMaterial("texturedmesh2");
-	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
-	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
-	skyBox.transformMatrix = translation * scale;
-	renderables.push_back(skyBox);
 
 	RenderObject map;
 	map.p_mesh = GetMesh("empire");
@@ -368,4 +361,12 @@ void RendererCore::LoadRenderables()
 	map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
 
 	renderables.push_back(map);
+
+	RenderObject skyBox;
+	skyBox.p_mesh = GetMesh("skyBox");
+	skyBox.p_material = GetMaterial("skyMat");
+	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
+	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
+	skyBox.transformMatrix = translation * scale;
+	renderables.push_back(skyBox);
 }
