@@ -176,7 +176,7 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 	InitSyncStructures();
 	InitDescriptors();
 	InitSamplers();
-	LoadImage("empty", "");
+	LoadImage("");
 	InitPipelines();
 
 	camera.position = { 0.f,0.f,10.f };
@@ -315,7 +315,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 
 	// Static light data, can be moved away
 	//TODO: make proper pointlight, spotlight and directional light
-	sceneParameters.dLight.intensity = glm::vec4(3.0f);
+	sceneParameters.dLight.intensity = glm::vec4(0.0f);
 	sceneParameters.dLight.color = glm::vec4(1.0f);
 	sceneParameters.dLight.direction = glm::vec4(glm::vec3( -0.2f, -1.0f, -0.3f), 0.0f);
 	sceneParameters.plightCount = glm::vec4(3);
@@ -494,11 +494,11 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 	VkDescriptorImageInfo imageBufferInfo[texturePaths.size()];
 	for(int i = 0; i < texturePaths.size(); i++)
 	{
-		std::filesystem::path textureName = texturePaths[i]; 
-		const std::string processedName = textureName.stem().u8string();
+		std::filesystem::path textureNamePath = texturePaths[i]; 
+		const std::string processedName = textureNamePath.stem().u8string();
 		if(texturePaths[i] != "")
 		{
-			LoadImage(processedName, texturePaths[i]);
+			LoadImage(texturePaths[i]);
 
 			//write to the descriptor set so that it points to our input texture
 			imageBufferInfo[i].sampler = textureSampler;
@@ -1033,7 +1033,7 @@ void VulkanRenderer::RecreateSwapchain()
 	pipelineBuilder.scissor.extent = swapChainObj.actualExtent;
 }
 
-void VulkanRenderer::LoadImage(const std::string textureName, const std::string texturePath)
+void VulkanRenderer::LoadImage(const std::string& texturePath)
 {
 	Texture inputTextures;
 	const std::filesystem::path path = texturePath;
@@ -1044,13 +1044,21 @@ void VulkanRenderer::LoadImage(const std::string textureName, const std::string 
 	
 	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
+	if(texturePath != "")
+	{
+		std::filesystem::path textureNamePath = texturePath; 
+		const std::string processedName = textureNamePath.stem().u8string();
 
-	loadedTextures[textureName] = inputTextures;
+		loadedTextures[processedName] = inputTextures;
+	}
+	else
+	{
+		loadedTextures["empty"] = inputTextures;
+	}
 
 	EnqueueCleanup([=]() {
 		vkDestroyImageView(device, inputTextures.imageView, nullptr);
 		vmaDestroyImage(allocator, inputTextures.image.image, inputTextures.image.allocation);
 	});
-
 }
 

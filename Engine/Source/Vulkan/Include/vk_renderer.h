@@ -318,6 +318,6 @@ private:
 	FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
 	FrameData& GetLastFrame() { return frames[(frameNumber - 1) % FRAME_OVERLAP]; }
 
-	void LoadImage(const std::string textureName, const std::string texturePath);
+	void LoadImage(const std::string& texturePath);
 };
 
