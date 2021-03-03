@@ -227,11 +227,13 @@ public:
 	 */
 	void CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name);
 
+	bool LoadComputeShader(const std::string& shaderPath, VkPipeline& pipeline, VkPipelineLayout& layout, std::vector<VkDescriptorSetLayout>& descriptorLayouts);
+
 	/**
 	 * Gets a material by its name. 
 	 * 
 	 * @param name The name of the material
-	 * @return A pointer to the material or nullptr if it could not be found
+	 * @return A pointer to the material or nullptr if it could not be found>
 	 */
 	Material* GetMaterial(const std::string& name);
 

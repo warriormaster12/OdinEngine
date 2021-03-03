@@ -83,6 +83,37 @@ namespace vkcomponent
         pipelineLayout = effect->builtLayout;
     }
 
+    VkPipeline ComputePipelineBuilder::BuildPipeline(VkDevice& device)
+    {
+        VkComputePipelineCreateInfo pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        pipelineInfo.pNext = nullptr;
+
+        pipelineInfo.stage = shaderStage;
+        pipelineInfo.layout = pipelineLayout;
+
+
+        VkPipeline newPipeline;
+        if (vkCreateComputePipelines(
+            device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline) != VK_SUCCESS) {
+            ENGINE_CORE_ERROR("Failed to build compute pipeline");
+            return VK_NULL_HANDLE;
+        }
+        else
+        {
+            return newPipeline;
+        }
+    }
+
+
+    void ComputePipelineBuilder::SetShaders(ShaderEffect* effect)
+    {
+        std::vector<VkPipelineShaderStageCreateInfo> stages = {shaderStage};
+        effect->FillStages(stages);
+
+        pipelineLayout = effect->builtLayout;
+    }
+
     ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info)
     {
         //textured defaultlit shader
@@ -115,5 +146,11 @@ namespace vkcomponent
         return pass;
 
         delete pass;
+    }
+
+    void ShaderPass::FlushPass(VkDevice& device)
+    {
+        vkDestroyPipeline(device, pipeline, nullptr);
+		vkDestroyPipelineLayout(device,  layout, nullptr);
     }
 }

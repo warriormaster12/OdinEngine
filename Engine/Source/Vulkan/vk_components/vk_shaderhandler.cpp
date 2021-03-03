@@ -326,6 +326,7 @@ bool vkcomponent::LoadShaderModule(const char* p_filePath, ShaderModule* p_outSh
 	//check that the creation goes well.
 	VkShaderModule shaderModule;
 	if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+        ENGINE_CORE_ERROR("Error when building the {}", p_filePath);
 		return false;
 	}
     std::string spirvName = p_filePath;

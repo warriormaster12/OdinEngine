@@ -483,6 +483,38 @@ Material* VulkanRenderer::GetMaterial(const std::string& name)
 	}
 }
 
+bool VulkanRenderer::LoadComputeShader(const std::string& shaderPath, VkPipeline& pipeline, VkPipelineLayout& layout, std::vector<VkDescriptorSetLayout>& descriptorLayouts)
+{
+	vkcomponent::ShaderModule computeModule;
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(shaderPath).c_str(), &computeModule, device);
+
+	vkcomponent::ShaderEffect* computeEffect = new vkcomponent::ShaderEffect();
+	computeEffect->AddStage(&computeModule, VK_SHADER_STAGE_COMPUTE_BIT);
+
+	VkPipelineLayoutCreateInfo computePipInfo = vkinit::PipelineLayoutCreateInfo();
+	computePipInfo.pSetLayouts = descriptorLayouts.data();
+	computePipInfo.setLayoutCount = descriptorLayouts.size();
+	std::vector<vkcomponent::ShaderModule> modules = {computeModule};
+	computeEffect = vkcomponent::BuildEffect(device, modules, computePipInfo);
+
+	vkcomponent::ComputePipelineBuilder computeBuilder;
+	computeBuilder.pipelineLayout = computeEffect->builtLayout;
+	computeBuilder.shaderStage = vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_COMPUTE_BIT, computeModule.module);
+
+
+	layout = computeEffect->builtLayout;
+	pipeline = computeBuilder.BuildPipeline(device);
+
+	vkDestroyShaderModule(device, computeModule.module, nullptr);
+
+	EnqueueCleanup([=]() {
+		vkDestroyPipeline(device, pipeline, nullptr);
+		vkDestroyPipelineLayout(device, layout, nullptr);
+	});
+
+	return true;
+}
+
 void VulkanRenderer::CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths)
 {
 	Material* texturedMaterial = GetMaterial(materialName);
@@ -898,17 +930,11 @@ void VulkanRenderer::InitPipelines()
 {
 	//VkShaderModule texturedMeshShader;
 	vkcomponent::ShaderModule texturedMeshShader;
-	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, device))
-	{
-		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
-	}
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, device);
 
 	//VkShaderModule meshVertShader;
 	vkcomponent::ShaderModule meshVertShader;
-	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, device))
-	{
-		ENGINE_CORE_ERROR("Error when building the mesh vertex shader module");
-	}
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, device);
 
 	vkcomponent::ShaderEffect* defaultEffect = new vkcomponent::ShaderEffect();
 	std::vector<vkcomponent::ShaderModule> shaderModules = {meshVertShader, texturedMeshShader};
@@ -974,17 +1000,11 @@ void VulkanRenderer::InitPipelines()
 
 	//VkShaderModule skyFragShader;
 	vkcomponent::ShaderModule skyFragShader;
-	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_frag.frag").c_str(), &skyFragShader, device))
-	{
-		ENGINE_CORE_ERROR("Error when building the textured mesh shader");
-	}
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_frag.frag").c_str(), &skyFragShader, device);
 
 	//VkShaderModule skyVertShader;
 	vkcomponent::ShaderModule skyVertShader;
-	if (!vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_vert.vert").c_str(), &skyVertShader, device))
-	{
-		ENGINE_CORE_ERROR("Error when building the mesh vertex shader module");
-	}
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_vert.vert").c_str(), &skyVertShader, device);
 
 	vkcomponent::ShaderEffect* skyEffect = new vkcomponent::ShaderEffect();
 	std::vector<vkcomponent::ShaderModule> skyShaderModules = {skyVertShader, skyFragShader};
@@ -1004,11 +1024,16 @@ void VulkanRenderer::InitPipelines()
 	CreateMaterial(skyPass->pipeline, skyPass->layout, "skyMat");
 
 
+	//currently only testing if creating compute pipeline works
+	VkPipeline computePip;
+	VkPipelineLayout computePipLayout;
+	std::vector<VkDescriptorSetLayout> computeLayouts = {globalSetLayout};
+	LoadComputeShader(".Shaders/indirect_cull.comp", computePip, computePipLayout, computeLayouts);
+
+
 	EnqueueCleanup([=]() {
-		vkDestroyPipeline(device, defaultPass->pipeline, nullptr);
-		vkDestroyPipelineLayout(device,  defaultPass->layout, nullptr);
-		vkDestroyPipeline(device, skyPass->pipeline, nullptr);
-		vkDestroyPipelineLayout(device,  skyPass->layout, nullptr);
+		defaultPass->FlushPass(device);
+		skyPass->FlushPass(device);
 	});
 }
 

@@ -30,10 +30,23 @@ namespace vkcomponent
         void SetShaders(ShaderEffect* effect);
     };
 
+
+class ComputePipelineBuilder {
+public:
+
+	VkPipelineShaderStageCreateInfo  shaderStage;
+	VkPipelineLayout pipelineLayout;
+	VkPipeline BuildPipeline(VkDevice& device);
+
+    void SetShaders(ShaderEffect* effect);
+};
+
     struct ShaderPass {
 		ShaderEffect* effect{ nullptr };
 		VkPipeline pipeline{ VK_NULL_HANDLE };
 		VkPipelineLayout layout{ VK_NULL_HANDLE };
+
+        void FlushPass(VkDevice& device);
 	};
 
     //ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides={});

@@ -108,7 +108,7 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 	VkDeviceSize imageSize = static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * sizeof(stbi_uc);
 
     //the format R8G8B8A8 matchs exactly with the pixels loaded from stb_image lib
-	VkFormat image_format = VK_FORMAT_R8G8B8A8_SRGB;
+	VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 
     //allocate temporary buffer for holding texture data to upload
 	AllocatedBuffer stagingBuffer;
@@ -124,7 +124,7 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
     //we no longer need the loaded data, so we can free the pixels as they are now in the staging buffer
 	stbi_image_free(pixels);
 
-    UploadImage(texWidth, texHeight, image_format, renderer, stagingBuffer, outImage);
+    UploadImage(texWidth, texHeight, imageFormat, renderer, stagingBuffer, outImage);
 
 	vmaDestroyBuffer(renderer.GetAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 
@@ -153,10 +153,10 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 	assets::TextureInfo textureInfo = read_texture_info(&file);
 	
 	VkDeviceSize imageSize = textureInfo.textureSize;
-	VkFormat image_format;
+	VkFormat imageFormat;
 	switch (textureInfo.textureFormat) {
 	case assets::TextureFormat::RGBA8:
-		image_format = VK_FORMAT_R8G8B8A8_SRGB;
+		imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 		break;
 	default:
 		ENGINE_CORE_WARN("Failed to load image asset: Unknown texture format '{0}', {1}", p_filename, textureInfo.textureFormat);
@@ -179,7 +179,7 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 	assets::unpack_texture(&textureInfo, file.binaryBlob.data(), file.binaryBlob.size(), (char*)data);	
 	vmaUnmapMemory(renderer.GetAllocator(), stagingBuffer.allocation);	
 
-	UploadImage(textureInfo.pixelsize[0], textureInfo.pixelsize[1], image_format, renderer, stagingBuffer, outImage);
+	UploadImage(textureInfo.pixelsize[0], textureInfo.pixelsize[1], imageFormat, renderer, stagingBuffer, outImage);
 
 	vmaDestroyBuffer(renderer.GetAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 	
@@ -194,7 +194,7 @@ void vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage)
 	VkDeviceSize imageSize = texWidth * texHeight * 4 * sizeof(char);
 
     //the format R8G8B8A8 matchs exactly with the pixels loaded from stb_image lib
-	VkFormat image_format = VK_FORMAT_R8G8B8A8_SRGB;
+	VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 
     //allocate temporary buffer for holding texture data to upload
 	AllocatedBuffer stagingBuffer;
@@ -208,7 +208,7 @@ void vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage)
 
     // copy pixel data to buffer
 	UploadArrayData(renderer.GetAllocator(), stagingBuffer.allocation, pixelData, 4);
-    UploadImage(texWidth, texHeight, image_format, renderer, stagingBuffer, outImage);
+    UploadImage(texWidth, texHeight, imageFormat, renderer, stagingBuffer, outImage);
 
 	vmaDestroyBuffer(renderer.GetAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 }
