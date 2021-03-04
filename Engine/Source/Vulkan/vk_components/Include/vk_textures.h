@@ -16,7 +16,7 @@ namespace vkcomponent
      * @param outImage A pointer to write the result to
      * @return True, if the load was successful, false otherwise
      */
-    bool LoadImageFromFile(VulkanRenderer& renderer, const char* p_filename, AllocatedImage* outImage);
+    bool LoadImageFromFile(VulkanRenderer& renderer, const char* p_filename, AllocatedImage* outImage, VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
 
     /**
      * Loads and allocates a VkImage from a binary file.

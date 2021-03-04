@@ -7,8 +7,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "Include/texture_asset.h"
-
 #include <glm/glm.hpp>
 #include<glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -21,7 +19,7 @@
 using namespace assets;
 
 
-bool asset_builder::convert_image(const fs::path& input, const fs::path& output)
+bool asset_builder::ConvertImage(const fs::path& input, const fs::path& output, assets::TextureInfo& texFormatInfo)
 {
 	int texWidth, texHeight, texChannels;
 	std::string binary_filename = output.u8string();
@@ -48,9 +46,9 @@ bool asset_builder::convert_image(const fs::path& input, const fs::path& output)
 			texinfo.textureSize = texture_size;
 			texinfo.pixelsize[0] = texWidth;
 			texinfo.pixelsize[1] = texHeight;
-			texinfo.textureFormat = TextureFormat::RGBA8;	
+			texinfo.textureFormat = texFormatInfo.textureFormat;	
 			texinfo.originalFile = input.string();
-			AssetFile newImage = assets::pack_texture(&texinfo, pixels);	
+			AssetFile newImage = assets::PackTexture(&texinfo, pixels);	
 				
 
 			stbi_image_free(pixels);

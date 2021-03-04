@@ -4,21 +4,25 @@
 #include <iostream>
 
 
-assets::TextureFormat parse_format(const char* f) {
+assets::TextureFormat ParseFormat(const char* f) {
 
 	if (strcmp(f, "RGBA8") == 0)
 	{
 		return assets::TextureFormat::RGBA8;
+	}
+	else if (strcmp(f, "UNORM8") == 0)
+	{
+		return assets::TextureFormat::UNORM8;
 	}
 	else {
 		return assets::TextureFormat::Unknown;
 	}
 }
 
-assets::AssetFile assets::pack_texture(assets::TextureInfo* info, void* pixelData)
+assets::AssetFile assets::PackTexture(assets::TextureInfo* info, void* pixelData)
 {
 	nlohmann::json texture_metadata;
-	texture_metadata["format"] = "RGBA8";
+	texture_metadata["format"] = info->textureFormat;
 	texture_metadata["width"] = info->pixelsize[0];
 	texture_metadata["height"] = info->pixelsize[1];
 	texture_metadata["buffer_size"] = info->textureSize;	
@@ -51,13 +55,13 @@ assets::AssetFile assets::pack_texture(assets::TextureInfo* info, void* pixelDat
 	return file;
 }
 
-assets::TextureInfo assets::read_texture_info(AssetFile* file)
+assets::TextureInfo assets::ReadTextureInfo(AssetFile* file)
 {
 	TextureInfo info;
 
 	nlohmann::json texture_metadata = nlohmann::json::parse(file->json);
 	std::string formatString = texture_metadata["format"];
-	info.textureFormat = parse_format(formatString.c_str());
+	info.textureFormat = ParseFormat(formatString.c_str());
 
 	std::string compressionString = texture_metadata["compression"];
 	info.compressionMode = parse_compression(compressionString.c_str());
@@ -70,7 +74,7 @@ assets::TextureInfo assets::read_texture_info(AssetFile* file)
 	return info;
 }
 
-void assets::unpack_texture(TextureInfo* info, const char* sourcebuffer, size_t sourceSize, char* destination)
+void assets::UnpackTexture(TextureInfo* info, const char* sourcebuffer, size_t sourceSize, char* destination)
 {
 	if (info->compressionMode == CompressionMode::LZ4) {
 		LZ4_decompress_safe(sourcebuffer, destination, sourceSize, info->textureSize);

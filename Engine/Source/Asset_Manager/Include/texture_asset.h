@@ -5,7 +5,8 @@ namespace assets {
 	enum class TextureFormat : uint32_t
 	{
 		Unknown = 0,
-		RGBA8		
+		RGBA8,
+		UNORM8		
 	};
 	
 
@@ -18,11 +19,11 @@ namespace assets {
 	};
 
 	//parses the texture metadata from an asset file
-	TextureInfo read_texture_info(AssetFile* file);
+	TextureInfo ReadTextureInfo(AssetFile* file);
 
-	void unpack_texture(TextureInfo* info, const char* sourcebuffer, size_t sourceSize, char* destination);
+	void UnpackTexture(TextureInfo* info, const char* sourcebuffer, size_t sourceSize, char* destination);
 
-	assets::AssetFile pack_texture(TextureInfo* info, void* pixelData);
+	assets::AssetFile PackTexture(TextureInfo* info, void* pixelData);
 
 }
 

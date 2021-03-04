@@ -2,6 +2,8 @@
 #include <fstream>
 #include <filesystem>
 
+#include "texture_asset.h"
+
 #include <iostream>
 
 namespace fs = std::filesystem;
@@ -15,6 +17,6 @@ struct ConverterState {
 
 namespace asset_builder
 {
-    bool convert_image(const fs::path& input, const fs::path& output);
+    bool ConvertImage(const fs::path& input, const fs::path& output, assets::TextureInfo& texFormatInfo);
 }
 

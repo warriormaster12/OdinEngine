@@ -13,7 +13,7 @@ namespace {
     void UploadImage(
         int texWidth,
         int texHeight,
-        VkFormat image_format,
+        VkFormat imageFormat,
         VulkanRenderer& renderer,
         AllocatedBuffer& stagingBuffer,
         AllocatedImage* outImage
@@ -23,7 +23,7 @@ namespace {
         imageExtent.height = static_cast<uint32_t>(texHeight);
         imageExtent.depth = 1;
 
-        VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(image_format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
+        VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(imageFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
         VmaAllocationCreateInfo dimg_allocinfo = {};
         dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -87,7 +87,7 @@ namespace {
 }
 
 
-bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_filename, AllocatedImage* outImage)
+bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_filename, AllocatedImage* outImage, VkFormat imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
 {
 	if (p_filename == nullptr)
 	{
@@ -106,9 +106,6 @@ bool vkcomponent::LoadImageFromFile(VulkanRenderer& renderer, const char* p_file
 		return false;
 	}
 	VkDeviceSize imageSize = static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * sizeof(stbi_uc);
-
-    //the format R8G8B8A8 matchs exactly with the pixels loaded from stb_image lib
-	VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 
     //allocate temporary buffer for holding texture data to upload
 	AllocatedBuffer stagingBuffer;
@@ -150,13 +147,16 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 		return false;
 	}
 	
-	assets::TextureInfo textureInfo = read_texture_info(&file);
+	assets::TextureInfo textureInfo = ReadTextureInfo(&file);
 	
 	VkDeviceSize imageSize = textureInfo.textureSize;
 	VkFormat imageFormat;
 	switch (textureInfo.textureFormat) {
 	case assets::TextureFormat::RGBA8:
 		imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+		break;
+	case assets::TextureFormat::UNORM8:
+		imageFormat =  VK_FORMAT_R8G8B8A8_UNORM;
 		break;
 	default:
 		ENGINE_CORE_WARN("Failed to load image asset: Unknown texture format '{0}', {1}", p_filename, textureInfo.textureFormat);
@@ -176,7 +176,7 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 	// Note: vmaMapMemory allocates memory for data and vmaUnmapMemory deallocates memory
 	void* data;
 	vmaMapMemory(renderer.GetAllocator(), stagingBuffer.allocation, &data);
-	assets::unpack_texture(&textureInfo, file.binaryBlob.data(), file.binaryBlob.size(), (char*)data);	
+	assets::UnpackTexture(&textureInfo, file.binaryBlob.data(), file.binaryBlob.size(), (char*)data);	
 	vmaUnmapMemory(renderer.GetAllocator(), stagingBuffer.allocation);	
 
 	UploadImage(textureInfo.pixelsize[0], textureInfo.pixelsize[1], imageFormat, renderer, stagingBuffer, outImage);

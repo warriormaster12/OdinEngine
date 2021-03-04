@@ -251,7 +251,7 @@ public:
 	 * index=5: Metallic map
 	 * index=6: Roughness map
 	 */
-	void CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths);
+	void CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths, const std::vector <VkFormat>& imageFormat);
 
 	Camera& GetCamera() { return camera; }
 	const VmaAllocator& GetAllocator() const { return allocator; }
@@ -320,6 +320,6 @@ private:
 	FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
 	FrameData& GetLastFrame() { return frames[(frameNumber - 1) % FRAME_OVERLAP]; }
 
-	void LoadImage(const std::string& texturePath);
+	void LoadImage(const std::string& texturePath, const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
 };
 

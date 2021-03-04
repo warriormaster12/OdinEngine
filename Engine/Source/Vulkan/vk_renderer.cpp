@@ -515,7 +515,7 @@ bool VulkanRenderer::LoadComputeShader(const std::string& shaderPath, VkPipeline
 	return true;
 }
 
-void VulkanRenderer::CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths)
+void VulkanRenderer::CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths, const std::vector <VkFormat>& imageFormat)
 {
 	Material* texturedMaterial = GetMaterial(materialName);
 	if (texturedMaterial == nullptr)
@@ -530,7 +530,7 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 		const std::string processedName = textureNamePath.stem().u8string();
 		if(texturePaths[i] != "")
 		{
-			LoadImage(texturePaths[i]);
+			LoadImage(texturePaths[i], imageFormat[i]);
 
 			//write to the descriptor set so that it points to our input texture
 			imageBufferInfo[i].sampler = textureSampler;
@@ -1066,16 +1066,26 @@ void VulkanRenderer::RecreateSwapchain()
 	pipelineBuilder.scissor.extent = swapChainObj.actualExtent;
 }
 
-void VulkanRenderer::LoadImage(const std::string& texturePath)
+void VulkanRenderer::LoadImage(const std::string& texturePath, const VkFormat& imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
 {
 	Texture inputTextures;
 	const std::filesystem::path path = texturePath;
 	const std::filesystem::path bin_path = texturePath + ".bin";
+	assets::TextureInfo textureInfo;
+	if (imageFormat == VK_FORMAT_R8G8B8A8_SRGB)
+	{
+		textureInfo.textureFormat = assets::TextureFormat::RGBA8;
+		asset_builder::ConvertImage(path,bin_path, textureInfo);
+	}
+	if(imageFormat == VK_FORMAT_R8G8B8A8_UNORM)
+	{
+		textureInfo.textureFormat = assets::TextureFormat::UNORM8;
+		asset_builder::ConvertImage(path,bin_path, textureInfo);
+	}
 	
-	asset_builder::convert_image(path,bin_path);
 	vkcomponent::LoadImageFromAsset(*this, (texturePath + ".bin").c_str(), &inputTextures.image);
 	
-	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(imageFormat, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
 	if(texturePath != "")
 	{
