@@ -1019,16 +1019,24 @@ void VulkanRenderer::InitPipelines()
 	//we have copied layout to builder so now we can flush old one
 	skyEffect->FlushLayout();
 	pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
-	//pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS);
+	vertexDescription = Vertex::GetVertexDescription(1);
+
+	//connect the pipeline builder vertex input info to the one we get from Vertex
+	pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
+	pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
+
+	pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
+	pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
+
 	vkcomponent::ShaderPass* skyPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, skyEffect);
 	CreateMaterial(skyPass->pipeline, skyPass->layout, "skyMat");
 
 
 	//currently only testing if creating compute pipeline works
-	VkPipeline computePip;
-	VkPipelineLayout computePipLayout;
-	std::vector<VkDescriptorSetLayout> computeLayouts = {globalSetLayout};
-	LoadComputeShader(".Shaders/indirect_cull.comp", computePip, computePipLayout, computeLayouts);
+	// VkPipeline computePip;
+	// VkPipelineLayout computePipLayout;
+	// std::vector<VkDescriptorSetLayout> computeLayouts = {globalSetLayout};
+	// LoadComputeShader(".Shaders/indirect_cull.comp", computePip, computePipLayout, computeLayouts);
 
 
 	EnqueueCleanup([=]() {

@@ -15,14 +15,14 @@ struct VertexInputDescription {
 
 	VkPipelineVertexInputStateCreateFlags flags = 0;
 };
-
+;
 
 struct Vertex {
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv;
-	static VertexInputDescription GetVertexDescription();
+	static VertexInputDescription GetVertexDescription(const uint32_t& locationSize = 4);
 };
 
 

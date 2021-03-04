@@ -3,10 +3,9 @@
 #include "../../Third-Party/tinyobjloader/tiny_obj_loader.h"
 
 
-VertexInputDescription Vertex::GetVertexDescription()
+VertexInputDescription Vertex::GetVertexDescription(const uint32_t& locationSize /*= 4*/)
 {
 	VertexInputDescription description;
-
 	//we will have just 1 vertex buffer binding, with a per-vertex rate
 	VkVertexInputBindingDescription mainBinding = {};
 	mainBinding.binding = 0;
@@ -43,10 +42,15 @@ VertexInputDescription Vertex::GetVertexDescription()
 	uvAttribute.format = VK_FORMAT_R32G32_SFLOAT;
 	uvAttribute.offset = offsetof(Vertex, uv);
 
-	description.attributes.push_back(positionAttribute);
-	description.attributes.push_back(normalAttribute);
-	description.attributes.push_back(colorAttribute);
-	description.attributes.push_back(uvAttribute);
+	std::vector<VkVertexInputAttributeDescription> descriptionAttributes = {positionAttribute, normalAttribute, colorAttribute, uvAttribute};
+	if(locationSize != descriptionAttributes.size())
+	{
+		descriptionAttributes.resize(locationSize);
+	}
+	for(auto currentAttribute : descriptionAttributes)
+	{
+		description.attributes.push_back(currentAttribute);
+	}
 	return description;
 }
 
