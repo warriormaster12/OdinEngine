@@ -38,5 +38,5 @@ namespace vkcomponent
      * @param renderer The VulkanRenderer instance
      * @param outImage A pointer to write the result to
      */
-    void LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage);
+    void LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage, VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
 }

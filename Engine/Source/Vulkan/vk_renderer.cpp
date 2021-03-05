@@ -3,7 +3,6 @@
 #include "Include/vk_init.h"
 #include "vk_utils.h"
 #include "vk_check.h"
-#include "vk_pipelinebuilder.h"
 #include "vk_shaderhandler.h"
 #include "vk_textures.h"
 #include "asset_builder.h"
@@ -129,15 +128,15 @@ namespace {
 
     void BindMaterial(Material* material, const DescriptorSetData& descriptorSets)
     {
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->materialPass.pipeline);
 
         //vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, &descriptorSets.uniform, 1, &descriptorSets.uniformOffset);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, &descriptorSets.uniform, 0, nullptr);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->materialPass.layout, 0, 1, &descriptorSets.uniform, 0, nullptr);
 
         //object data descriptor
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 1, 1, &descriptorSets.object, 0, &descriptorSets.objectOffset);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->materialPass.layout, 1, 1, &descriptorSets.object, 0, &descriptorSets.objectOffset);
         //texture + material descriptor
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 2, 1, &material->materialSet, 0, nullptr);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material->materialPass.layout, 2, 1, &material->materialSet, 0, nullptr);
     }
 
     void BindMesh(Mesh* mesh)
@@ -175,8 +174,8 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 	InitCommands();
 	InitSyncStructures();
 	InitDescriptors();
-	InitSamplers();
 	LoadImage("");
+	InitSamplers();
 	InitPipelines();
 
 	camera.position = { 0.f,0.f,10.f };
@@ -442,14 +441,31 @@ void VulkanRenderer::UploadMesh(Mesh& mesh)
 	vmaDestroyBuffer(allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 }
 
-void VulkanRenderer::CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name)
+void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, std::vector<std::string>* textures, const std::string& name)
 {
 	Material mat;
-	mat.pipeline = pipeline;
-	mat.pipelineLayout = layout;
+	mat.materialPass = *inputPass;
 	materials[name] = mat;
 	materialList.push_back(name);
-	p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, 7);
+	std::vector<std::string> emptyTextures = {
+		""
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+	};
+	if(textures == nullptr)
+	{
+		p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, emptyTextures.size());
+	}
+	else
+	{
+		p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, textures->size());
+	}
+	
 
 	{
 		CreateBufferInfo info;
@@ -466,6 +482,25 @@ void VulkanRenderer::CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layo
 
 	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
 	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
+	std::vector<VkFormat> formats = {
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_FORMAT_R8G8B8A8_UNORM,
+	};
+	if(textures == nullptr)
+	{
+		CreateTextures(name, emptyTextures, formats);
+	}
+	else
+	{
+		CreateTextures(name, *textures, formats);
+	}
+	
+
 	EnqueueCleanup([=]() {
 		vmaDestroyBuffer(allocator, materials[name].buffer.buffer, materials[name].buffer.allocation);
 	});
@@ -515,7 +550,7 @@ bool VulkanRenderer::LoadComputeShader(const std::string& shaderPath, VkPipeline
 	return true;
 }
 
-void VulkanRenderer::CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths, const std::vector <VkFormat>& imageFormat)
+void VulkanRenderer::CreateTextures(const std::string& materialName, std::vector<std::string>& texturePaths, const std::vector <VkFormat>& imageFormat)
 {
 	Material* texturedMaterial = GetMaterial(materialName);
 	if (texturedMaterial == nullptr)
@@ -544,7 +579,6 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, const std::
 			imageBufferInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		}
 	}
-	ENGINE_CORE_INFO("total texture paths: {}", texturePaths.size());
 	// +1: binding 0 is used for material data (uniform data)
 	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo, 1, texturePaths.size());
 	
@@ -822,7 +856,7 @@ void VulkanRenderer::InitDescriptors()
 	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 7);
 	
 	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, TexturesBind};
-	std::vector<VkDescriptorBindingFlagsEXT> flags = {0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT};
+	std::vector<VkDescriptorBindingFlagsEXT> flags = {0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
 	VkDescriptorSetLayoutBindingFlagsCreateInfo info = vkinit::DescriptorLayoutBindingFlagsInfo(flags);
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings, &info);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
@@ -996,7 +1030,16 @@ void VulkanRenderer::InitPipelines()
 	
 	//build the mesh triangle pipeline
 	vkcomponent::ShaderPass* defaultPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, defaultEffect);
-	CreateMaterial(defaultPass->pipeline, defaultPass->layout, "defaultMat");
+	std::vector<std::string> uninitTextures = {
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+	};
+	CreateMaterial(defaultPass, &uninitTextures, "defaultMat");
 
 	//VkShaderModule skyFragShader;
 	vkcomponent::ShaderModule skyFragShader;
@@ -1029,7 +1072,8 @@ void VulkanRenderer::InitPipelines()
 	pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
 
 	vkcomponent::ShaderPass* skyPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, skyEffect);
-	CreateMaterial(skyPass->pipeline, skyPass->layout, "skyMat");
+
+	CreateMaterial(skyPass, &uninitTextures, "skyMat");
 
 
 	//currently only testing if creating compute pipeline works
@@ -1082,9 +1126,14 @@ void VulkanRenderer::LoadImage(const std::string& texturePath, const VkFormat& i
 		textureInfo.textureFormat = assets::TextureFormat::UNORM8;
 		asset_builder::ConvertImage(path,bin_path, textureInfo);
 	}
-	
-	vkcomponent::LoadImageFromAsset(*this, (texturePath + ".bin").c_str(), &inputTextures.image);
-	
+	if(texturePath != "")
+	{
+		vkcomponent::LoadImageFromAsset(*this, (texturePath + ".bin").c_str(), &inputTextures.image);
+	}
+	else
+	{
+		vkcomponent::LoadEmpty(*this, &inputTextures.image, imageFormat);
+	}
 	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(imageFormat, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
 	if(texturePath != "")

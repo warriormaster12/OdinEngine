@@ -17,7 +17,7 @@ namespace RendererCore
     void LoadMaterials();
     void LoadRenderables();
 
-    void CreateMaterial(const std::string& name);
+    void CreateMaterial(const std::string& name, std::vector<std::string>* textures);
     Material* GetMaterial(const std::string& name);
     Mesh* GetMesh(const std::string& name);
 

@@ -44,9 +44,9 @@ void RendererCore::CleanupRenderer()
     windowHandler.DestroyWindow();
 }
 
-void RendererCore::CreateMaterial(const std::string& name)
+void RendererCore::CreateMaterial(const std::string& name, std::vector<std::string>* textures)
 {
-	vkRenderer.CreateMaterial(GetMaterial("defaultMat")->pipeline, GetMaterial("defaultMat")->pipelineLayout, name);
+	vkRenderer.CreateMaterial(&GetMaterial("defaultMat")->materialPass, textures, name);
 }
 
 Material* RendererCore::GetMaterial(const std::string& name)
@@ -205,11 +205,56 @@ void RendererCore::LoadMeshes()
 
 void RendererCore::LoadMaterials()
 {
-	CreateMaterial("texturedmesh2");
-	CreateMaterial("texturedmesh");
-	CreateMaterial("texturedmesh3");
-	CreateMaterial("DamagedHelmetMat");
-	CreateMaterial("BarrelMat");
+	//lost empire
+	std::vector<std::string> lostEmpireTextures = {
+		"EngineAssets/Textures/lost_empire-RGBA.png"
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+	};
+	//viking room
+	std::vector<std::string> vikingRoomTextures = {
+		"EngineAssets/Textures/viking_room.png"
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+	};
+	
+
+	//DamagedHelmet
+	std::vector<std::string> DamagedHelmetTextures = {
+		"EngineAssets/DamagedHelmet/Default_albedo.jpg",
+		"EngineAssets/DamagedHelmet/Default_normal.jpg",
+		"EngineAssets/DamagedHelmet/Default_emissive.jpg",
+		"EngineAssets/DamagedHelmet/Default_AO.jpg",
+		"EngineAssets/DamagedHelmet/Default_metalRoughness.jpg",
+		"",
+		"",
+	};
+	//Barrel
+	std::vector<std::string> BarrelTextures = {
+		"EngineAssets/Textures/ExplosionBarrel Diffuse.png",
+		"",
+		"EngineAssets/Textures/ExplosionBarrel Emission.png",
+		"",
+		"",
+		"EngineAssets/Textures/ExplosionBarrel Metallic.png",
+		"EngineAssets/Textures/ExplosionBarrel Roughness.png",
+	};
+
+	CreateMaterial("texturedmesh2", nullptr);
+	CreateMaterial("texturedmesh", &lostEmpireTextures);
+	CreateMaterial("texturedmesh3", &vikingRoomTextures);
+	CreateMaterial("DamagedHelmetMat", &DamagedHelmetTextures);
+	CreateMaterial("BarrelMat", &BarrelTextures);
 
 	// TODO: Configure through one function call
 	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
@@ -250,72 +295,7 @@ void RendererCore::LoadMaterials()
 
 void RendererCore::LoadTextures()
 {
-	//lost empire
-	std::vector<VkFormat> formats = {
-		VK_FORMAT_R8G8B8A8_SRGB,
-		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_R8G8B8A8_SRGB,
-		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_R8G8B8A8_SRGB,
-		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_R8G8B8A8_UNORM,
-	};
-	std::vector<std::string> lostEmpireTextures = {
-		"EngineAssets/Textures/lost_empire-RGBA.png"
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	};
-	vkRenderer.CreateTextures("texturedmesh", lostEmpireTextures, formats);
-	std::vector<std::string> vikingRoomTextures = {
-		"EngineAssets/Textures/viking_room.png",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	};
-	//viking room
-	vkRenderer.CreateTextures("texturedmesh3", vikingRoomTextures, formats);
-
-	//DamagedHelmet
-	std::vector<std::string> DamagedHelmetTextures = {
-		"EngineAssets/DamagedHelmet/Default_albedo.jpg",
-		"EngineAssets/DamagedHelmet/Default_normal.jpg",
-		"EngineAssets/DamagedHelmet/Default_emissive.jpg",
-		"EngineAssets/DamagedHelmet/Default_AO.jpg",
-		"EngineAssets/DamagedHelmet/Default_metalRoughness.jpg",
-		"",
-		""
-	};
-	vkRenderer.CreateTextures("DamagedHelmetMat", DamagedHelmetTextures, formats);
-	//Barrel
-	//diffuse
-	std::vector<std::string> BarrelTextures = {
-		"EngineAssets/Textures/ExplosionBarrel Diffuse.png",
-		"",
-		"EngineAssets/Textures/ExplosionBarrel Emission.png",
-		"",
-		"",
-		"EngineAssets/Textures/ExplosionBarrel Metallic.png",
-		"EngineAssets/Textures/ExplosionBarrel Roughness.png",
-	};
-	vkRenderer.CreateTextures("BarrelMat", BarrelTextures, formats);
-	std::vector<std::string> emptyTextures = {
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	};
-	vkRenderer.CreateTextures("texturedmesh2", emptyTextures, formats);
+	
 }
 
 

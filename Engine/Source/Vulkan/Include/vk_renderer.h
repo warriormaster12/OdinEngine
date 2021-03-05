@@ -18,13 +18,14 @@
 
 #include "camera.h"
 
+#include "vk_pipelinebuilder.h"
+
 
 
 struct Material {
 	VkDescriptorSet materialSet{VK_NULL_HANDLE};
 	AllocatedBuffer buffer;
-	VkPipeline pipeline;
-	VkPipelineLayout pipelineLayout;
+	vkcomponent::ShaderPass materialPass;
 
 	glm::vec4 albedo; // vec4
 	float metallic; // float
@@ -225,7 +226,7 @@ public:
 	 * @param layout The layout of the pipeline
 	 * @param name The name to store it as
 	 */
-	void CreateMaterial(VkPipeline& pipeline, VkPipelineLayout& layout, const std::string& name);
+	void CreateMaterial(vkcomponent::ShaderPass* inputPass, std::vector<std::string>* textures ,const std::string& name);
 
 	bool LoadComputeShader(const std::string& shaderPath, VkPipeline& pipeline, VkPipelineLayout& layout, std::vector<VkDescriptorSetLayout>& descriptorLayouts);
 
@@ -251,7 +252,7 @@ public:
 	 * index=5: Metallic map
 	 * index=6: Roughness map
 	 */
-	void CreateTextures(const std::string& materialName, const std::vector<std::string>& texturePaths, const std::vector <VkFormat>& imageFormat);
+	void CreateTextures(const std::string& materialName, std::vector<std::string>& texturePaths, const std::vector <VkFormat>& imageFormat);
 
 	Camera& GetCamera() { return camera; }
 	const VmaAllocator& GetAllocator() const { return allocator; }

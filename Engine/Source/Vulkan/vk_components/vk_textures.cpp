@@ -185,16 +185,14 @@ bool vkcomponent::LoadImageFromAsset(VulkanRenderer& renderer, const char* p_fil
 	
 	return true;
 }
-void vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage)
+void vkcomponent::LoadEmpty(VulkanRenderer& renderer, AllocatedImage* outImage, VkFormat imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
 {
 	const uint64_t texWidth = 1;
 	const uint64_t texHeight = 1;
 
     char pixelData[] = {0,0,0,0};
 	VkDeviceSize imageSize = texWidth * texHeight * 4 * sizeof(char);
-
-    //the format R8G8B8A8 matchs exactly with the pixels loaded from stb_image lib
-	VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+	
 
     //allocate temporary buffer for holding texture data to upload
 	AllocatedBuffer stagingBuffer;
