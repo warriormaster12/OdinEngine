@@ -235,7 +235,7 @@ void RendererCore::LoadMaterials()
 
 	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
 	GetMaterial("DamagedHelmetMat")->metallic = 1.0f;
-	GetMaterial("DamagedHelmetMat")->roughness = 1.0f;
+	GetMaterial("DamagedHelmetMat")->roughness = 0.5f;
 	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
 	GetMaterial("DamagedHelmetMat")->emissionColor = glm::vec4(1.0f);
 	GetMaterial("DamagedHelmetMat")->emissionPower = 8.0f;
@@ -256,7 +256,7 @@ void RendererCore::LoadTextures()
 		VK_FORMAT_R8G8B8A8_UNORM,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		VK_FORMAT_R8G8B8A8_UNORM,
 	};
