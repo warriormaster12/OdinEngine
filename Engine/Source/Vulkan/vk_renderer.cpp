@@ -441,30 +441,14 @@ void VulkanRenderer::UploadMesh(Mesh& mesh)
 	vmaDestroyBuffer(allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 }
 
-void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, std::vector<std::string>* textures, const std::string& name)
+void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, const std::string& name)
 {
 	Material mat;
 	mat.materialPass = *inputPass;
 	materials[name] = mat;
 	materialList.push_back(name);
-	std::vector<std::string> emptyTextures = {
-		""
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	};
-	if(textures == nullptr)
-	{
-		p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, emptyTextures.size());
-	}
-	else
-	{
-		p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, textures->size());
-	}
+	
+	p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, mat.textures.size());
 	
 
 	{
@@ -482,23 +466,8 @@ void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, std::vec
 
 	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
 	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
-	std::vector<VkFormat> formats = {
-		VK_FORMAT_R8G8B8A8_SRGB,
-		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_R8G8B8A8_SRGB,
-		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_R8G8B8A8_SRGB,
-		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_R8G8B8A8_UNORM,
-	};
-	if(textures == nullptr)
-	{
-		CreateTextures(name, emptyTextures, formats);
-	}
-	else
-	{
-		CreateTextures(name, *textures, formats);
-	}
+	
+	CreateTextures(name, mat.textures);
 	
 
 	EnqueueCleanup([=]() {
@@ -550,8 +519,17 @@ bool VulkanRenderer::LoadComputeShader(const std::string& shaderPath, VkPipeline
 	return true;
 }
 
-void VulkanRenderer::CreateTextures(const std::string& materialName, std::vector<std::string>& texturePaths, const std::vector <VkFormat>& imageFormat)
+void VulkanRenderer::CreateTextures(const std::string& materialName, std::vector<std::string>& texturePaths)
 {
+	std::vector<VkFormat> formats = {
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_FORMAT_R8G8B8A8_UNORM,
+	};
 	Material* texturedMaterial = GetMaterial(materialName);
 	if (texturedMaterial == nullptr)
 	{
@@ -565,7 +543,7 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, std::vector
 		const std::string processedName = textureNamePath.stem().u8string();
 		if(texturePaths[i] != "")
 		{
-			LoadImage(texturePaths[i], imageFormat[i]);
+			LoadImage(texturePaths[i], formats[i]);
 
 			//write to the descriptor set so that it points to our input texture
 			imageBufferInfo[i].sampler = textureSampler;
@@ -1030,16 +1008,8 @@ void VulkanRenderer::InitPipelines()
 	
 	//build the mesh triangle pipeline
 	vkcomponent::ShaderPass* defaultPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, defaultEffect);
-	std::vector<std::string> uninitTextures = {
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	};
-	CreateMaterial(defaultPass, &uninitTextures, "defaultMat");
+	
+	CreateMaterial(defaultPass, "defaultMat");
 
 	//VkShaderModule skyFragShader;
 	vkcomponent::ShaderModule skyFragShader;
@@ -1073,7 +1043,7 @@ void VulkanRenderer::InitPipelines()
 
 	vkcomponent::ShaderPass* skyPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, skyEffect);
 
-	CreateMaterial(skyPass, &uninitTextures, "skyMat");
+	CreateMaterial(skyPass, "skyMat");
 
 
 	//currently only testing if creating compute pipeline works

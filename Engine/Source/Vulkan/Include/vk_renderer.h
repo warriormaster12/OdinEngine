@@ -35,6 +35,17 @@ struct Material {
 	glm::vec4 emissionColor; //vec3
     float emissionPower; // float
 
+	std::vector<std::string> textures = {
+		""
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+	};
+
 	
 };
 
@@ -226,7 +237,7 @@ public:
 	 * @param layout The layout of the pipeline
 	 * @param name The name to store it as
 	 */
-	void CreateMaterial(vkcomponent::ShaderPass* inputPass, std::vector<std::string>* textures ,const std::string& name);
+	void CreateMaterial(vkcomponent::ShaderPass* inputPass,const std::string& name);
 
 	bool LoadComputeShader(const std::string& shaderPath, VkPipeline& pipeline, VkPipelineLayout& layout, std::vector<VkDescriptorSetLayout>& descriptorLayouts);
 
@@ -252,7 +263,7 @@ public:
 	 * index=5: Metallic map
 	 * index=6: Roughness map
 	 */
-	void CreateTextures(const std::string& materialName, std::vector<std::string>& texturePaths, const std::vector <VkFormat>& imageFormat);
+	void CreateTextures(const std::string& materialName, std::vector<std::string>& texturePaths);
 
 	Camera& GetCamera() { return camera; }
 	const VmaAllocator& GetAllocator() const { return allocator; }

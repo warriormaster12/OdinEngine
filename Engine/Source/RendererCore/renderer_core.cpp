@@ -44,9 +44,9 @@ void RendererCore::CleanupRenderer()
     windowHandler.DestroyWindow();
 }
 
-void RendererCore::CreateMaterial(const std::string& name, std::vector<std::string>* textures)
+void RendererCore::CreateMaterial(const std::string& name)
 {
-	vkRenderer.CreateMaterial(&GetMaterial("defaultMat")->materialPass, textures, name);
+	vkRenderer.CreateMaterial(&GetMaterial("defaultMat")->materialPass, name);
 }
 
 Material* RendererCore::GetMaterial(const std::string& name)
@@ -75,7 +75,6 @@ void RendererCore::InitScene()
 {
     LoadMeshes();
 	LoadMaterials();
-	LoadTextures();
 	// Must be called after the load functions above
 	LoadRenderables();
 }
@@ -250,11 +249,11 @@ void RendererCore::LoadMaterials()
 		"EngineAssets/Textures/ExplosionBarrel Roughness.png",
 	};
 
-	CreateMaterial("texturedmesh2", nullptr);
-	CreateMaterial("texturedmesh", &lostEmpireTextures);
-	CreateMaterial("texturedmesh3", &vikingRoomTextures);
-	CreateMaterial("DamagedHelmetMat", &DamagedHelmetTextures);
-	CreateMaterial("BarrelMat", &BarrelTextures);
+	CreateMaterial("texturedmesh2");
+	CreateMaterial("texturedmesh");
+	CreateMaterial("texturedmesh3");
+	CreateMaterial("DamagedHelmetMat");
+	CreateMaterial("BarrelMat");
 
 	// TODO: Configure through one function call
 	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
@@ -263,6 +262,7 @@ void RendererCore::LoadMaterials()
 	GetMaterial("texturedmesh")->ao = 1.0f;
 	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 	GetMaterial("texturedmesh")->emissionPower = 1.0f;
+	GetMaterial("texturedmesh")->textures = UpdateTextures("texturedmesh", lostEmpireTextures);
 
 	GetMaterial("texturedmesh2")->albedo = glm::vec4(0.0f,0.0f,0.0f,1.0f);
 	GetMaterial("texturedmesh2")->metallic = 0.5f;
@@ -277,6 +277,7 @@ void RendererCore::LoadMaterials()
 	GetMaterial("texturedmesh3")->ao = 1.0f;
 	GetMaterial("texturedmesh3")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 	GetMaterial("texturedmesh3")->emissionPower = 1.0f;
+	GetMaterial("texturedmesh3")->textures = UpdateTextures("texturedmesh3", vikingRoomTextures);
 
 	GetMaterial("DamagedHelmetMat")->albedo = glm::vec4(1.0f);
 	GetMaterial("DamagedHelmetMat")->metallic = 1.0f;
@@ -284,6 +285,7 @@ void RendererCore::LoadMaterials()
 	GetMaterial("DamagedHelmetMat")->ao = 1.0f;
 	GetMaterial("DamagedHelmetMat")->emissionColor = glm::vec4(1.0f);
 	GetMaterial("DamagedHelmetMat")->emissionPower = 8.0f;
+	GetMaterial("DamagedHelmetMat")->textures = UpdateTextures("DamagedHelmetMat",DamagedHelmetTextures);
 
 	GetMaterial("BarrelMat")->albedo = glm::vec4(1.0f);
 	GetMaterial("BarrelMat")->metallic = 1.0f;
@@ -291,11 +293,13 @@ void RendererCore::LoadMaterials()
 	GetMaterial("BarrelMat")->ao = 1.0f;
 	GetMaterial("BarrelMat")->emissionColor = glm::vec4(1.0f, 0.3f, 0.0f, 1.0f);
 	GetMaterial("BarrelMat")->emissionPower = 8.0f;
+	GetMaterial("BarrelMat")->textures = UpdateTextures("BarrelMat",BarrelTextures);
 }
 
-void RendererCore::LoadTextures()
+std::vector<std::string> RendererCore::UpdateTextures(std::string materialName, std::vector<std::string>& input)
 {
-	
+	vkRenderer.CreateTextures(materialName, input);
+	return input;
 }
 
 
