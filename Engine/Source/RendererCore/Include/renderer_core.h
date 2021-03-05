@@ -17,7 +17,7 @@ namespace RendererCore
     void LoadRenderables();
 
     std::vector<std::string> UpdateTextures(const std::string materialName, std::vector<std::string>& input);
-    Mesh* GetMesh(const std::string& name);
+    
 
     WindowHandler GetWindowHandler();
 

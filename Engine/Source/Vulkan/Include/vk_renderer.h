@@ -12,7 +12,6 @@
 #include "vk_swapchain.h"
 #include "function_queuer.h"
 #include "vk_descriptors.h"
-#include "vk_mesh.h"
 
 #include "window_handler.h"
 
@@ -21,16 +20,11 @@
 #include "vk_pipelinebuilder.h"
 
 #include "material_core.h"
+#include "mesh_core.h"
 
 
 
-struct RenderObject {
-	Mesh* p_mesh;
 
-	Material* p_material;
-
-	glm::mat4 transformMatrix;
-};
 
 struct DescriptorSetData {
 	/* Descriptor set for uniform data */

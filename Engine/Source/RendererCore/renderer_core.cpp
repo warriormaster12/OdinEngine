@@ -1,5 +1,6 @@
 #include "Include/renderer_core.h"
 #include "Include/material_core.h"
+#include "Include/mesh_core.h"
 
 VulkanRenderer vkRenderer;
 WindowHandler windowHandler;
@@ -8,7 +9,7 @@ auto end = std::chrono::system_clock::now();
 float deltaTime;
 
 std::vector<RenderObject> renderables;
-std::unordered_map<std::string, Mesh> meshes;
+
 
 void RendererCore::InitRenderer()
 {
@@ -48,16 +49,7 @@ void RendererCore::CleanupRenderer()
 
 
 
-Mesh* RendererCore::GetMesh(const std::string& name)
-{
-	auto it = meshes.find(name);
-	if (it == meshes.end()) {
-		return nullptr;
-	}
-	else {
-		return &(*it).second;
-	}
-}
+
 
 WindowHandler RendererCore::GetWindowHandler()
 {
@@ -164,36 +156,14 @@ void RendererCore::LoadMeshes()
 	cubeMesh.vertices[33].uv = {1.0f, 0.0f};
 	cubeMesh.vertices[34].uv = {0.0f, 0.0f};
 	cubeMesh.vertices[35].uv = {0.0f, 1.0f};
-	
 
 
-	//load the monkey
-	Mesh monkeyMesh{};
-	Mesh lostEmpire{};
-	Mesh viking_room{};
-	Mesh DamagedHelmet{};
-	Mesh Barrel{};
-	monkeyMesh.LoadFromObj("EngineAssets/Meshes/monkey_smooth.obj");
-	lostEmpire.LoadFromObj("EngineAssets/Meshes/lost_empire.obj");
-	viking_room.LoadFromObj("EngineAssets/Meshes/viking_room.obj");
-	DamagedHelmet.LoadFromObj("EngineAssets/DamagedHelmet/DamagedHelmet.obj");
-	Barrel.LoadFromObj("EngineAssets/Meshes/Barrel.obj");
-
-
-	//UploadMesh(triMesh);
-	vkRenderer.UploadMesh(monkeyMesh);
-	vkRenderer.UploadMesh(lostEmpire);
-	vkRenderer.UploadMesh(cubeMesh);
-	vkRenderer.UploadMesh(viking_room);
-	vkRenderer.UploadMesh(DamagedHelmet);
-	vkRenderer.UploadMesh(Barrel);
-
-	meshes["monkey"] = monkeyMesh;
-	meshes["skyBox"] = cubeMesh;	
-	meshes["empire"] = lostEmpire;
-	meshes["viking_room"] = viking_room;
-	meshes["DamagedHelmet"] = DamagedHelmet;
-	meshes["Barrel"] = Barrel;
+	CreateMeshFromFile("monkey", "EngineAssets/Meshes/monkey_smooth.obj", vkRenderer);
+	CreateMeshFromFile("viking_room", "EngineAssets/Meshes/viking_room.obj", vkRenderer);
+	CreateMeshFromFile("empire", "EngineAssets/Meshes/lost_empire.obj", vkRenderer);
+	CreateMeshFromFile("DamagedHelmet", "EngineAssets/DamagedHelmet/DamagedHelmet.obj", vkRenderer);
+	CreateMeshFromFile("Barrel", "EngineAssets/Meshes/Barrel.obj", vkRenderer);
+	CreateMesh("skyBox", cubeMesh, vkRenderer);
 }
 
 void RendererCore::LoadMaterials()
