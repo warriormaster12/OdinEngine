@@ -22,7 +22,14 @@ assets::TextureFormat ParseFormat(const char* f) {
 assets::AssetFile assets::PackTexture(assets::TextureInfo* info, void* pixelData)
 {
 	nlohmann::json texture_metadata;
-	texture_metadata["format"] = info->textureFormat;
+	switch (info->textureFormat)
+	{
+	case assets::TextureFormat::RGBA8:
+		texture_metadata["format"] = "RGBA8";
+		break;
+	case assets::TextureFormat::UNORM8:
+		texture_metadata["format"] = "UNORM8";
+	}
 	texture_metadata["width"] = info->pixelsize[0];
 	texture_metadata["height"] = info->pixelsize[1];
 	texture_metadata["buffer_size"] = info->textureSize;	

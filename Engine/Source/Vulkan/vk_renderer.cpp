@@ -315,7 +315,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 
 	// Static light data, can be moved away
 	//TODO: make proper pointlight, spotlight and directional light
-	sceneParameters.dLight.intensity = glm::vec4(0.0f);
+	sceneParameters.dLight.intensity = glm::vec4(3.0f);
 	sceneParameters.dLight.color = glm::vec4(1.0f);
 	sceneParameters.dLight.direction = glm::vec4(glm::vec3( -0.2f, -1.0f, -0.3f), 0.0f);
 	sceneParameters.plightCount = glm::vec4(3);
