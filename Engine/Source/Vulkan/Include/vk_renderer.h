@@ -20,34 +20,9 @@
 
 #include "vk_pipelinebuilder.h"
 
+#include "material_core.h"
 
 
-struct Material {
-	VkDescriptorSet materialSet{VK_NULL_HANDLE};
-	AllocatedBuffer buffer;
-	vkcomponent::ShaderPass materialPass;
-
-	glm::vec4 albedo; // vec4
-	float metallic; // float
-	float roughness; // float
-	float ao; // float
-
-	glm::vec4 emissionColor; //vec3
-    float emissionPower; // float
-
-	std::vector<std::string> textures = {
-		""
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	};
-
-	
-};
 
 struct RenderObject {
 	Mesh* p_mesh;

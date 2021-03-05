@@ -10,6 +10,7 @@
 #include "Imgui_layer.h"
 
 
+
 //bootstrap library
 #include "VkBootstrap.h"
 #define VMA_IMPLEMENTATION
@@ -64,7 +65,7 @@ namespace {
             materialData.metallic = glm::vec4(glm::vec3(material.metallic), 1.0f);
             materialData.roughness = glm::vec4(glm::vec3(material.roughness), 1.0f);
             materialData.ao = glm::vec4(glm::vec3(material.ao), 1.0f);
-			materialData.emissionColor = glm::vec4(material.emissionColor);
+			materialData.emissionColor = glm::vec4(glm::vec3(material.emissionColor),1.0f);
 			materialData.emissionPower = glm::vec4(material.emissionPower);
 
 			UploadSingleData(allocator, material.buffer.allocation, materialData);

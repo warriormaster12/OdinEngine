@@ -1,4 +1,5 @@
 #include "Include/renderer_core.h"
+#include "Include/material_core.h"
 
 VulkanRenderer vkRenderer;
 WindowHandler windowHandler;
@@ -44,15 +45,8 @@ void RendererCore::CleanupRenderer()
     windowHandler.DestroyWindow();
 }
 
-void RendererCore::CreateMaterial(const std::string& name)
-{
-	vkRenderer.CreateMaterial(&GetMaterial("defaultMat")->materialPass, name);
-}
 
-Material* RendererCore::GetMaterial(const std::string& name)
-{
-	return vkRenderer.GetMaterial(name);
-}
+
 
 Mesh* RendererCore::GetMesh(const std::string& name)
 {
@@ -207,24 +201,10 @@ void RendererCore::LoadMaterials()
 	//lost empire
 	std::vector<std::string> lostEmpireTextures = {
 		"EngineAssets/Textures/lost_empire-RGBA.png"
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
 	};
 	//viking room
 	std::vector<std::string> vikingRoomTextures = {
 		"EngineAssets/Textures/viking_room.png"
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
 	};
 	
 
@@ -235,8 +215,6 @@ void RendererCore::LoadMaterials()
 		"EngineAssets/DamagedHelmet/Default_emissive.jpg",
 		"EngineAssets/DamagedHelmet/Default_AO.jpg",
 		"EngineAssets/DamagedHelmet/Default_metalRoughness.jpg",
-		"",
-		"",
 	};
 	//Barrel
 	std::vector<std::string> BarrelTextures = {
@@ -249,13 +227,13 @@ void RendererCore::LoadMaterials()
 		"EngineAssets/Textures/ExplosionBarrel Roughness.png",
 	};
 
-	CreateMaterial("texturedmesh2");
-	CreateMaterial("texturedmesh");
-	CreateMaterial("texturedmesh3");
-	CreateMaterial("DamagedHelmetMat");
-	CreateMaterial("BarrelMat");
+	CreateMaterial("texturedmesh2", vkRenderer);
+	CreateMaterial("texturedmesh", vkRenderer);
+	CreateMaterial("texturedmesh3", vkRenderer);
+	CreateMaterial("DamagedHelmetMat", vkRenderer);
+	CreateMaterial("BarrelMat", vkRenderer);
 
-	// TODO: Configure through one function call
+	// Materials have a default configuration. Here we do custom config
 	GetMaterial("texturedmesh")->albedo = glm::vec4(1.0f);
 	GetMaterial("texturedmesh")->metallic = 0.5f;
 	GetMaterial("texturedmesh")->roughness = 0.5f;
@@ -263,13 +241,6 @@ void RendererCore::LoadMaterials()
 	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 	GetMaterial("texturedmesh")->emissionPower = 1.0f;
 	GetMaterial("texturedmesh")->textures = UpdateTextures("texturedmesh", lostEmpireTextures);
-
-	GetMaterial("texturedmesh2")->albedo = glm::vec4(0.0f,0.0f,0.0f,1.0f);
-	GetMaterial("texturedmesh2")->metallic = 0.5f;
-	GetMaterial("texturedmesh2")->roughness = 0.5f;
-	GetMaterial("texturedmesh2")->ao = 1.0f;
-	GetMaterial("texturedmesh2")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
-	GetMaterial("texturedmesh2")->emissionPower = 1.0f;
 
 	GetMaterial("texturedmesh3")->albedo = glm::vec4(0.5f,0.5f,0.5f,1.0f);
 	GetMaterial("texturedmesh3")->metallic = 0.5f;
