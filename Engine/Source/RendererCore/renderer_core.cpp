@@ -238,11 +238,7 @@ void RendererCore::LoadMaterials()
 	GetMaterial("BarrelMat")->textures = UpdateTextures("BarrelMat",BarrelTextures);
 }
 
-std::vector<std::string> RendererCore::UpdateTextures(std::string materialName, std::vector<std::string>& input)
-{
-	vkRenderer.CreateTextures(materialName, input);
-	return input;
-}
+
 
 
 void RendererCore::LoadRenderables()

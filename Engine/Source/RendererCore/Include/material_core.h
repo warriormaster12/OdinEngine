@@ -36,4 +36,6 @@ namespace RendererCore
 {
     void CreateMaterial(const std::string& name, VulkanRenderer& vkRenderer);
     Material* GetMaterial(const std::string& name);
+
+    std::vector<std::string> UpdateTextures(const std::string materialName, std::vector<std::string>& input);
 }

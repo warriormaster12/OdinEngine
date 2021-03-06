@@ -16,9 +16,6 @@ namespace RendererCore
     void LoadMaterials();
     void LoadRenderables();
 
-    std::vector<std::string> UpdateTextures(const std::string materialName, std::vector<std::string>& input);
-    
-
     WindowHandler GetWindowHandler();
 
 };

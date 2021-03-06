@@ -14,4 +14,10 @@ namespace RendererCore
     {
         return p_renderer->GetMaterial(name);
     }
+
+    std::vector<std::string> UpdateTextures(std::string materialName, std::vector<std::string>& input)
+    {
+        p_renderer->CreateTextures(materialName, input);
+        return input;
+    }
 }
