@@ -1097,14 +1097,9 @@ void VulkanRenderer::LoadImage(const std::string& texturePath, const VkFormat& i
 		textureInfo.textureFormat = assets::TextureFormat::UNORM8;
 		asset_builder::ConvertImage(path,bin_path, textureInfo);
 	}
-	if(texturePath != "")
-	{
-		vkcomponent::LoadImageFromAsset(*this, (texturePath + ".bin").c_str(), &inputTextures.image);
-	}
-	else
-	{
-		vkcomponent::LoadEmpty(*this, &inputTextures.image, imageFormat);
-	}
+
+	vkcomponent::LoadImageFromAsset(*this, (texturePath + ".bin").c_str(), &inputTextures.image);
+
 	VkImageViewCreateInfo imageinfo = vkinit::ImageViewCreateInfo(imageFormat, inputTextures.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCreateImageView(device, &imageinfo, nullptr, &inputTextures.imageView);
 	if(texturePath != "")
