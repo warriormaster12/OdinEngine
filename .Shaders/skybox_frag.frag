@@ -5,6 +5,9 @@ layout (location = 0) in vec3 TexCoords;
 
 
 void main()
-{    
-    outFragColor = vec4(0.0, 0.9686, 1.0, 1.0);
+{   
+    vec3 position = normalize(TexCoords);
+    vec4 top = vec4(0.0, 0.3176, 1.0, 1.0);
+    vec4 bottom = vec4(0.0, 0.851, 1.0, 1.0);
+    outFragColor = vec4(mix(bottom, top, (position.y/0.6)));
 }

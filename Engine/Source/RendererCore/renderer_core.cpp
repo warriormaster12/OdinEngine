@@ -47,11 +47,6 @@ void RendererCore::CleanupRenderer()
     windowHandler.DestroyWindow();
 }
 
-
-
-
-
-
 WindowHandler RendererCore::GetWindowHandler()
 {
 	return windowHandler;
@@ -69,7 +64,7 @@ void RendererCore::InitScene()
 void RendererCore::LoadMeshes()
 {
 	Mesh cubeMesh{};
-	//make the array 3 vertices long
+	//make the array 105 vertices long
 	cubeMesh.vertices.resize(105);
 
 	//vertex positions
