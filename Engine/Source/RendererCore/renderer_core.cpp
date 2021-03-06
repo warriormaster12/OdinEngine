@@ -7,6 +7,7 @@ WindowHandler windowHandler;
 auto start = std::chrono::system_clock::now();
 auto end = std::chrono::system_clock::now();
 float deltaTime;
+float fps;
 
 
 
@@ -21,8 +22,8 @@ void RendererCore::InitRenderer()
 void RendererCore::UpdateRenderer()
 {
     end = std::chrono::system_clock::now();
-    std::chrono::duration<float> elapsed_seconds = end - start;
-    deltaTime = elapsed_seconds.count() * 1000.f;
+    using ms = std::chrono::duration<float, std::milli>;
+    deltaTime = std::chrono::duration_cast<ms>(end - start).count();
     start = std::chrono::system_clock::now();
    
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
