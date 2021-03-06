@@ -1,17 +1,15 @@
 #pragma once 
 
-#include "../../Third-Party/imgui/Include/imgui.h"
+#include "imgui.h"
 #include <iostream>
-#include "../../Vulkan/Include/vk_renderer.h"
+#include "vk_renderer.h"
 
-#include "GameViewport.h"
 
-class Editor
+namespace Editor
 {
-public:
-    static void showMainWindow(VulkanRenderer& renderer);
 
-private:
-    static void setupDockSpace();
+    void showMainWindow(VulkanRenderer& renderer);
+    void ObjectEditor();
     
+    std::array<float, 4> GetColor();
 };
