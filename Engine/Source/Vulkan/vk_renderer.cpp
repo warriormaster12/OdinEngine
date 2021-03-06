@@ -19,8 +19,8 @@
 #include "logger.h"
 
 vkcomponent::PipelineBuilder pipelineBuilder;
-VkCommandBuffer cmd;
 uint32_t swapchainImageIndex;
+VkCommandBuffer cmd;
 VkResult drawResult;
 
 // Utility (pure) functions are put in an anonymous namespace
@@ -165,6 +165,11 @@ namespace {
 
 
 constexpr bool bUseValidationLayers = true;
+VkCommandBuffer& VulkanRenderer::GetCommandBuffer()
+{
+	return cmd;
+}
+
 void VulkanRenderer::Init(WindowHandler& windowHandler)
 {
 	p_windowHandler = &windowHandler;

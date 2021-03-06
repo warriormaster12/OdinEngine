@@ -7,10 +7,9 @@ void Editor::showMainWindow(VulkanRenderer& renderer)
 {
     width = renderer.GetWidth();
     height = renderer.GetHeight();
-    setupDockSpace();
+    //setupDockSpace();
     ImGui::ShowDemoWindow();
-    Viewport::ShowGameViewport(renderer);
-    ImGui::End();
+    //Viewport::ShowGameViewport(renderer);
 }
 
 void Editor::setupDockSpace()

@@ -101,6 +101,7 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 		init_info.MinImageCount = 3;
 		init_info.ImageCount = 3;
 
+		ImGui_ImplGlfw_InitForVulkan(renderer.GetWindowHandler()->p_window, true);
 		ImGui_ImplVulkan_Init(&init_info, renderer.GetRenderPass());
 
 		//execute a gpu command to upload imgui font textures
@@ -125,7 +126,7 @@ void imgui_layer::UpdateUi()
 	{
 		//imgui new frame 
 		ImGui_ImplVulkan_NewFrame();
-		//ImGui_ImplSDL2_NewFrame(p_renderer->p_windowHandler->window);
+		ImGui_ImplGlfw_NewFrame();
 
 		ImGui::NewFrame();        
 

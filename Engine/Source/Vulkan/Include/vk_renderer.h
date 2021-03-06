@@ -245,6 +245,10 @@ public:
 
 	uint32_t GetWidth() const { return swapChainObj.actualExtent.width; }
 	uint32_t GetHeight() const { return swapChainObj.actualExtent.height; }
+
+	VkCommandBuffer& GetCommandBuffer();
+
+	WindowHandler* GetWindowHandler() {return p_windowHandler;}
 	
 private:
 	int frameNumber{0};

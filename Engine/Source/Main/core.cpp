@@ -3,9 +3,6 @@
 #include "window_handler.h"
 #include "logger.h"
 
-#include "EditorWindow.h"
-#include "Imgui_layer.h"
-
 
 bool isInitialized{ false };
 
@@ -14,7 +11,6 @@ void Core::CoreInit()
     Logger::Init();
 	
 	RendererCore::InitRenderer();
-	//imgui_layer::init_imgui_layer(renderer);
 
     //everything went fine
     isInitialized = true;
@@ -32,7 +28,6 @@ void Core::CoreUpdate()
         {
             RendererCore::GetWindowHandler().WindowClose();
         }
-		//imgui_layer::update_ui();
 		RendererCore::UpdateRenderer();
     }
 }

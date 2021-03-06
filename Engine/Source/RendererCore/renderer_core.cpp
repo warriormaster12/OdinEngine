@@ -2,6 +2,9 @@
 #include "Include/material_core.h"
 #include "Include/mesh_core.h"
 
+#include "EditorWindow.h"
+#include "Imgui_layer.h"
+
 VulkanRenderer vkRenderer;
 WindowHandler windowHandler;
 auto start = std::chrono::system_clock::now();
@@ -16,6 +19,7 @@ void RendererCore::InitRenderer()
 {
     windowHandler.CreateWindow(1920, 1080);
     vkRenderer.Init(windowHandler);
+	imgui_layer::InitImguiLayer(vkRenderer);
     InitScene();
 }
 
@@ -25,12 +29,13 @@ void RendererCore::UpdateRenderer()
     using ms = std::chrono::duration<float, std::milli>;
     deltaTime = std::chrono::duration_cast<ms>(end - start).count();
     start = std::chrono::system_clock::now();
-   
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
+	imgui_layer::UpdateUi();
     vkRenderer.BeginDraw();
 
     vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
-	//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+	//Draw UI after drawing the 3D world
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
 
 	vkRenderer.EndDraw();
 }
