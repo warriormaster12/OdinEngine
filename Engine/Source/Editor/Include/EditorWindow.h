@@ -9,7 +9,4 @@ namespace Editor
 {
 
     void showMainWindow(VulkanRenderer& renderer);
-    void ObjectEditor();
-    
-    std::array<float, 4> GetColor();
 };

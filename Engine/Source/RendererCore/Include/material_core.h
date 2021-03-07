@@ -31,6 +31,10 @@ struct Material {
         "",
         "",
     };
+
+    void SetAlbedo(glm::vec4& inputColor);
+
+    bool isOutdated = false;
 };
 namespace RendererCore
 {

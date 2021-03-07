@@ -8,6 +8,7 @@ namespace RendererCore
     {
         p_renderer = &vkRenderer;
         vkRenderer.CreateMaterial(&p_renderer->GetMaterial("defaultMat")->materialPass, name);
+        p_renderer->GetMaterial(name)->isOutdated = true;
     }
 
     Material* GetMaterial(const std::string& name)
@@ -19,5 +20,14 @@ namespace RendererCore
     {
         p_renderer->CreateTextures(materialName, input);
         return input;
+    }
+}
+
+void Material::SetAlbedo(glm::vec4& inputColor)
+{
+    if(albedo != inputColor)
+    {
+        isOutdated = true;
+        albedo = inputColor;
     }
 }

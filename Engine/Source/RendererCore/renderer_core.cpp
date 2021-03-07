@@ -29,7 +29,6 @@ void RendererCore::UpdateRenderer()
     using ms = std::chrono::duration<float, std::milli>;
     deltaTime = std::chrono::duration_cast<ms>(end - start).count();
     start = std::chrono::system_clock::now();
-	GetMaterial("texturedmesh2")->albedo = glm::vec4(Editor::GetColor()[0], Editor::GetColor()[1], Editor::GetColor()[2], 1.0f);
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
 	imgui_layer::UpdateUi();
     vkRenderer.BeginDraw();
