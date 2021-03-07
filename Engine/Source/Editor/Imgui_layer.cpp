@@ -44,6 +44,7 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 
@@ -88,8 +89,6 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 		colors[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 		colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		//this initializes imgui for SDL
-		//ImGui_ImplSDL2_InitForVulkan(renderer.p_windowHandler->p_window);
 
 		//this initializes imgui for Vulkan
 		ImGui_ImplVulkan_InitInfo init_info = {};

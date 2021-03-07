@@ -18,4 +18,5 @@ void Editor::showMainWindow(VulkanRenderer& renderer)
     width = renderer.GetWidth();
     height = renderer.GetHeight();
     ObjectEditor();
+    ImGui::ShowDemoWindow();
 }
