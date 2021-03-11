@@ -5,8 +5,10 @@
 #include "EditorWindow.h"
 #include "Imgui_layer.h"
 
+
 VulkanRenderer vkRenderer;
 WindowHandler windowHandler;
+
 auto start = std::chrono::system_clock::now();
 auto end = std::chrono::system_clock::now();
 float deltaTime;
@@ -31,13 +33,16 @@ void RendererCore::UpdateRenderer()
     start = std::chrono::system_clock::now();
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
 	imgui_layer::UpdateUi();
-    vkRenderer.BeginDraw();
-
-    vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
-	//Draw UI after drawing the 3D world
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
-
-	vkRenderer.EndDraw();
+    vkRenderer.BeginCommands();
+	//In between commands we can specify in which renderPass we are going to draw
+	{
+		vkRenderer.BeginRenderpass();
+		vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
+		//Draw UI after drawing the 3D world
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
+		vkRenderer.EndRenderpass();
+	}
+	vkRenderer.EndCommands();
 }
 
 void RendererCore::RendererEvents()

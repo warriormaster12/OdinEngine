@@ -140,14 +140,17 @@ public:
 	 * 
 	 * Must be called at the start of the frame and before DrawObjects() and EndDraw().
 	 */
-	void BeginDraw();
+	void BeginCommands();
 
 	/**
 	 * Ends the current frame draw. 
 	 * 
 	 * Must be called at the end of the frame and before the next BeginDraw().
 	 */
-	void EndDraw();
+	void EndCommands();
+
+	void BeginRenderpass();
+	void EndRenderpass();
 
 	/**
 	 * Draws a set of objects. 

@@ -10,8 +10,8 @@ class VulkanOffscreen
 public:
     void InitOffscreen(VulkanRenderer& renderer);
 
-    void BeginOffscreenDraw();
-    void EndOffscreenDraw();
+    void BeginOffscreenRenderpass();
+    void EndOffscreenRenderpass();
 private:
     VulkanRenderer* p_renderer;
     void InitRenderpass();

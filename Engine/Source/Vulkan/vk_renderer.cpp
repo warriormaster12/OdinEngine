@@ -219,7 +219,7 @@ void VulkanRenderer::CleanUp()
 }
 
 
-void VulkanRenderer::BeginDraw()
+void VulkanRenderer::BeginCommands()
 {
 	//wait until the gpu has finished rendering the last frame. Timeout of 1 second
 	VK_CHECK(vkWaitForFences(device, 1, &GetCurrentFrame().renderFence, true, 1000000000));
@@ -246,14 +246,18 @@ void VulkanRenderer::BeginDraw()
 
 	VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
 
-	//make a clear-color from frame number. This will flash with a 120 frame period.
+
+}
+
+void VulkanRenderer::BeginRenderpass()
+{
 	VkClearValue clearValue;
 	clearValue.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 
 	//clear depth at 1
 	VkClearValue depthClear;
 	depthClear.depthStencil.depth = 1.f;
-
+	
 	//start the main renderpass. 
 	//We will use the clear color from above, and the framebuffer of the index the swapchain gave us
 	VkRenderPassBeginInfo rpInfo = vkinit::RenderpassBeginInfo(renderPass, swapChainObj.actualExtent, framebuffers[swapchainImageIndex]);
@@ -266,13 +270,17 @@ void VulkanRenderer::BeginDraw()
 	rpInfo.pClearValues = &clearValues[0];
 	
 	vkCmdBeginRenderPass(cmd, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
-
+	
 }
 
-void VulkanRenderer::EndDraw()
+void VulkanRenderer::EndRenderpass()
 {
 	//finalize the render pass
 	vkCmdEndRenderPass(cmd);
+}
+
+void VulkanRenderer::EndCommands()
+{
 	//finalize the command buffer (we can no longer add commands, but it can now be executed)
 	VK_CHECK(vkEndCommandBuffer(cmd));
 

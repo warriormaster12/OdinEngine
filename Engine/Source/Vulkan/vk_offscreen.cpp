@@ -109,76 +109,37 @@ void VulkanOffscreen::InitDescriptors()
 void VulkanOffscreen::InitPipelines()
 {
     //VkShaderModule texturedMeshShader;
-	vkcomponent::ShaderModule texturedMeshShader;
-	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_pbr_lit.frag").c_str(), &texturedMeshShader, p_renderer->GetDevice());
+	vkcomponent::ShaderModule quadVertShader;
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/Quad.vert").c_str(), &quadVertShader, p_renderer->GetDevice());
 
 	//VkShaderModule meshVertShader;
-	vkcomponent::ShaderModule meshVertShader;
-	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/mesh_triangle.vert").c_str(), &meshVertShader, p_renderer->GetDevice());
+	vkcomponent::ShaderModule quadFragShader;
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/Quard.frag").c_str(), &quadFragShader, p_renderer->GetDevice());
 
-	vkcomponent::ShaderEffect* defaultEffect = new vkcomponent::ShaderEffect();
-	std::vector<vkcomponent::ShaderModule> shaderModules = {meshVertShader, texturedMeshShader};
+	vkcomponent::ShaderEffect* shadowDebugEffect = new vkcomponent::ShaderEffect();
+	std::vector<vkcomponent::ShaderModule> shaderModules = {quadVertShader, quadFragShader};
 
     //for now pipeline layout is going to be null because our shader doesn't communicate with descriptors
 	//std::array<VkDescriptorSetLayout, 3> layouts= {globalSetLayout, objectSetLayout, materialTextureSetLayout};
-	VkPipelineLayoutCreateInfo meshpipInfo = vkinit::PipelineLayoutCreateInfo();
-	meshpipInfo.pSetLayouts = nullptr;
-	meshpipInfo.setLayoutCount = 0;
-	defaultEffect = vkcomponent::BuildEffect(p_renderer->GetDevice(), shaderModules, meshpipInfo);
+	VkPipelineLayoutCreateInfo debugpipInfo = vkinit::PipelineLayoutCreateInfo();
+	debugpipInfo.pSetLayouts = nullptr;
+	debugpipInfo.setLayoutCount = 0;
+	shadowDebugEffect = vkcomponent::BuildEffect(p_renderer->GetDevice(), shaderModules, debugpipInfo);
 
 	//hook the push constants layout
-	offscreenBuilder.pipelineLayout = defaultEffect->builtLayout;
+	offscreenBuilder.pipelineLayout = shadowDebugEffect->builtLayout;
 	//we have copied layout to builder so now we can flush old one
-	defaultEffect->FlushLayout();
+	shadowDebugEffect->FlushLayout();
 
 	//vertex input controls how to read vertices from vertex buffers. We arent using it yet
 	offscreenBuilder.vertexInputInfo = vkinit::VertexInputStateCreateInfo();
 
-	//input assembly is the configuration for drawing triangle lists, strips, or individual points.
-	//we are just going to draw triangle list
-	offscreenBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-
-	//build viewport and scissor from the swapchain extents
-	offscreenBuilder.viewport.x = 0.0f;
-	offscreenBuilder.viewport.y = 0.0f;
-	offscreenBuilder.viewport.width = (float)shadowExtent.width;
-	offscreenBuilder.viewport.height = (float)shadowExtent.height;
-	offscreenBuilder.viewport.minDepth = 0.0f;
-	offscreenBuilder.viewport.maxDepth = 1.0f;
-
-	offscreenBuilder.blendConstant = {0.0f, 0.0f, 0.0f, 0.0f};
-
-	offscreenBuilder.scissor.offset = { 0, 0 };
-	offscreenBuilder.scissor.extent = shadowExtent;
-
 	//configure the rasterizer to draw filled triangles
-	offscreenBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
-
-	//we dont use multisampling, so just run the default one
-	offscreenBuilder.multisampling = vkinit::MultisamplingStateCreateInfo();
-
-	//a single blend attachment with no blending and writing to RGBA
-	offscreenBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
-
-
-	//default depthtesting
-	offscreenBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
-
-	//build the mesh pipeline
-
-	//VertexInputDescription vertexDescription = Vertex::GetVertexDescription(1);
-
-	//connect the pipeline builder vertex input info to the one we get from Vertex
-	// pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
-	// pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
-
-	// pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
-	// pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
+	offscreenBuilder.rasterizer.cullMode = VK_CULL_MODE_NONE;
 
 	
 	//build the mesh triangle pipeline
-	vkcomponent::ShaderPass* defaultPass = vkcomponent::BuildShader(p_renderer->GetDevice(), shadowPass, offscreenBuilder, defaultEffect);
-    offscreenBuilder.BuildPipeline(p_renderer->GetDevice(), shadowPass);
+	vkcomponent::ShaderPass* defaultPass = vkcomponent::BuildShader(p_renderer->GetDevice(), shadowPass, offscreenBuilder, shadowDebugEffect);
 
     p_renderer->EnqueueCleanup([=]()
     {
@@ -186,12 +147,12 @@ void VulkanOffscreen::InitPipelines()
     });
 }
 
-void VulkanOffscreen::BeginOffscreenDraw()
+void VulkanOffscreen::BeginOffscreenRenderpass()
 {
 
 }
 
-void VulkanOffscreen::EndOffscreenDraw()
+void VulkanOffscreen::EndOffscreenRenderpass()
 {
 
 }
