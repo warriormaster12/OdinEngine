@@ -118,11 +118,6 @@ struct UploadContext {
 	VkCommandPool commandPool;	
 };
 
-struct Texture {
-	AllocatedImage image;
-	VkImageView imageView;
-};
-
 
 constexpr unsigned int FRAME_OVERLAP = 2;
 
@@ -242,6 +237,8 @@ public:
 	VkDevice& GetDevice() { return device; }
 	VkQueue& GetGraphicsQueue() { return graphicsQueue; }
 	VkRenderPass& GetRenderPass() { return renderPass; }
+	vkcomponent::SwapChain&  GetSwapChain() {return swapChainObj; }
+	FunctionQueuer& GetSwapQueue() {return swapDeletionQueue;}
 
 	uint32_t GetWidth() const { return swapChainObj.actualExtent.width; }
 	uint32_t GetHeight() const { return swapChainObj.actualExtent.height; }
@@ -290,6 +287,8 @@ private:
 	std::unordered_map<std::string, Texture> loadedTextures;
 	std::unordered_map<std::string, Material> materials;
 	std::vector<std::string> materialList; 
+	
+
 
 	void InitVulkan();
 	void InitSwapchain();

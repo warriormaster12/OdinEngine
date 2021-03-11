@@ -1,4 +1,5 @@
 #include "Include/vk_renderer.h"
+#include "Include/vk_offscreen.h"
 #include "Include/vk_types.h"
 #include "Include/vk_init.h"
 #include "vk_utils.h"
@@ -8,6 +9,8 @@
 #include "asset_builder.h"
 #include "imgui_impl_vulkan.h"
 #include "Imgui_layer.h"
+
+
 
 
 
@@ -22,6 +25,8 @@ vkcomponent::PipelineBuilder pipelineBuilder;
 uint32_t swapchainImageIndex;
 VkCommandBuffer cmd;
 VkResult drawResult;
+
+VulkanOffscreen offscreen;
 
 // Utility (pure) functions are put in an anonymous namespace
 
@@ -188,6 +193,8 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 	LoadImage("");
 	InitSamplers();
 	InitPipelines();
+
+	//offscreen.InitOffscreen(*this);
 
 	camera.position = { 0.f,0.f,10.f };
 
@@ -479,6 +486,8 @@ void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, const st
 	vkUpdateDescriptorSets(device, 1, &objectFragWrite, 0, nullptr);
 	
 	CreateTextures(name, mat.textures);
+
+	materials[name].isOutdated = true;
 	
 
 	EnqueueCleanup([=]() {
@@ -731,12 +740,13 @@ void VulkanRenderer::InitDefaultRenderpass()
 	});
 }
 
+
+
 void VulkanRenderer::InitFramebuffers()
 {
-	const uint32_t swapchain_imagecount = swapChainObj.swapchainImageViews.size();
-	framebuffers = std::vector<VkFramebuffer>(swapchain_imagecount);
-
-	for (int i = 0; i < swapchain_imagecount; i++) {
+	const uint32_t swapchainImageCount = swapChainObj.swapchainImageViews.size();
+	framebuffers = std::vector<VkFramebuffer>(swapchainImageCount);
+	for (int i = 0; i < swapchainImageCount; i++) {
 		//create the framebuffers for the swapchain images. This will connect the render-pass to the images for rendering
 		VkFramebufferCreateInfo fb_info = vkinit::FramebufferCreateInfo(renderPass, swapChainObj.actualExtent);
 		std::array <VkImageView, 2> attachments = {swapChainObj.swapchainImageViews[i], swapChainObj.depthImageView};
@@ -745,9 +755,9 @@ void VulkanRenderer::InitFramebuffers()
 		fb_info.attachmentCount = attachments.size();
 		fb_info.pAttachments = attachments.data();
 		VK_CHECK(vkCreateFramebuffer(device, &fb_info, nullptr, &framebuffers[i]));
-		swapDeletionQueue.PushFunction([=]() {
+		EnqueueCleanup([=]() {
 			vkDestroyFramebuffer(device, framebuffers[i], nullptr);
-		});
+		},&swapDeletionQueue);
 	}
 }
 
@@ -1006,8 +1016,12 @@ void VulkanRenderer::InitPipelines()
 	pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
 
 	//build the mesh pipeline
-
-	VertexInputDescription vertexDescription = Vertex::GetVertexDescription();
+	std::vector <LocationInfo> locations = {{VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
+		{VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, normal)},
+		{VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, color)},
+		{VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex, uv)}
+	};
+	VertexInputDescription vertexDescription = Vertex::GetVertexDescription(locations);
 
 	//connect the pipeline builder vertex input info to the one we get from Vertex
 	pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
@@ -1043,7 +1057,8 @@ void VulkanRenderer::InitPipelines()
 	//we have copied layout to builder so now we can flush old one
 	skyEffect->FlushLayout();
 	pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
-	vertexDescription = Vertex::GetVertexDescription(1);
+	locations.resize(1);
+	vertexDescription = Vertex::GetVertexDescription(locations);
 
 	//connect the pipeline builder vertex input info to the one we get from Vertex
 	pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();

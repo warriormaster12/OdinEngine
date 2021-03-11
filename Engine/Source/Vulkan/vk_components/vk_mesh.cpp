@@ -3,7 +3,7 @@
 #include "../../Third-Party/tinyobjloader/tiny_obj_loader.h"
 
 
-VertexInputDescription Vertex::GetVertexDescription(const uint32_t& locationSize /*= 4*/)
+VertexInputDescription Vertex::GetVertexDescription(const std::vector<LocationInfo>& locations)
 {
 	VertexInputDescription description;
 	//we will have just 1 vertex buffer binding, with a per-vertex rate
@@ -14,42 +14,16 @@ VertexInputDescription Vertex::GetVertexDescription(const uint32_t& locationSize
 
 	description.bindings.push_back(mainBinding);
 
-	//Position will be stored at Location 0
-	VkVertexInputAttributeDescription positionAttribute = {};
-	positionAttribute.binding = 0;
-	positionAttribute.location = 0;
-	positionAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-	positionAttribute.offset = offsetof(Vertex, position);
-
-	 //Normal will be stored at Location 1
-	VkVertexInputAttributeDescription normalAttribute = {};
-	normalAttribute.binding = 0;
-	normalAttribute.location = 1;
-	normalAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-	normalAttribute.offset = offsetof(Vertex, normal);
-
-	//Color will be stored at Location 2
-	VkVertexInputAttributeDescription colorAttribute = {};
-	colorAttribute.binding = 0;
-	colorAttribute.location = 2;
-	colorAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-	colorAttribute.offset = offsetof(Vertex, color);
-
-	//UV will be stored at Location 3
-	VkVertexInputAttributeDescription uvAttribute = {};
-	uvAttribute.binding = 0;
-	uvAttribute.location = 3;
-	uvAttribute.format = VK_FORMAT_R32G32_SFLOAT;
-	uvAttribute.offset = offsetof(Vertex, uv);
-
-	std::vector<VkVertexInputAttributeDescription> descriptionAttributes = {positionAttribute, normalAttribute, colorAttribute, uvAttribute};
-	if(locationSize != descriptionAttributes.size())
+	
+	VkVertexInputAttributeDescription attributes[locations.size()];
+	for(int i = 0; i < locations.size(); i++)
 	{
-		descriptionAttributes.resize(locationSize);
-	}
-	for(auto currentAttribute : descriptionAttributes)
-	{
-		description.attributes.push_back(currentAttribute);
+		attributes[i].binding = 0;
+		attributes[i].location = i;
+		attributes[i].format = locations[i].format;
+		attributes[i].offset = locations[i].offset;
+
+		description.attributes.push_back(attributes[i]);
 	}
 	return description;
 }

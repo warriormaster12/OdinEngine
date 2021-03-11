@@ -15,14 +15,19 @@ struct VertexInputDescription {
 
 	VkPipelineVertexInputStateCreateFlags flags = 0;
 };
-;
+
+struct LocationInfo
+{
+	VkFormat format;
+	uint32_t offset;
+};
 
 struct Vertex {
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv;
-	static VertexInputDescription GetVertexDescription(const uint32_t& locationSize = 4);
+	static VertexInputDescription GetVertexDescription(const std::vector<LocationInfo>& locations);
 };
 
 
