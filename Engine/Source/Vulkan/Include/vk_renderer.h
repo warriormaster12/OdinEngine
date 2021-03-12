@@ -121,6 +121,7 @@ struct UploadContext {
 
 
 constexpr unsigned int FRAME_OVERLAP = 2;
+static int frameNumber{0};
 
 class VulkanRenderer {
 public:
@@ -257,9 +258,11 @@ public:
 	WindowHandler* GetWindowHandler() {return p_windowHandler;}
 
 	VulkanOffscreen& GetOffscreen() {return offscreen;}
-	
+
+	FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
+
 private:
-	int frameNumber{0};
+	
 	int selectedShader{0};
 	WindowHandler* p_windowHandler;
 
@@ -314,7 +317,7 @@ private:
 	void InitPipelines();
 	void RecreateSwapchain();
 
-	FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
+	
 	FrameData& GetLastFrame() { return frames[(frameNumber - 1) % FRAME_OVERLAP]; }
 
 	void LoadImage(const std::string& texturePath, const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);

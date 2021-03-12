@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include "mesh_core.h"
+
 class VulkanRenderer;
 
 struct LightMatrixData{   
@@ -18,6 +20,7 @@ public:
     void InitOffscreen(VulkanRenderer& renderer);
     void InitFramebuffer();
     void BeginOffscreenRenderpass();
+    void OffscreenDraw(const std::vector<RenderObject>& objects);
     void EndOffscreenRenderpass();
 private:
     VulkanRenderer* p_renderer;
