@@ -1,5 +1,4 @@
 #include "Include/vk_renderer.h"
-#include "Include/vk_offscreen.h"
 #include "Include/vk_types.h"
 #include "Include/vk_init.h"
 #include "vk_utils.h"
@@ -25,8 +24,6 @@ vkcomponent::PipelineBuilder pipelineBuilder;
 uint32_t swapchainImageIndex;
 VkCommandBuffer cmd;
 VkResult drawResult;
-
-VulkanOffscreen offscreen;
 
 // Utility (pure) functions are put in an anonymous namespace
 
@@ -192,9 +189,9 @@ void VulkanRenderer::Init(WindowHandler& windowHandler)
 	InitDescriptors();
 	LoadImage("");
 	InitSamplers();
+	offscreen.InitOffscreen(*this);
 	InitPipelines();
 
-	//offscreen.InitOffscreen(*this);
 
 	camera.position = { 0.f,0.f,10.f };
 
@@ -1105,7 +1102,7 @@ void VulkanRenderer::RecreateSwapchain()
 	}
 
 	swapChainObj.InitSwapchain(p_windowHandler->p_window);
-
+	offscreen.InitFramebuffer();
 	InitFramebuffers();	
 
 	//update parts of the pipeline that change dynamically

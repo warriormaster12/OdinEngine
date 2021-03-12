@@ -34,6 +34,11 @@ void RendererCore::UpdateRenderer()
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
 	imgui_layer::UpdateUi();
     vkRenderer.BeginCommands();
+	vkRenderer.GetOffscreen().BeginOffscreenRenderpass();
+	{
+
+	}
+	vkRenderer.GetOffscreen().EndOffscreenRenderpass();
 	//In between commands we can specify in which renderPass we are going to draw
 	{
 		vkRenderer.BeginRenderpass();

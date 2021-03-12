@@ -18,6 +18,7 @@
 #include "camera.h"
 
 #include "vk_pipelinebuilder.h"
+#include "vk_offscreen.h"
 
 #include "material_core.h"
 #include "mesh_core.h"
@@ -235,10 +236,15 @@ public:
 	Camera& GetCamera() { return camera; }
 	const VmaAllocator& GetAllocator() const { return allocator; }
 
+	FrameData& GetFrameData(uint32_t frameOverlap) {return frames[frameOverlap];}
+	vkcomponent::DescriptorAllocator* GetDescriptorAllocator()  {return p_descriptorAllocator;}
+	vkcomponent::DescriptorLayoutCache* GetDescriptorLayoutCache()  {return p_descriptorLayoutCache;}
+
 	VkInstance& GetInstance() { return instance; }
 	VkPhysicalDevice& GetPhysicalDevice() { return chosenGPU; }
 	VkDevice& GetDevice() { return device; }
 	VkQueue& GetGraphicsQueue() { return graphicsQueue; }
+
 	VkRenderPass& GetRenderPass() { return renderPass; }
 	vkcomponent::SwapChain&  GetSwapChain() {return swapChainObj; }
 	FunctionQueuer& GetSwapQueue() {return swapDeletionQueue;}
@@ -249,6 +255,8 @@ public:
 	VkCommandBuffer& GetCommandBuffer();
 
 	WindowHandler* GetWindowHandler() {return p_windowHandler;}
+
+	VulkanOffscreen& GetOffscreen() {return offscreen;}
 	
 private:
 	int frameNumber{0};
@@ -290,6 +298,8 @@ private:
 	std::unordered_map<std::string, Texture> loadedTextures;
 	std::unordered_map<std::string, Material> materials;
 	std::vector<std::string> materialList; 
+
+	VulkanOffscreen offscreen;
 	
 
 
