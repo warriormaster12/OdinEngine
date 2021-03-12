@@ -1102,7 +1102,6 @@ void VulkanRenderer::RecreateSwapchain()
 	}
 
 	swapChainObj.InitSwapchain(p_windowHandler->p_window);
-	offscreen.InitFramebuffer();
 	InitFramebuffers();	
 
 	//update parts of the pipeline that change dynamically

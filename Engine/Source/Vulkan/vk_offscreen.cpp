@@ -93,7 +93,7 @@ void VulkanOffscreen::InitRenderpass()
 	VkAttachmentDescription depth_attachment = {};
 	// Depth attachment
 	depth_attachment.flags = 0;
-	depth_attachment.format = p_renderer->GetSwapChain().depthFormat;
+	depth_attachment.format = VK_FORMAT_D16_UNORM;
 	depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -130,10 +130,10 @@ void VulkanOffscreen::InitRenderpass()
 	render_pass_info.subpassCount = 1;
 	render_pass_info.pSubpasses = &subpass;	
 
-	VK_CHECK(vkCreateRenderPass(p_renderer->GetDevice(), &render_pass_info, nullptr, &shadowPass));
+	VK_CHECK(vkCreateRenderPass(p_renderer->GetDevice(), &render_pass_info, nullptr, &shadow.shadowPass));
 
 	p_renderer->EnqueueCleanup([=]() {
-		vkDestroyRenderPass(p_renderer->GetDevice(), shadowPass, nullptr);
+		vkDestroyRenderPass(p_renderer->GetDevice(), shadow.shadowPass, nullptr);
 	});
 }
 
@@ -147,51 +147,55 @@ void VulkanOffscreen::InitFramebuffer()
 	dimg_allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	//shadow image
 	{
-		VkExtent3D shadowExtent3D = {shadowExtent.width, shadowExtent.height, 1};
+		VkExtent3D shadowExtent3D = {shadow.shadowExtent.width, shadow.shadowExtent.height, 1};
 	
 		//the depth image will be a image with the format we selected and Depth Attachment usage flag
-		VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(p_renderer->GetSwapChain().depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, shadowExtent3D);
+		VkImageCreateInfo dimg_info = vkinit::ImageCreateInfo(VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, shadowExtent3D);
 
 		//allocate and create the image
-		vmaCreateImage(p_renderer->GetAllocator(), &dimg_info, &dimg_allocinfo, &shadowImage.image.image, &shadowImage.image.allocation, nullptr);
+		vmaCreateImage(p_renderer->GetAllocator(), &dimg_info, &dimg_allocinfo, &shadow.shadowImage.image.image, &shadow.shadowImage.image.allocation, nullptr);
 
 		//build a image-view for the depth image to use for rendering
-		VkImageViewCreateInfo dview_info = vkinit::ImageViewCreateInfo(p_renderer->GetSwapChain().depthFormat, shadowImage.image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
+		VkImageViewCreateInfo dview_info = vkinit::ImageViewCreateInfo(VK_FORMAT_D16_UNORM, shadow.shadowImage.image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-		VK_CHECK(vkCreateImageView(p_renderer->GetDevice(), &dview_info, nullptr, &shadowImage.imageView));
+		VK_CHECK(vkCreateImageView(p_renderer->GetDevice(), &dview_info, nullptr, &shadow.shadowImage.imageView));
 	}
-
-    VkFramebufferCreateInfo sh_info = vkinit::FramebufferCreateInfo(shadowPass, shadowExtent);
-	sh_info.pAttachments = &shadowImage.imageView;
+    VkFramebufferCreateInfo sh_info = vkinit::FramebufferCreateInfo(shadow.shadowPass, shadow.shadowExtent);
+	sh_info.pAttachments = &shadow.shadowImage.imageView;
 	sh_info.attachmentCount = 1;
-	VK_CHECK(vkCreateFramebuffer(p_renderer->GetDevice(), &sh_info, nullptr, &shadowFramebuffer));
-
+	VK_CHECK(vkCreateFramebuffer(p_renderer->GetDevice(), &sh_info, nullptr, &shadow.shadowFramebuffer));
+	VkFilter shadowFilter = vkinit::FormatIsFilterable(p_renderer->GetPhysicalDevice(), VK_FORMAT_D16_UNORM, VK_IMAGE_TILING_OPTIMAL) ?
+		   VK_FILTER_LINEAR :
+		   VK_FILTER_NEAREST;
 	VkSamplerCreateInfo shadowInfo = vkinit::SamplerCreateInfo(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-	vkCreateSampler(p_renderer->GetDevice(), &shadowInfo, nullptr, &shadowMapSampler);
+	vkCreateSampler(p_renderer->GetDevice(), &shadowInfo, nullptr, &shadow.shadowMapSampler);
 
     p_renderer->EnqueueCleanup([=]() {
-		vkDestroyImageView(p_renderer->GetDevice(), shadowImage.imageView, nullptr);
-		vkDestroyImage(p_renderer->GetDevice(), shadowImage.image.image, nullptr);
-		vkDestroyFramebuffer(p_renderer->GetDevice(), shadowFramebuffer, nullptr);
-		vkDestroySampler(p_renderer->GetDevice(), shadowMapSampler, nullptr);
-	}, &p_renderer->GetSwapQueue());
+		vkDestroyImageView(p_renderer->GetDevice(), shadow.shadowImage.imageView, nullptr);
+		vkDestroyImage(p_renderer->GetDevice(), shadow.shadowImage.image.image, nullptr);
+		vkDestroyFramebuffer(p_renderer->GetDevice(), shadow.shadowFramebuffer, nullptr);
+		vkDestroySampler(p_renderer->GetDevice(), shadow.shadowMapSampler, nullptr);
+	});
 
 }
 
 void VulkanOffscreen::InitDescriptors()
 {
-	VkDescriptorSetLayoutBinding cameraBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT,0);
 	VkDescriptorSetLayoutBinding debugTexBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {debugTexBind};
 	VkDescriptorSetLayoutCreateInfo _set1 = vkinit::DescriptorLayoutInfo(bindings);
-	offscreenGlobalSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set1);
+	debugTextureLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set1);
 
+	VkDescriptorSetLayoutBinding lightBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT,0);
 	VkDescriptorSetLayoutBinding objectBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
-	std::vector<VkDescriptorSetLayoutBinding> objectBindings = { objectBind};
-	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(objectBindings);
-	offscreenObjectSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set2);
+	std::vector<VkDescriptorSetLayoutBinding> lightBindings = {lightBind};
+	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(lightBindings);
+	shadow.offscreenGlobalSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set2);
+	std::vector<VkDescriptorSetLayoutBinding> objectBindings = {objectBind};
+	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(objectBindings);
+	shadow.offscreenObjectSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set3);
 
 	frames[0] = p_renderer->GetFrameData(0);
 	frames[1] = p_renderer->GetFrameData(1);
@@ -202,8 +206,8 @@ void VulkanOffscreen::InitDescriptors()
 		
 		frames[i].p_dynamicDescriptorAllocator = new vkcomponent::DescriptorAllocator{};
 		frames[i].p_dynamicDescriptorAllocator->Init(p_renderer->GetDevice());
-		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].globalDescriptor, offscreenGlobalSetLayout);
-		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].objectDescriptor, offscreenObjectSetLayout);
+		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].globalDescriptor, shadow.offscreenGlobalSetLayout);
+		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].objectDescriptor, shadow.offscreenObjectSetLayout);
 
 		{
 			CreateBufferInfo info;
@@ -221,16 +225,19 @@ void VulkanOffscreen::InitDescriptors()
             CreateBuffer(p_renderer->GetAllocator(), &frames[i].objectBuffer, info);
 		}
 
-		VkDescriptorBufferInfo cameraInfo;
-		cameraInfo.buffer = frames[i].cameraBuffer.buffer;
-		cameraInfo.offset = 0;
-		cameraInfo.range = sizeof(LightMatrixData);
+		VkDescriptorBufferInfo lightInfo;
+		lightInfo.buffer = frames[i].cameraBuffer.buffer;
+		lightInfo.offset = 0;
+		lightInfo.range = sizeof(LightMatrixData);
 
 		VkDescriptorBufferInfo objectBufferInfo;
 		objectBufferInfo.buffer = frames[i].objectBuffer.buffer;
 		objectBufferInfo.offset = 0;
 		objectBufferInfo.range = sizeof(GPUObjectData) * MAX_OBJECTS;
 		
+		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), frames[i].p_dynamicDescriptorAllocator)
+		.BindBuffer(0, &lightInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+		.Build(frames[i].globalDescriptor);
 
 		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), frames[i].p_dynamicDescriptorAllocator)
 		.BindBuffer(0, &objectBufferInfo, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
@@ -244,15 +251,24 @@ void VulkanOffscreen::InitDescriptors()
 			frames[i].p_dynamicDescriptorAllocator->CleanUp();
 		});
 	}
+	p_renderer->GetDescriptorAllocator()->Allocate(&debugTextureSet, debugTextureLayout);
+	VkDescriptorImageInfo imageBufferInfo;
+	imageBufferInfo.sampler = shadow.shadowMapSampler;
+	imageBufferInfo.imageView = shadow.shadowImage.imageView;
+	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
+	.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+	.Build(debugTextureSet);
 }
 
 void VulkanOffscreen::InitPipelines()
 {
-    //VkShaderModule texturedMeshShader;
+    //VkShaderModule debugVertexShader;
 	vkcomponent::ShaderModule debugVertShader;
 	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/debug.vert").c_str(), &debugVertShader, p_renderer->GetDevice());
 
-	//VkShaderModule meshVertShader;
+	//VkShaderModule debugFragmentShader;
 	vkcomponent::ShaderModule debugFragShader;
 	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/debug.frag").c_str(), &debugFragShader, p_renderer->GetDevice());
 
@@ -260,7 +276,7 @@ void VulkanOffscreen::InitPipelines()
 	std::vector<vkcomponent::ShaderModule> shaderModules = {debugVertShader, debugFragShader};
 
     
-	std::array<VkDescriptorSetLayout, 1> layouts= {offscreenGlobalSetLayout};
+	std::array<VkDescriptorSetLayout, 1> layouts= {debugTextureLayout};
 	VkPipelineLayoutCreateInfo debugpipInfo = vkinit::PipelineLayoutCreateInfo();
 	debugpipInfo.pSetLayouts = layouts.data();
 	debugpipInfo.setLayoutCount = layouts.size();
@@ -287,9 +303,46 @@ void VulkanOffscreen::InitPipelines()
 	vkcomponent::ShaderPass* debugPass = vkcomponent::BuildShader(p_renderer->GetDevice(), p_renderer->GetRenderPass(), offscreenBuilder, shadowDebugEffect);
 	shadowDebug = debugPass->pipeline;
 	shadowDebugLayout = debugPass->layout;
+
+
+	//VkShaderModule offscreenVertex;
+	vkcomponent::ShaderModule offscreenVertShader;
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/offscreen.vert").c_str(), & offscreenVertShader, p_renderer->GetDevice());
+
+	vkcomponent::ShaderEffect* offscreenEffect = new vkcomponent::ShaderEffect();
+	shaderModules.clear();
+	shaderModules = {offscreenVertShader};
+
+    
+	std::array<VkDescriptorSetLayout, 2> offscreenLayouts= {shadow.offscreenGlobalSetLayout, shadow.offscreenObjectSetLayout};
+	VkPipelineLayoutCreateInfo offscreenpipInfo = vkinit::PipelineLayoutCreateInfo();
+	offscreenpipInfo.pSetLayouts = offscreenLayouts.data();
+	offscreenpipInfo.setLayoutCount = offscreenLayouts.size();
+	offscreenEffect = vkcomponent::BuildEffect(p_renderer->GetDevice(), shaderModules, offscreenpipInfo);
+
+	std::vector <LocationInfo> locations = {{VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)}
+	};
+	VertexInputDescription vertexDescription = Vertex::GetVertexDescription(locations);
+
+	//connect the pipeline builder vertex input info to the one we get from Vertex
+	offscreenBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
+	offscreenBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
+
+	offscreenBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
+	offscreenBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
+
+	offscreenBuilder.rasterizer.depthBiasEnable = true;
+
+
+	vkcomponent::ShaderPass* offscreenPass = vkcomponent::BuildShader(p_renderer->GetDevice(), shadow.shadowPass, offscreenBuilder, offscreenEffect);
+	shadow.shadowPipeline = offscreenPass->pipeline;
+	shadow.shadowPipelineLayout = offscreenPass->layout;
+
+
     p_renderer->EnqueueCleanup([=]()
     {
         debugPass->FlushPass(p_renderer->GetDevice());
+		offscreenPass->FlushPass(p_renderer->GetDevice());
     });
 	
 }
@@ -299,7 +352,7 @@ void VulkanOffscreen::BeginOffscreenRenderpass()
 	//clear depth at 1
 	VkClearValue depthClear;
 	depthClear.depthStencil.depth = 1.f;	
-	VkRenderPassBeginInfo rpInfo = vkinit::RenderpassBeginInfo(shadowPass, shadowExtent, shadowFramebuffer);
+	VkRenderPassBeginInfo rpInfo = vkinit::RenderpassBeginInfo(shadow.shadowPass, shadow.shadowExtent, shadow.shadowFramebuffer);
 
 	//connect clear values
 	rpInfo.clearValueCount = 1;
@@ -310,7 +363,7 @@ void VulkanOffscreen::BeginOffscreenRenderpass()
 	vkCmdBeginRenderPass(p_renderer->GetCommandBuffer(), &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void VulkanOffscreen::OffscreenDraw(const std::vector<RenderObject>& objects)
+void VulkanOffscreen::debugShadows(bool /*debug = false*/)
 {
 	VkViewport viewport;
 	viewport.x = 0.0f;
@@ -320,38 +373,19 @@ void VulkanOffscreen::OffscreenDraw(const std::vector<RenderObject>& objects)
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
+	VkExtent2D imageExtent;
+	imageExtent.width = p_renderer->GetWidth();
+	imageExtent.height = p_renderer->GetHeight();
 	VkRect2D scissor;
 	scissor.offset = { 0, 0 };
-	scissor.extent = shadowExtent;
+	scissor.extent = imageExtent;
 
 	vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 	vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
-
-	
-
-	DescriptorSetData descriptorSets;
-	VkDescriptorImageInfo imageBufferInfo;
-	imageBufferInfo.sampler = shadowMapSampler;
-	imageBufferInfo.imageView = shadowImage.imageView;
-	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), GetCurrentFrame().p_dynamicDescriptorAllocator)
-	.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-	.Build(GetCurrentFrame().globalDescriptor);
-
-	descriptorSets.uniform = GetCurrentFrame().globalDescriptor;
-	descriptorSets.uniformOffset = 0;
-
-		// descriptorSets.object = p_renderer->GetCurrentFrame().objectDescriptor;
-		// descriptorSets.objectOffset = 0;
-		// UploadLightData(p_renderer->GetAllocator(), p_renderer->GetCurrentFrame().cameraBuffer.allocation);
-		// UploadDrawCalls(p_renderer->GetAllocator(), p_renderer->GetCurrentFrame().indirectDrawBuffer.allocation, objects);
-	//std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);
 	vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebug);
-	if(descriptorSets.uniform != VK_NULL_HANDLE)
-	{
-		vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0,1, &descriptorSets.uniform, 0, nullptr);
-	}
+	
+	vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0,1, &debugTextureSet, 0, nullptr);
+	
 	vkCmdDraw(p_renderer->GetCommandBuffer(), 3, 1, 0, 0);
 
 }

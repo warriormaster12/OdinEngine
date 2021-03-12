@@ -319,6 +319,21 @@ VkSamplerCreateInfo vkinit::SamplerCreateInfo(VkFilter filters, VkSamplerAddress
 
 	return info;
 }
+
+VkBool32 vkinit::FormatIsFilterable(VkPhysicalDevice physicalDevice, VkFormat format, VkImageTiling tiling)
+{
+    VkFormatProperties formatProps;
+    vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProps);
+
+    if (tiling == VK_IMAGE_TILING_OPTIMAL)
+        return formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;
+
+    if (tiling == VK_IMAGE_TILING_LINEAR)
+        return formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;
+
+    return false;
+}
+
 VkWriteDescriptorSet vkinit::WriteDescriptorImage(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo* p_imageInfo, uint32_t binding, uint32_t descriptorCount /*=1*/)
 {
 	VkWriteDescriptorSet write = {};

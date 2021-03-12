@@ -36,7 +36,11 @@ namespace vkcomponent
 
         //build the actual pipeline
         //we now use all of the info structs we have been writing into into this one to create the pipeline
-        std::array <VkDynamicState, 2> dStates = {VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR}; 
+        std::vector <VkDynamicState> dStates = {VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR}; 
+        if(rasterizer.depthBiasEnable == true)
+        {
+            dStates.push_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
+        }
         VkPipelineDynamicStateCreateInfo dStateInfo = {};
         dStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dStateInfo.dynamicStateCount = dStates.size();
