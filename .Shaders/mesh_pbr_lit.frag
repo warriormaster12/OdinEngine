@@ -8,6 +8,7 @@ layout (location = 0) in vec3 inColor;
 layout (location = 1) in vec2 texCoord;
 layout (location = 2) in vec3 WorldPos;
 layout (location = 3) in vec3 Normal;
+layout (location = 4) in vec4 inShadowCoord;
 //output write
 layout (location = 0) out vec4 outFragColor;
 
@@ -49,6 +50,7 @@ layout(set = 2, binding = 0) uniform MaterialData{
 } materialData;
 
 layout(set = 2, binding = 1) uniform sampler2D textureMaps[];
+layout(set = 2, binding = 2) uniform sampler2D shadowMap;
 
 
 
@@ -112,6 +114,8 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 vec3 calcPointLight(int index, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0,  float viewDistance);
 
 // ----------------------------------------------------------------------------
+float calcDirShadow(vec4 shadowCoord, vec2 off);
+float filterPCF(vec4 sc);
 vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0);
 // ----------------------------------------------------------------------------
 void main()
@@ -283,9 +287,45 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
     vec3 specular = numerator / max (denominator, 0.0001);
 
     vec3 radiance = (kD * (albedo / PI) + specular ) * radianceIn * nDotL;
-
-    //shadow isn't supported yet
-    // radiance *= (1.0 - shadow);
+    float shadow = filterPCF(inShadowCoord / inShadowCoord.w);
+    radiance *= shadow;
 
     return radiance;
+}
+
+float filterPCF(vec4 sc)
+{
+	ivec2 texDim = textureSize(shadowMap, 0);
+	float scale = 1.5;
+	float dx = scale * 1.0 / float(texDim.x);
+	float dy = scale * 1.0 / float(texDim.y);
+
+	float shadowFactor = 0.0;
+	int count = 0;
+	int range = 1;
+	
+	for (int x = -range; x <= range; x++)
+	{
+		for (int y = -range; y <= range; y++)
+		{
+			shadowFactor += calcDirShadow(sc, vec2(dx*x, dy*y));
+			count++;
+		}
+	
+	}
+	return shadowFactor / count;
+}
+
+float calcDirShadow(vec4 shadowCoord, vec2 off){
+    float shadow = 1.0;
+	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
+	{
+		float dist = texture( shadowMap, shadowCoord.st + off ).r;
+        float ambient = 0.1;
+		if ( shadowCoord.w > 0.0 && dist < shadowCoord.z ) 
+		{
+			shadow = ambient;
+		}
+	}
+    return shadow;
 }

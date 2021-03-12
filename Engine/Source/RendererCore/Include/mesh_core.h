@@ -16,6 +16,8 @@ struct RenderObject {
 	Material* p_material;
 
 	glm::mat4 transformMatrix;
+
+    bool shadowEnabled = true;
 };
 
 namespace RendererCore

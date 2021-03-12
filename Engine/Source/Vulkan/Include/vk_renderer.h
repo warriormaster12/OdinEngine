@@ -77,6 +77,8 @@ struct GPUCameraData{
 	glm::mat4 viewproj;
 
 	glm::vec4 camPos; // vec3
+
+	glm::mat4 lightSpace;
 };
 
 struct GPUMaterialData 

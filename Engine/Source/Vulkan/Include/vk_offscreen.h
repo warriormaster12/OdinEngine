@@ -16,7 +16,7 @@ struct Shadow{
     //shadows
 	Texture shadowImage;
 	VkFramebuffer shadowFramebuffer;
-	VkExtent2D shadowExtent{1024, 1024};
+	VkExtent2D shadowExtent{4096, 4096};
 
     VkRenderPass shadowPass;
     VkPipeline shadowPipeline;
@@ -45,6 +45,7 @@ public:
     void EndOffscreenRenderpass();
 
     Shadow& GetShadow(){return shadow;}
+    LightMatrixData light;
 private:
     VulkanRenderer* p_renderer;
     void InitRenderpass();

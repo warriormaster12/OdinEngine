@@ -28,13 +28,14 @@ VkResult drawResult;
 // Utility (pure) functions are put in an anonymous namespace
 
 namespace {
-    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, const Camera& cam)
+    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, const Camera& cam, const glm::mat4& space)
     {
         GPUCameraData camData;
         camData.view = cam.GetViewMatrix();
         camData.proj = cam.GetProjectionMatrix(false);
         camData.viewproj = camData.proj * camData.view;
         camData.camPos = glm::vec4(glm::vec3(cam.position), 0.0f);
+		camData.lightSpace = space;
 
 		UploadSingleData(allocator, allocation, camData);
     }
@@ -368,7 +369,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	descriptorSets.object = GetCurrentFrame().objectDescriptor;
 	descriptorSets.objectOffset = 0;
 
-	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera);
+	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera, offscreen.light.lightSpaceMatrix);
 	UploadSceneData(allocator, sceneParameterBuffer.allocation, sceneParameters, uniformOffset);
 	UploadObjectData(allocator, GetCurrentFrame().objectBuffer.allocation, objects);
 	
@@ -493,6 +494,14 @@ void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, const st
 	CreateTextures(name, mat.textures);
 
 	materials[name].isOutdated = true;
+
+	VkDescriptorImageInfo imageBufferInfo;
+	imageBufferInfo.sampler = offscreen.GetShadow().shadowMapSampler;
+	imageBufferInfo.imageView = offscreen.GetShadow().shadowImage.imageView;
+	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+	VkWriteDescriptorSet shadowImage = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materials[name].materialSet, &imageBufferInfo, 2);
+	vkUpdateDescriptorSets(device, 1, &shadowImage, 0, nullptr);
 	
 
 	EnqueueCleanup([=]() {
@@ -858,9 +867,10 @@ void VulkanRenderer::InitDescriptors()
 
 	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 7);
+	VkDescriptorSetLayoutBinding shadowBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
 	
-	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, TexturesBind};
-	std::vector<VkDescriptorBindingFlagsEXT> flags = {0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, TexturesBind, shadowBind};
+	std::vector<VkDescriptorBindingFlagsEXT> flags = {0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT, 0};
 	VkDescriptorSetLayoutBindingFlagsCreateInfo info = vkinit::DescriptorLayoutBindingFlagsInfo(flags);
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings, &info);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);

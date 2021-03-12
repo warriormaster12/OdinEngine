@@ -7,17 +7,18 @@ vkcomponent::PipelineBuilder offscreenBuilder;
 FrameData frames[FRAME_OVERLAP];
 FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
 
-glm::vec3 lightPos = glm::vec3(-2.0f, 4.0f, -1.0f);
+glm::vec3 lightPos = glm::vec3(0.0f, 50.0f, 50.0f);
 
 namespace 
 {
-	void UploadLightData(const VmaAllocator& allocator, const VmaAllocation& allocation)
+	void UploadLightData(const VmaAllocator& allocator, const VmaAllocation& allocation, LightMatrixData& light)
     {
         LightMatrixData lightData;
 		glm::mat4 depthProjectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, 1.0f, 96.0f);
 		glm::mat4 depthViewMatrix = glm::lookAt(glm::vec3(lightPos), glm::vec3(0.0f), glm::vec3(0, 1, 0));
         lightData.lightSpaceMatrix = depthProjectionMatrix * depthViewMatrix;
 		UploadSingleData(allocator, allocation, lightData);
+		light.lightSpaceMatrix = lightData.lightSpaceMatrix;
     }
 	void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation& allocation, const std::vector<RenderObject>& objects)
     {
@@ -34,6 +35,19 @@ namespace
         }
 
 		UploadVectorData(allocator, allocation, commands);
+    }
+	void UploadObjectData(const VmaAllocator& allocator, const VmaAllocation& allocation, const std::vector<RenderObject>& objects)
+    {
+        std::vector<GPUObjectData> data;
+        data.reserve(objects.size());
+        for (const RenderObject& obj : objects)
+        {
+            GPUObjectData objData;
+            objData.modelMatrix = obj.transformMatrix;
+            data.push_back(objData);
+        }
+
+		UploadVectorData(allocator, allocation, data);
     }
 	std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, const DescriptorSetData& descriptorSets)
     {
@@ -102,48 +116,54 @@ void VulkanOffscreen::InitOffscreen(VulkanRenderer& renderer)
 
 void VulkanOffscreen::InitRenderpass()
 {
-    //shadow pass
-	VkAttachmentDescription depth_attachment = {};
-	// Depth attachment
-	depth_attachment.flags = 0;
-	depth_attachment.format = VK_FORMAT_D16_UNORM;
-	depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depth_attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    VkAttachmentDescription attachmentDescription{};
+	attachmentDescription.format = VK_FORMAT_D16_UNORM;
+	attachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+	attachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;							// Clear depth at beginning of the render pass
+	attachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;						// We will read from depth, so it's important to store the depth attachment results
+	attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;					// We don't care about initial layout of the attachment
+	attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;// Attachment will be transitioned to shader read at render pass end
 
-	VkAttachmentReference depth_attachment_ref = {};
-	depth_attachment_ref.attachment =0;
-	depth_attachment_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference depthReference = {};
+	depthReference.attachment = 0;
+	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;			// Attachment will be used as depth/stencil during render pass
 
-	//we are going to create 1 subpass, which is the minimum you can do
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 0;													// No color attachments
+	subpass.pDepthStencilAttachment = &depthReference;									// Reference to our depth attachment
 
-	//hook the depth attachment into the subpass
-	subpass.pDepthStencilAttachment = &depth_attachment_ref;
+	// Use subpass dependencies for layout transitions
+	std::array<VkSubpassDependency, 2> dependencies;
 
-	//1 dependency, which is from "outside" into the subpass. And we can read or write color
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	VkRenderPassCreateInfo render_pass_info = {};
-	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	//2 attachments from said array
-	render_pass_info.attachmentCount = 1;
-	render_pass_info.pAttachments = &depth_attachment;
-	render_pass_info.subpassCount = 1;
-	render_pass_info.pSubpasses = &subpass;	
+	dependencies[1].srcSubpass = 0;
+	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	VK_CHECK(vkCreateRenderPass(p_renderer->GetDevice(), &render_pass_info, nullptr, &shadow.shadowPass));
+	VkRenderPassCreateInfo renderPassCreateInfo = {};
+		renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassCreateInfo.attachmentCount = 1;
+	renderPassCreateInfo.pAttachments = &attachmentDescription;
+	renderPassCreateInfo.subpassCount = 1;
+	renderPassCreateInfo.pSubpasses = &subpass;
+	renderPassCreateInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+	renderPassCreateInfo.pDependencies = dependencies.data();
+
+	VK_CHECK(vkCreateRenderPass(p_renderer->GetDevice(), &renderPassCreateInfo, nullptr, &shadow.shadowPass));
 
 	p_renderer->EnqueueCleanup([=]() {
 		vkDestroyRenderPass(p_renderer->GetDevice(), shadow.shadowPass, nullptr);
@@ -359,7 +379,7 @@ void VulkanOffscreen::BuildImage()
 	VkDescriptorImageInfo imageBufferInfo;
 	imageBufferInfo.sampler = shadow.shadowMapSampler;
 	imageBufferInfo.imageView = shadow.shadowImage.imageView;
-	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
 	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
 	.BindImage(0, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -442,7 +462,8 @@ void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& obje
 
 	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);
 
-	UploadLightData(p_renderer->GetAllocator(), GetCurrentFrame().cameraBuffer.allocation);
+	UploadLightData(p_renderer->GetAllocator(), GetCurrentFrame().cameraBuffer.allocation, light);
+	UploadObjectData(p_renderer->GetAllocator(), GetCurrentFrame().objectBuffer.allocation, objects);
 	IssueDrawCalls(p_renderer->GetCommandBuffer(), GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, shadow.shadowPipeline, shadow.shadowPipelineLayout);
 }
 

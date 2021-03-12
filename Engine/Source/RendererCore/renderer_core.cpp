@@ -14,6 +14,8 @@ auto end = std::chrono::system_clock::now();
 float deltaTime;
 float fps;
 
+std::vector<RenderObject> shadowObjects;
+
 
 
 
@@ -36,13 +38,13 @@ void RendererCore::UpdateRenderer()
     vkRenderer.BeginCommands();
 	vkRenderer.GetOffscreen().BeginOffscreenRenderpass();
 	{
-		vkRenderer.GetOffscreen().drawOffscreenShadows(RendererCore::GetRenderObjects());
+		vkRenderer.GetOffscreen().drawOffscreenShadows(shadowObjects);
 	}
 	vkRenderer.GetOffscreen().EndOffscreenRenderpass();
 	//In between commands we can specify in which renderPass we are going to draw
 	{
 		vkRenderer.BeginRenderpass();
-		vkRenderer.GetOffscreen().debugShadows(true);
+		vkRenderer.GetOffscreen().debugShadows(false);
 		vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
 		//Draw UI after drawing the 3D world
 		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
@@ -172,7 +174,7 @@ void RendererCore::LoadMeshes()
 
 	CreateMeshFromFile("monkey", "EngineAssets/Meshes/monkey_smooth.obj", vkRenderer);
 	CreateMeshFromFile("viking_room", "EngineAssets/Meshes/viking_room.obj", vkRenderer);
-	CreateMeshFromFile("empire", "EngineAssets/Meshes/lost_empire.obj", vkRenderer);
+	CreateMeshFromFile("empire", "EngineAssets/Meshes/Floor.obj", vkRenderer);
 	CreateMeshFromFile("DamagedHelmet", "EngineAssets/DamagedHelmet/DamagedHelmet.obj", vkRenderer);
 	CreateMeshFromFile("Barrel", "EngineAssets/Meshes/Barrel.obj", vkRenderer);
 	CreateMesh("skyBox", cubeMesh, vkRenderer);
@@ -222,7 +224,7 @@ void RendererCore::LoadMaterials()
 	GetMaterial("texturedmesh")->ao = 1.0f;
 	GetMaterial("texturedmesh")->emissionColor = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 	GetMaterial("texturedmesh")->emissionPower = 1.0f;
-	GetMaterial("texturedmesh")->textures = UpdateTextures("texturedmesh", lostEmpireTextures);
+	//GetMaterial("texturedmesh")->textures = UpdateTextures("texturedmesh", lostEmpireTextures);
 
 	GetMaterial("texturedmesh3")->albedo = glm::vec4(1.0f,1.0f,1.0f,1.0f);
 	GetMaterial("texturedmesh3")->metallic = 0.5f;
@@ -282,12 +284,12 @@ void RendererCore::LoadRenderables()
 
 
 	RenderObject Barrel;
-	Barrel.transformMatrix = glm::translate(glm::vec3{ 0,3.0f,5.0f }); 
+	Barrel.transformMatrix = glm::translate(glm::vec3{ 0,1.0f,10.0f }); 
 
 	RendererCore::CreateRenderObject("Barrel", "BarrelMat",Barrel.transformMatrix);
 
 	RenderObject map;
-	map.transformMatrix = glm::translate(glm::vec3{ 5,-12,0 }); 
+	map.transformMatrix = glm::translate(glm::vec3{ 5,-2,0 }); 
 
 	RendererCore::CreateRenderObject("empire", "texturedmesh",map.transformMatrix);
 
@@ -295,5 +297,14 @@ void RendererCore::LoadRenderables()
 	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
 	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
 	skyBox.transformMatrix = translation * scale;
-	RendererCore::CreateRenderObject("skyBox", "skyMat",map.transformMatrix);
+	skyBox.shadowEnabled = false;
+	RendererCore::CreateRenderObject("skyBox", "skyMat", skyBox.transformMatrix);
+
+	for(size_t i = 0; i < RendererCore::GetRenderObjects().size(); i++)
+	{
+		if(RendererCore::GetRenderObjects()[i].shadowEnabled == true)
+		{
+			shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
+		}
+	}
 }
