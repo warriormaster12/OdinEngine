@@ -49,8 +49,8 @@ layout(set = 2, binding = 0) uniform MaterialData{
     vec4 emissionPower; // float
 } materialData;
 
-layout(set = 2, binding = 1) uniform sampler2D textureMaps[];
-layout(set = 2, binding = 2) uniform sampler2D shadowMap;
+layout(set = 2, binding = 1) uniform sampler2D shadowMap;
+layout(set = 2, binding = 2) uniform sampler2D textureMaps[];
 
 
 

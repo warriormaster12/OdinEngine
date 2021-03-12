@@ -471,7 +471,6 @@ void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, const st
 	mat.materialPass = *inputPass;
 	materials[name] = mat;
 	materialList.push_back(name);
-	
 	p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, mat.textures.size());
 	
 
@@ -500,7 +499,7 @@ void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, const st
 	imageBufferInfo.imageView = offscreen.GetShadow().shadowImage.imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
-	VkWriteDescriptorSet shadowImage = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materials[name].materialSet, &imageBufferInfo, 2);
+	VkWriteDescriptorSet shadowImage = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materials[name].materialSet, &imageBufferInfo, 1);
 	vkUpdateDescriptorSets(device, 1, &shadowImage, 0, nullptr);
 	
 
@@ -592,7 +591,7 @@ void VulkanRenderer::CreateTextures(const std::string& materialName, std::vector
 		}
 	}
 	// +1: binding 0 is used for material data (uniform data)
-	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo, 1, texturePaths.size());
+	VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMaterial->materialSet, imageBufferInfo, 2, texturePaths.size());
 	
 	vkUpdateDescriptorSets(device, 1, &outputTexture, 0, nullptr);
 }
@@ -866,12 +865,13 @@ void VulkanRenderer::InitDescriptors()
 
 
 	VkDescriptorSetLayoutBinding objectMaterialBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 7);
-	VkDescriptorSetLayoutBinding shadowBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
+	VkDescriptorSetLayoutBinding shadowBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	VkDescriptorSetLayoutBinding TexturesBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 7);
 	
-	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, TexturesBind, shadowBind};
-	std::vector<VkDescriptorBindingFlagsEXT> flags = {0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT, 0};
-	VkDescriptorSetLayoutBindingFlagsCreateInfo info = vkinit::DescriptorLayoutBindingFlagsInfo(flags);
+	
+	std::vector<VkDescriptorSetLayoutBinding> textureBindings = {objectMaterialBind, shadowBind, TexturesBind};
+	std::vector<VkDescriptorBindingFlagsEXT> flags = {0, 0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+	auto& info = vkinit::DescriptorLayoutBindingFlagsInfo(flags);
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings, &info);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 

@@ -51,7 +51,7 @@ namespace vkinit {
 
     VkDescriptorSetLayoutCreateInfo DescriptorLayoutInfo(std::vector<VkDescriptorSetLayoutBinding>& bindings, const void* bindingFlags = nullptr);
     
-    VkDescriptorSetLayoutBindingFlagsCreateInfo DescriptorLayoutBindingFlagsInfo(const std::vector<VkDescriptorBindingFlagsEXT> flags);
+    const VkDescriptorSetLayoutBindingFlagsCreateInfo DescriptorLayoutBindingFlagsInfo(std::vector<VkDescriptorBindingFlagsEXT>& flags);
 
     VkBool32 FormatIsFilterable(VkPhysicalDevice physicalDevice, VkFormat format, VkImageTiling tiling);
 }

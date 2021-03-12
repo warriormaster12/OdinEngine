@@ -14,6 +14,5 @@ namespace MaterialProperties
             RendererCore::GetMaterial(materialName)->SetAlbedo(inputColor);
         }
         ImGui::End();
-        ENGINE_CORE_INFO(RendererCore::GetMaterial(materialName)->isOutdated);
     }
 }
