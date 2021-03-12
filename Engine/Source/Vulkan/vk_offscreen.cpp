@@ -7,13 +7,15 @@ vkcomponent::PipelineBuilder offscreenBuilder;
 FrameData frames[FRAME_OVERLAP];
 FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
 
+glm::vec3 lightPos = glm::vec3(-2.0f, 4.0f, -1.0f);
+
 namespace 
 {
 	void UploadLightData(const VmaAllocator& allocator, const VmaAllocation& allocation)
     {
         LightMatrixData lightData;
 		glm::mat4 depthProjectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, 1.0f, 96.0f);
-		glm::mat4 depthViewMatrix = glm::lookAt(glm::vec3(100.0f, 100.0f, 100.0f), glm::vec3(0.0f), glm::vec3(0, 1, 0));
+		glm::mat4 depthViewMatrix = glm::lookAt(glm::vec3(lightPos), glm::vec3(0.0f), glm::vec3(0, 1, 0));
         lightData.lightSpaceMatrix = depthProjectionMatrix * depthViewMatrix;
 		UploadSingleData(allocator, allocation, lightData);
     }
@@ -65,10 +67,19 @@ namespace
         return batch;
     }
 
-	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls)
+	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls, const VkPipeline& pipeline, const VkPipelineLayout& layout)
 	{
 		for (const DrawCall& dc : drawCalls)
 		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &dc.descriptorSets.uniform, 0, nullptr);
+
+        	//object data descriptor
+        	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 1, 1, &dc.descriptorSets.object, 0, &dc.descriptorSets.objectOffset);
+
+			VkDeviceSize vertexOffset = 0;
+        	vkCmdBindVertexBuffers(cmd, 0, 1, &dc.pMesh->vertexBuffer.buffer, &vertexOffset);
+
 			uint32_t stride = sizeof(VkDrawIndirectCommand);
 			uint32_t offset = dc.index * stride;
 
@@ -85,6 +96,8 @@ void VulkanOffscreen::InitOffscreen(VulkanRenderer& renderer)
    InitFramebuffer();
    InitDescriptors();
    InitPipelines();
+   BuildImage();
+
 }
 
 void VulkanOffscreen::InitRenderpass()
@@ -181,7 +194,7 @@ void VulkanOffscreen::InitFramebuffer()
 
 void VulkanOffscreen::InitDescriptors()
 {
-	VkDescriptorSetLayoutBinding debugTexBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	VkDescriptorSetLayoutBinding debugTexBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {debugTexBind};
 	VkDescriptorSetLayoutCreateInfo _set1 = vkinit::DescriptorLayoutInfo(bindings);
@@ -251,15 +264,6 @@ void VulkanOffscreen::InitDescriptors()
 			frames[i].p_dynamicDescriptorAllocator->CleanUp();
 		});
 	}
-	p_renderer->GetDescriptorAllocator()->Allocate(&debugTextureSet, debugTextureLayout);
-	VkDescriptorImageInfo imageBufferInfo;
-	imageBufferInfo.sampler = shadow.shadowMapSampler;
-	imageBufferInfo.imageView = shadow.shadowImage.imageView;
-	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
-	.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-	.Build(debugTextureSet);
 }
 
 void VulkanOffscreen::InitPipelines()
@@ -294,6 +298,8 @@ void VulkanOffscreen::InitPipelines()
 
 	//configure the rasterizer to draw filled triangles
 	offscreenBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE);
+
+	offscreenBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
 
 	offscreenBuilder.multisampling = vkinit::MultisamplingStateCreateInfo();
 
@@ -347,6 +353,19 @@ void VulkanOffscreen::InitPipelines()
 	
 }
 
+void VulkanOffscreen::BuildImage()
+{
+	p_renderer->GetDescriptorAllocator()->Allocate(&debugTextureSet, debugTextureLayout);
+	VkDescriptorImageInfo imageBufferInfo;
+	imageBufferInfo.sampler = shadow.shadowMapSampler;
+	imageBufferInfo.imageView = shadow.shadowImage.imageView;
+	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
+	.BindImage(0, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+	.Build(debugTextureSet);
+}
+
 void VulkanOffscreen::BeginOffscreenRenderpass()
 {
 	//clear depth at 1
@@ -363,31 +382,68 @@ void VulkanOffscreen::BeginOffscreenRenderpass()
 	vkCmdBeginRenderPass(p_renderer->GetCommandBuffer(), &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void VulkanOffscreen::debugShadows(bool /*debug = false*/)
+void VulkanOffscreen::debugShadows(bool debug /*= false*/)
+{
+	if(debug == true)
+	{
+		VkViewport viewport;
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)p_renderer->GetWidth();
+		viewport.height = (float)p_renderer->GetHeight();
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		VkExtent2D imageExtent;
+		imageExtent.width = p_renderer->GetWidth();
+		imageExtent.height = p_renderer->GetHeight();
+		VkRect2D scissor;
+		scissor.offset = { 0, 0 };
+		scissor.extent = imageExtent;
+
+		vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
+		vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
+		vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebug);
+		
+		vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0,1, &debugTextureSet, 0, nullptr);
+		
+		vkCmdDraw(p_renderer->GetCommandBuffer(), 3, 1, 0, 0);
+	}
+
+}
+
+void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& objects)
 {
 	VkViewport viewport;
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)p_renderer->GetWidth();
-	viewport.height = (float)p_renderer->GetHeight();
+	viewport.width = (float)shadow.shadowExtent.width;
+	viewport.height = (float)shadow.shadowExtent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkExtent2D imageExtent;
-	imageExtent.width = p_renderer->GetWidth();
-	imageExtent.height = p_renderer->GetHeight();
+	imageExtent.width = shadow.shadowExtent.width;
+	imageExtent.height = shadow.shadowExtent.height;
 	VkRect2D scissor;
 	scissor.offset = { 0, 0 };
 	scissor.extent = imageExtent;
 
 	vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 	vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
-	vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebug);
-	
-	vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0,1, &debugTextureSet, 0, nullptr);
-	
-	vkCmdDraw(p_renderer->GetCommandBuffer(), 3, 1, 0, 0);
+	vkCmdSetDepthBias(p_renderer->GetCommandBuffer(), shadow.depthBiasConstant,0.0f,shadow.depthBiasSlope);
+	vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadow.shadowPipeline);
 
+	DescriptorSetData descriptorSets;
+	descriptorSets.uniform = GetCurrentFrame().globalDescriptor;
+	descriptorSets.uniformOffset = 0;
+	descriptorSets.object = GetCurrentFrame().objectDescriptor;
+	descriptorSets.objectOffset = 0;
+
+	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);
+
+	UploadLightData(p_renderer->GetAllocator(), GetCurrentFrame().cameraBuffer.allocation);
+	IssueDrawCalls(p_renderer->GetCommandBuffer(), GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, shadow.shadowPipeline, shadow.shadowPipelineLayout);
 }
 
 void VulkanOffscreen::EndOffscreenRenderpass()

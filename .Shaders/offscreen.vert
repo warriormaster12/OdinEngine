@@ -17,5 +17,5 @@ layout(std140,set = 1, binding = 0) readonly buffer ObjectBuffer{
  
 void main()
 {
-	gl_Position =  objectBuffer.objects[gl_InstanceIndex].model * lightMatrixData.lightSpaceMatrix * vec4(inPos, 1.0);
+	gl_Position = lightMatrixData.lightSpaceMatrix * objectBuffer.objects[gl_InstanceIndex].model * vec4(inPos, 1.0);
 }

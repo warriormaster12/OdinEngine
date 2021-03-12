@@ -26,6 +26,11 @@ struct Shadow{
 	VkDescriptorSetLayout offscreenObjectSetLayout{};
 
     VkSampler shadowMapSampler;
+
+    // Constant depth bias factor (always applied)
+	float depthBiasConstant = 1.25f;
+	// Slope depth bias factor, applied depending on polygon's slope
+	float depthBiasSlope = 1.75f;
 };
 
 // here we defie things to get offscreen rendering going
@@ -35,7 +40,7 @@ public:
     void InitOffscreen(VulkanRenderer& renderer);
     void InitFramebuffer();
     void BeginOffscreenRenderpass();
-    void drawOffscreenShadows();
+    void drawOffscreenShadows(const std::vector<RenderObject>& objects);
     void debugShadows(bool debug = false);
     void EndOffscreenRenderpass();
 
@@ -45,6 +50,7 @@ private:
     void InitRenderpass();
     void InitDescriptors();
     void InitPipelines();
+    void BuildImage();
 
     Shadow shadow;
 
