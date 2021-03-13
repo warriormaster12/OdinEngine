@@ -250,20 +250,13 @@ void VulkanOffscreen::InitDescriptors()
 			CreateBuffer(p_renderer->GetAllocator(), &frames[i].cameraBuffer, info);
 		}
 
-		{
-			CreateBufferInfo info;
-			info.allocSize = MAX_OBJECTS * sizeof(GPUObjectData);
-			info.bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-            CreateBuffer(p_renderer->GetAllocator(), &frames[i].objectBuffer, info);
-		}
-
 		VkDescriptorBufferInfo lightInfo;
 		lightInfo.buffer = frames[i].cameraBuffer.buffer;
 		lightInfo.offset = 0;
 		lightInfo.range = sizeof(LightMatrixData);
 
 		VkDescriptorBufferInfo objectBufferInfo;
+		//objectBuffer's allocSize hasn't changed so we don't need to recreate the buffer
 		objectBufferInfo.buffer = frames[i].objectBuffer.buffer;
 		objectBufferInfo.offset = 0;
 		objectBufferInfo.range = sizeof(GPUObjectData) * MAX_OBJECTS;
@@ -278,7 +271,6 @@ void VulkanOffscreen::InitDescriptors()
 
 		p_renderer->EnqueueCleanup([=]()
 		{
-			vmaDestroyBuffer(p_renderer->GetAllocator(), frames[i].objectBuffer.buffer, frames[i].objectBuffer.allocation);
 			vmaDestroyBuffer(p_renderer->GetAllocator(), frames[i].cameraBuffer.buffer, frames[i].cameraBuffer.allocation);
 
 			frames[i].p_dynamicDescriptorAllocator->CleanUp();
@@ -319,9 +311,9 @@ void VulkanOffscreen::InitPipelines()
 	//configure the rasterizer to draw filled triangles
 	offscreenBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE);
 
-	offscreenBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
-
 	offscreenBuilder.multisampling = vkinit::MultisamplingStateCreateInfo();
+	
+	offscreenBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
 
 	offscreenBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
 
@@ -349,6 +341,7 @@ void VulkanOffscreen::InitPipelines()
 	std::vector <LocationInfo> locations = {{VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)}
 	};
 	VertexInputDescription vertexDescription = Vertex::GetVertexDescription(locations);
+
 
 	//connect the pipeline builder vertex input info to the one we get from Vertex
 	offscreenBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();

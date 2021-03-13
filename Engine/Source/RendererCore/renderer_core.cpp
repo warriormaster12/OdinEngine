@@ -44,7 +44,7 @@ void RendererCore::UpdateRenderer()
 	//In between commands we can specify in which renderPass we are going to draw
 	{
 		vkRenderer.BeginRenderpass();
-		vkRenderer.GetOffscreen().debugShadows(false);
+		vkRenderer.GetOffscreen().debugShadows(true);
 		vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
 		//Draw UI after drawing the 3D world
 		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
