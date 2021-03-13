@@ -44,7 +44,7 @@ void RendererCore::UpdateRenderer()
 	//In between commands we can specify in which renderPass we are going to draw
 	{
 		vkRenderer.BeginRenderpass();
-		vkRenderer.GetOffscreen().debugShadows(true);
+		vkRenderer.GetOffscreen().debugShadows(false);
 		vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
 		//Draw UI after drawing the 3D world
 		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
@@ -293,18 +293,16 @@ void RendererCore::LoadRenderables()
 
 	RendererCore::CreateRenderObject("empire", "texturedmesh",map.transformMatrix);
 
+	for(size_t i = 0; i < RendererCore::GetRenderObjects().size(); i++)
+	{
+		shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
+	}
+
 	RenderObject skyBox;
 	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
 	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
 	skyBox.transformMatrix = translation * scale;
-	skyBox.shadowEnabled = false;
 	RendererCore::CreateRenderObject("skyBox", "skyMat", skyBox.transformMatrix);
 
-	for(size_t i = 0; i < RendererCore::GetRenderObjects().size(); i++)
-	{
-		if(RendererCore::GetRenderObjects()[i].shadowEnabled == true)
-		{
-			shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
-		}
-	}
+	
 }
