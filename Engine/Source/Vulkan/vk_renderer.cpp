@@ -369,7 +369,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	descriptorSets.object = GetCurrentFrame().objectDescriptor;
 	descriptorSets.objectOffset = 0;
 
-	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera, offscreen.light.lightSpaceMatrix);
+	//UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera, offscreen.light.lightSpaceMatrix);
 	UploadSceneData(allocator, sceneParameterBuffer.allocation, sceneParameters, uniformOffset);
 	UploadObjectData(allocator, GetCurrentFrame().objectBuffer.allocation, objects);
 	
@@ -494,13 +494,13 @@ void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, const st
 
 	materials[name].isOutdated = true;
 
-	VkDescriptorImageInfo imageBufferInfo;
-	imageBufferInfo.sampler = offscreen.GetShadow().shadowMapSampler;
-	imageBufferInfo.imageView = offscreen.GetShadow().shadowImage.imageView;
-	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	// VkDescriptorImageInfo imageBufferInfo;
+	// imageBufferInfo.sampler = offscreen.GetShadow().shadowMapSampler;
+	// imageBufferInfo.imageView = offscreen.GetShadow().shadowImage.imageView;
+	// imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
-	VkWriteDescriptorSet shadowImage = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materials[name].materialSet, &imageBufferInfo, 1);
-	vkUpdateDescriptorSets(device, 1, &shadowImage, 0, nullptr);
+	// VkWriteDescriptorSet shadowImage = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materials[name].materialSet, &imageBufferInfo, 1);
+	// vkUpdateDescriptorSets(device, 1, &shadowImage, 0, nullptr);
 	
 
 	EnqueueCleanup([=]() {

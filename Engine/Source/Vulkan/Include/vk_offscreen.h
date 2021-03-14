@@ -7,11 +7,15 @@
 
 #include "mesh_core.h"
 
+#define SHADOW_MAP_CASCADE_COUNT 4
 class VulkanRenderer;
 
-struct LightMatrixData{   
-	glm::mat4 lightSpaceMatrix;
+
+struct PushConstBlock {
+    glm::vec4 position;
+    uint32_t cascadeIndex;
 };
+
 struct Shadow{
     //shadows
 	Texture shadowImage;
@@ -22,8 +26,10 @@ struct Shadow{
     VkPipeline shadowPipeline;
     VkPipelineLayout shadowPipelineLayout;
 
-    VkDescriptorSetLayout offscreenGlobalSetLayout{};
-	VkDescriptorSetLayout offscreenObjectSetLayout{};
+
+    struct LightMatrixData {
+        std::array<glm::mat4, SHADOW_MAP_CASCADE_COUNT> cascadeViewProjMat;
+    } lightMatrixData;
 
     VkSampler shadowMapSampler;
 
@@ -32,6 +38,20 @@ struct Shadow{
 	// Slope depth bias factor, applied depending on polygon's slope
 	float depthBiasSlope = 1.75f;
 };
+struct Cascade {
+		VkFramebuffer frameBuffer;
+		VkDescriptorSet descriptorSet;
+		VkImageView view;
+
+		float splitDepth;
+		glm::mat4 viewProjMatrix;
+
+    void destroy(VkDevice device) {
+        vkDestroyImageView(device, view, nullptr);
+        vkDestroyFramebuffer(device, frameBuffer, nullptr);
+    }
+};
+
 
 // here we defie things to get offscreen rendering going
 class VulkanOffscreen
@@ -45,7 +65,7 @@ public:
     void EndOffscreenRenderpass();
 
     Shadow& GetShadow(){return shadow;}
-    LightMatrixData light;
+    Shadow::LightMatrixData light;
 private:
     VulkanRenderer* p_renderer;
     void InitRenderpass();
@@ -54,11 +74,18 @@ private:
     void BuildImage();
 
     Shadow shadow;
+    std::array<Cascade, SHADOW_MAP_CASCADE_COUNT> cascades;
 
     VkPipeline shadowDebug;
     VkPipelineLayout shadowDebugLayout;
 
-    VkDescriptorSetLayout debugTextureLayout{};
+    VkDescriptorSetLayout debugSetLayout{};
     VkDescriptorSet debugTextureSet;
+
+    VkDescriptorSetLayout depthSetLayout{};
+
+    VkDescriptorSetLayout depthSetLayoutGlobal{};
+    VkDescriptorSet depthTextureSet;
+	
 
 };

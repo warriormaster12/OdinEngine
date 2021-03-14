@@ -54,5 +54,7 @@ namespace vkinit {
     const VkDescriptorSetLayoutBindingFlagsCreateInfo DescriptorLayoutBindingFlagsInfo(std::vector<VkDescriptorBindingFlagsEXT>& flags);
 
     VkBool32 FormatIsFilterable(VkPhysicalDevice physicalDevice, VkFormat format, VkImageTiling tiling);
+
+    VkFormat GetSupportedDepthFormat(bool checkSamplingSupport, VkPhysicalDevice& physicalDevice);
 }
 

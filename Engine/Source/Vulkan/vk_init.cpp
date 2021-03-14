@@ -371,6 +371,28 @@ const VkDescriptorSetLayoutBindingFlagsCreateInfo vkinit::DescriptorLayoutBindin
     return bindingFlags;
  }
 
+VkFormat vkinit::GetSupportedDepthFormat(bool checkSamplingSupport, VkPhysicalDevice& physicalDevice)
+{
+    // All depth formats may be optional, so we need to find a suitable depth format to use
+    std::vector<VkFormat> depthFormats = { VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D16_UNORM };
+    for (auto& format : depthFormats)
+    {
+        VkFormatProperties formatProperties;
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
+        // Format must support depth stencil attachment for optimal tiling
+        if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+        {
+            if (checkSamplingSupport) {
+                if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)) {
+                    continue;
+                }
+            }
+            return format;
+        }
+    }
+    throw std::runtime_error("Could not find a matching depth format");
+}
+
 
 
 
