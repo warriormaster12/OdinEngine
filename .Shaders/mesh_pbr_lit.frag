@@ -3,14 +3,24 @@
 
 #extension GL_EXT_nonuniform_qualifier : require
 
+#define SHADOW_MAP_CASCADE_COUNT 4
+
+
 //shader input
 layout (location = 0) in vec3 inColor;
 layout (location = 1) in vec2 texCoord;
 layout (location = 2) in vec3 WorldPos;
 layout (location = 3) in vec3 Normal;
-layout (location = 4) in vec4 inShadowCoord;
+layout (location = 4) in vec3 inViewPos;
 //output write
 layout (location = 0) out vec4 outFragColor;
+
+const mat4 biasMat = mat4( 
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0 
+);
 
 
 layout(set = 0, binding = 0) uniform  CameraBuffer{   
@@ -19,6 +29,15 @@ layout(set = 0, binding = 0) uniform  CameraBuffer{
 	mat4 viewproj;
 	vec4 camPos; // vec3
 } cameraData;
+
+layout (set = 0, binding = 2) uniform UBO {
+	vec4 cascadeSplits;
+	mat4 cascadeViewProjMat[SHADOW_MAP_CASCADE_COUNT];
+	mat4 inverseViewMat;
+	vec3 lightDir;
+	float pad;
+	int colorCascades;
+} ubo;
 
 struct DirectionLight{
     vec4 direction; //vec3
@@ -51,6 +70,9 @@ layout(set = 2, binding = 0) uniform MaterialData{
 
 layout(set = 2, binding = 1) uniform sampler2D shadowMap;
 layout(set = 2, binding = 2) uniform sampler2D textureMaps[];
+
+layout (set = 0, binding = 1) uniform sampler2DArray shadowMap;
+layout (set = 1, binding = 0) uniform sampler2D colorMap;
 
 
 
@@ -114,8 +136,8 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 vec3 calcPointLight(int index, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0,  float viewDistance);
 
 // ----------------------------------------------------------------------------
-float calcDirShadow(vec4 shadowCoord, vec2 off);
-float filterPCF(vec4 sc);
+float calcDirShadow(vec4 shadowCoord, vec2 offset, uint cascadeIndex);
+float filterPCF(vec4 sc, uint cascadeIndex);
 vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0);
 // ----------------------------------------------------------------------------
 void main()
@@ -265,6 +287,13 @@ vec3 calcPointLight(int index, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 alb
 
 vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0)
 {
+    // Get cascade index for the current fragment's view position
+	uint cascadeIndex = 0;
+	for(uint i = 0; i < SHADOW_MAP_CASCADE_COUNT - 1; ++i) {
+		if(inViewPos.z < ubo.cascadeSplits[i]) {	
+			cascadeIndex = i + 1;
+		}
+	}
     //Variables common to BRDFs
     vec3 lightDir = normalize(vec3(-light.direction));
     vec3 halfway  = normalize(lightDir + viewDir);
@@ -293,9 +322,13 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
     return radiance;
 }
 
-float filterPCF(vec4 sc)
+float filterPCF(vec4 sc, uint cascadeIndex)
 {
-	ivec2 texDim = textureSize(shadowMap, 0);
+	ivec2 texDim = textureSize(shadowMap, 0).xy;
+	float scale = 0.75;
+	float dx = scale * 1.0 / float(texDim.x);
+	float dy = scale * 1.0 / float(texDim.y);
+ivec2 texDim = textureSize(shadowMap, 0);
 	float scale = 1.5;
 	float dx = scale * 1.0 / float(texDim.x);
 	float dy = scale * 1.0 / float(texDim.y);
@@ -314,18 +347,46 @@ float filterPCF(vec4 sc)
 	
 	}
 	return shadowFactor / count;
+	float shadowFactor = 0.0;
+	int count = 0;
+	int range = 1;
+	
+	for (int x = -range; x <= range; x++) {
+		for (int y = -range; y <= range; y++) {
+			shadowFactor += calcDirShadow(sc, vec2(dx*x, dy*y), cascadeIndex);
+			count++;
+		}
+	}
+	return shadowFactor / count;
 }
 
-float calcDirShadow(vec4 shadowCoord, vec2 off){
+float calcDirShadow(vec4 shadowCoord, vec2 offset, uint cascadeIndex){
     float shadow = 1.0;
-	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
+	float bias = 0.005;ivec2 texDim = textureSize(shadowMap, 0);
+	float scale = 1.5;
+	float dx = scale * 1.0 / float(texDim.x);
+	float dy = scale * 1.0 / float(texDim.y);
+
+	float shadowFactor = 0.0;
+	int count = 0;
+	int range = 1;
+	
+	for (int x = -range; x <= range; x++)
 	{
-		float dist = texture( shadowMap, shadowCoord.st + off ).r;
-        float ambient = 0.1;
-		if ( shadowCoord.w > 0.0 && dist < shadowCoord.z ) 
+		for (int y = -range; y <= range; y++)
 		{
+			shadowFactor += calcDirShadow(sc, vec2(dx*x, dy*y));
+			count++;
+		}
+	
+	}
+	return shadowFactor / count;
+
+	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) {
+		float dist = texture(shadowMap, vec3(shadowCoord.st + offset, cascadeIndex)).r;
+		if (shadowCoord.w > 0 && dist < shadowCoord.z - bias) {
 			shadow = ambient;
 		}
 	}
-    return shadow;
+	return shadow;
 }
