@@ -16,7 +16,7 @@ namespace
 {
 	void UploadLightData(const VmaAllocator& allocator, const VmaAllocation& allocation, std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
     {
-        Shadow::LightMatrixData lightData;
+        DepthPass::UniformBlock lightData;
 		for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
 			lightData.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
 		}
@@ -51,7 +51,7 @@ namespace
 
 		UploadVectorData(allocator, allocation, data);
     }
-	std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, const DescriptorSetData& descriptorSets)
+	std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, DescriptorSetData descriptorSets)
     {
         std::vector<DrawCall> batch;
 
@@ -67,7 +67,9 @@ namespace
                 DrawCall dc;
                 dc.pMesh = objects[i].p_mesh;
                 dc.pMaterial = objects[i].p_material;
-                dc.descriptorSets = descriptorSets;
+				
+               	dc.descriptorSets = descriptorSets;
+	
                 dc.transformMatrix = objects[0].transformMatrix;
                 dc.index = i;
                 dc.count = 1;
@@ -98,8 +100,12 @@ namespace
 			glm::decompose(dc.transformMatrix, scale, rotation, position, scew, perspective);
 			pushConstBlock.position = glm::vec4(position, 0.0f);
 			vkCmdPushConstants(cmd,layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
+	
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 1, 1, &dc.descriptorSets.uniform, 0, nullptr);
+			for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+			{
+				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 1, 1, &dc.descriptorSets.cascadeSets[i], 0, nullptr);
+			}
 
 			VkDeviceSize vertexOffset = 0;
         	vkCmdBindVertexBuffers(cmd, 0, 1, &dc.pMesh->vertexBuffer.buffer, &vertexOffset);
@@ -179,11 +185,11 @@ void VulkanOffscreen::InitRenderpass()
 	renderPassCreateInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 	renderPassCreateInfo.pDependencies = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass(p_renderer->GetDevice(), &renderPassCreateInfo, nullptr, &shadow.shadowPass));
+	VK_CHECK(vkCreateRenderPass(p_renderer->GetDevice(), &renderPassCreateInfo, nullptr, &depthPass.renderPass));
 
 
 	p_renderer->EnqueueCleanup([=]() {
-		vkDestroyRenderPass(p_renderer->GetDevice(), shadow.shadowPass, nullptr);
+		vkDestroyRenderPass(p_renderer->GetDevice(), depthPass.renderPass, nullptr);
 	});
 }
 
@@ -193,7 +199,7 @@ void VulkanOffscreen::InitFramebuffer()
     /*
 		Layered depth image and views
 	*/
-	VkExtent3D shadowExtent3D = {shadow.shadowExtent.width, shadow.shadowExtent.height, 1};
+	VkExtent3D shadowExtent3D = {depth.imageSize.width, depth.imageSize.height, 1};
 	VkImageCreateInfo imageInfo = vkinit::ImageCreateInfo(depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,shadowExtent3D);
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
 	imageInfo.mipLevels = 1;
@@ -202,31 +208,29 @@ void VulkanOffscreen::InitFramebuffer()
 	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	VmaAllocationCreateInfo dimg_allocinfo = {};
     dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-	VK_CHECK(vmaCreateImage(p_renderer->GetAllocator(),&imageInfo, &dimg_allocinfo, &shadow.shadowImage.image.image, &shadow.shadowImage.image.allocation, nullptr));
+	VK_CHECK(vmaCreateImage(p_renderer->GetAllocator(),&imageInfo, &dimg_allocinfo, &depth.depthImage.image.image, &depth.depthImage.image.allocation, nullptr));
 	// Full depth map view (all layers)
-	VkImageViewCreateInfo viewInfo = vkinit::ImageViewCreateInfo(depthFormat, shadow.shadowImage.image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
+	VkImageViewCreateInfo viewInfo = vkinit::ImageViewCreateInfo(depthFormat, depth.depthImage.image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-	viewInfo.subresourceRange = {};
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = SHADOW_MAP_CASCADE_COUNT;
-	VK_CHECK(vkCreateImageView(p_renderer->GetDevice(), &viewInfo, nullptr, &shadow.shadowImage.imageView));
+	VK_CHECK(vkCreateImageView(p_renderer->GetDevice(), &viewInfo, nullptr, &depth.depthImage.imageView));
 
 	// One image and framebuffer per cascade
 	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
 		// Image view for this cascade's layer (inside the depth map)
 		// This view is used to render to that specific depth image layer
-		VkImageViewCreateInfo viewInfo = vkinit::ImageViewCreateInfo(depthFormat, shadow.shadowImage.image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
+		VkImageViewCreateInfo viewInfo = vkinit::ImageViewCreateInfo(depthFormat, depth.depthImage.image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-		viewInfo.subresourceRange = {};
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = i;
 		viewInfo.subresourceRange.layerCount = 1;
 		VK_CHECK(vkCreateImageView(p_renderer->GetDevice(), &viewInfo, nullptr, &cascades[i].view));
 		// Framebuffer
-		VkFramebufferCreateInfo framebufferInfo = vkinit::FramebufferCreateInfo(shadow.shadowPass, shadow.shadowExtent);
+		VkFramebufferCreateInfo framebufferInfo = vkinit::FramebufferCreateInfo(depthPass.renderPass, depth.imageSize);
 		framebufferInfo.attachmentCount = 1;
 		framebufferInfo.pAttachments = &cascades[i].view;
 		framebufferInfo.layers = 1;
@@ -237,9 +241,8 @@ void VulkanOffscreen::InitFramebuffer()
 	}
 
     p_renderer->EnqueueCleanup([=]() {
-		vkDestroyImageView(p_renderer->GetDevice(), shadow.shadowImage.imageView, nullptr);
-		vkDestroyImage(p_renderer->GetDevice(), shadow.shadowImage.image.image, nullptr);
-		vkDestroySampler(p_renderer->GetDevice(), shadow.shadowMapSampler, nullptr);
+		vmaDestroyImage(p_renderer->GetAllocator(), depth.depthImage.image.image, depth.depthImage.image.allocation);
+		vkDestroyImageView(p_renderer->GetDevice(), depth.depthImage.imageView, nullptr);
 	});
 
 }
@@ -253,52 +256,47 @@ void VulkanOffscreen::InitDescriptors()
 	debugSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set1);
 
 	VkDescriptorSetLayoutBinding depthBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT,0);
-	VkDescriptorSetLayoutBinding depthImageBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT,1);
+	VkDescriptorSetLayoutBinding depthImageBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT,1);
 
-	std::vector<VkDescriptorSetLayoutBinding> lightBindings = {depthBind};
-	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(lightBindings);
+	std::vector<VkDescriptorSetLayoutBinding> depthBindings = {depthBind, depthImageBind};
+	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(depthBindings);
 	depthSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set2);
 
-	std::vector<VkDescriptorSetLayoutBinding> depthImageBindings = {depthImageBind};
-	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(depthImageBindings);
-	depthSetLayoutGlobal = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set3);
-
-	frames[0] = p_renderer->GetFrameData(0);
-	frames[1] = p_renderer->GetFrameData(1);
-
-	const int MAX_OBJECTS = 10000;
-	for (int i = 0; i < FRAME_OVERLAP; i++)
+	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
 	{
-		
-		frames[i].p_dynamicDescriptorAllocator = new vkcomponent::DescriptorAllocator{};
-		frames[i].p_dynamicDescriptorAllocator->Init(p_renderer->GetDevice());
-		frames[i].p_dynamicDescriptorAllocator->Allocate(&frames[i].globalDescriptor, depthSetLayoutGlobal);
-
+		cascades[i].p_dynamicDescriptorAllocator = new vkcomponent::DescriptorAllocator{};
+		cascades[i].p_dynamicDescriptorAllocator->Init(p_renderer->GetDevice());
+	 	cascades[i].p_dynamicDescriptorAllocator->Allocate(&cascades[i].descriptorSet, depthSetLayout);
 		{
 			CreateBufferInfo info;
-			info.allocSize = sizeof(Shadow::LightMatrixData);
+			info.allocSize = sizeof(DepthPass::UniformBlock);
 			info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-			CreateBuffer(p_renderer->GetAllocator(), &frames[i].cameraBuffer, info);
+			CreateBuffer(p_renderer->GetAllocator(), &depthPass.uboBuffer, info);
 		}
 
 		VkDescriptorBufferInfo lightInfo;
-		lightInfo.buffer = frames[i].cameraBuffer.buffer;
+		lightInfo.buffer = depthPass.uboBuffer.buffer;
 		lightInfo.offset = 0;
-		lightInfo.range = sizeof(Shadow::LightMatrixData);
+		lightInfo.range = sizeof(DepthPass::UniformBlock);
 
 		
-		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), frames[i].p_dynamicDescriptorAllocator)
+		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), cascades[i].p_dynamicDescriptorAllocator)
 		.BindBuffer(0, &lightInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-		.Build(frames[i].globalDescriptor);
+		.Build(depthSet);
 
 		p_renderer->EnqueueCleanup([=]()
 		{
-			vmaDestroyBuffer(p_renderer->GetAllocator(), frames[i].cameraBuffer.buffer, frames[i].cameraBuffer.allocation);
-
-			frames[i].p_dynamicDescriptorAllocator->CleanUp();
+			vmaDestroyBuffer(p_renderer->GetAllocator(), depthPass.uboBuffer.buffer, depthPass.uboBuffer.allocation);
+			cascades[i].p_dynamicDescriptorAllocator->CleanUp();
 		});
+		
 	}
+	p_renderer->EnqueueCleanup([=]()
+	{
+		vmaDestroyBuffer(p_renderer->GetAllocator(), depthPass.uboBuffer.buffer, depthPass.uboBuffer.allocation);
+	});
+	
 }
 
 void VulkanOffscreen::InitPipelines()
@@ -352,7 +350,7 @@ void VulkanOffscreen::InitPipelines()
 	shadowDebugLayout = debugPass->layout;
 
 
-	//VkShaderModule depthVertex;
+	VkShaderModule depthVertex;
 	vkcomponent::ShaderModule depthVertShader;
 	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/depthpass.vert").c_str(), & depthVertShader, p_renderer->GetDevice());
 	//VkShaderModule depthFrag;
@@ -364,7 +362,7 @@ void VulkanOffscreen::InitPipelines()
 	shaderModules = {depthVertShader, depthFragShader};
 
     
-	std::array<VkDescriptorSetLayout, 2> offscreenLayouts= {depthSetLayout, depthSetLayoutGlobal};
+	std::array<VkDescriptorSetLayout, 1> offscreenLayouts= {depthSetLayout};
 	VkPipelineLayoutCreateInfo offscreenpipInfo = vkinit::PipelineLayoutCreateInfo();
 	offscreenpipInfo.pSetLayouts = offscreenLayouts.data();
 	offscreenpipInfo.setLayoutCount = offscreenLayouts.size();
@@ -385,12 +383,12 @@ void VulkanOffscreen::InitPipelines()
 	offscreenBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
 	offscreenBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
 
-	offscreenBuilder.rasterizer.depthClampEnable = true;
+	offscreenBuilder.rasterizer.depthClampEnable = false;
 
 
-	vkcomponent::ShaderPass* offscreenPass = vkcomponent::BuildShader(p_renderer->GetDevice(), shadow.shadowPass, offscreenBuilder, offscreenEffect);
-	shadow.shadowPipeline = offscreenPass->pipeline;
-	shadow.shadowPipelineLayout = offscreenPass->layout;
+	vkcomponent::ShaderPass* offscreenPass = vkcomponent::BuildShader(p_renderer->GetDevice(), depthPass.renderPass, offscreenBuilder, offscreenEffect);
+	depthPass.pipeline = offscreenPass->pipeline;
+	depthPass.pipelineLayout = offscreenPass->layout;
 
 
     p_renderer->EnqueueCleanup([=]()
@@ -410,52 +408,61 @@ void VulkanOffscreen::BuildImage()
 	sampler.minLod = 0.0f;
 	sampler.maxLod = 1.0f;
 	sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(p_renderer->GetDevice(), &sampler, nullptr, &shadow.shadowMapSampler));
-
-	p_renderer->GetDescriptorAllocator()->Allocate(&debugTextureSet, debugSetLayout);
-	p_renderer->GetDescriptorAllocator()->Allocate(&depthTextureSet, depthSetLayout);
-	VkDescriptorImageInfo imageBufferInfo;
-	imageBufferInfo.sampler = shadow.shadowMapSampler;
-	imageBufferInfo.imageView = shadow.shadowImage.imageView;
+	VK_CHECK(vkCreateSampler(p_renderer->GetDevice(), &sampler, nullptr, &depth.sampler));
+	
+	for(int i =0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+	{
+		VkDescriptorImageInfo imageBufferInfo = {};
+		imageBufferInfo.sampler = depth.sampler;
+		imageBufferInfo.imageView = depth.depthImage.imageView;
+		imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		
+		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), cascades[i].p_dynamicDescriptorAllocator)
+		.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+		.Build(cascades[i].descriptorSet);
+	}
+	p_renderer->GetDescriptorAllocator()->Allocate(&depthSet, debugSetLayout);
+	VkDescriptorImageInfo imageBufferInfo = {};
+	imageBufferInfo.sampler = depth.sampler;
+	imageBufferInfo.imageView = depth.depthImage.imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-
+	
 	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
 	.BindImage(0, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-	.Build(debugTextureSet);
-	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
-	.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-	.Build(depthTextureSet);
+	.Build(depthSet);
+	 p_renderer->EnqueueCleanup([=]() {
+		vkDestroySampler(p_renderer->GetDevice(), depth.sampler, nullptr);
+	});
 }
 
-void VulkanOffscreen::BeginOffscreenRenderpass()
+void VulkanOffscreen::BeginOffscreenRenderpass(uint32_t count)
 {
 	VkClearValue clearValues[1];
 	clearValues[0].depthStencil = { 1.0f, 0 };
 
-	VkRenderPassBeginInfo renderPassBeginInfo = vkinit::RenderpassBeginInfo(shadow.shadowPass, shadow.shadowExtent, VK_NULL_HANDLE);
+	VkRenderPassBeginInfo renderPassBeginInfo = vkinit::RenderpassBeginInfo(depthPass.renderPass, depth.imageSize, VK_NULL_HANDLE);
 	renderPassBeginInfo.renderArea.offset.x = 0;
 	renderPassBeginInfo.renderArea.offset.y = 0;
 	renderPassBeginInfo.clearValueCount = 1;
 	renderPassBeginInfo.pClearValues = clearValues;
 
 	VkViewport viewport = {};
-	viewport.width = (float)shadow.shadowExtent.width;
-	viewport.height = (float)shadow.shadowExtent.height;
+	viewport.width = (float)depth.imageSize.width;
+	viewport.height = (float)depth.imageSize.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 
 	VkRect2D scissor = {};
 	scissor.offset = {0,0};
-	scissor.extent = shadow.shadowExtent;
+	scissor.extent = depth.imageSize;
 	vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
 
 	// One pass per cascade
-	// The layer that this pass renders to is defined by the cascade's image view (selected via the cascade's descriptor set)
-	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
-		renderPassBeginInfo.framebuffer = cascades[i].frameBuffer;
-	}
+	// The layer that this pass renders to is defined by the cascade's image view (selected via the cascade's descriptor set)	
+	renderPassBeginInfo.framebuffer = cascades[count].frameBuffer;
 	vkCmdBeginRenderPass(p_renderer->GetCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	
 }
 
 void VulkanOffscreen::debugShadows(bool debug /*= false*/)
@@ -479,9 +486,10 @@ void VulkanOffscreen::debugShadows(bool debug /*= false*/)
 
 		vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 		vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
-		vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0, 1, &debugTextureSet, 0, nullptr);
+		vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0, 1, &depthSet, 0, nullptr);
 		vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebug);
 		PushConstBlock pushConstBlock = {};
+		pushConstBlock.cascadeIndex = 1;
 		vkCmdPushConstants(p_renderer->GetCommandBuffer(), shadowDebugLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
 		vkCmdDraw(p_renderer->GetCommandBuffer(), 3, 1, 0, 0);
 	}
@@ -493,29 +501,27 @@ void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& obje
 	VkViewport viewport;
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)shadow.shadowExtent.width;
-	viewport.height = (float)shadow.shadowExtent.height;
+	viewport.width = (float)depth.imageSize.width;
+	viewport.height = (float)depth.imageSize.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
-	VkExtent2D imageExtent;
-	imageExtent.width = shadow.shadowExtent.width;
-	imageExtent.height = shadow.shadowExtent.height;
 	VkRect2D scissor;
 	scissor.offset = { 0, 0 };
-	scissor.extent = imageExtent;
+	scissor.extent = depth.imageSize;
 
 	vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 	vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
 
 	DescriptorSetData descriptorSets;
-	descriptorSets.uniform = GetCurrentFrame().globalDescriptor;
-	descriptorSets.uniformOffset = 0;
-
+	for(int i=0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+	{
+		descriptorSets.cascadeSets[i] = cascades[i].descriptorSet;
+	}
 	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);
 
 	UploadLightData(p_renderer->GetAllocator(), GetCurrentFrame().cameraBuffer.allocation, cascades);
-	IssueDrawCalls(p_renderer->GetCommandBuffer(), GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, shadow.shadowPipeline, shadow.shadowPipelineLayout);
+	IssueDrawCalls(p_renderer->GetCommandBuffer(), GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, depthPass.pipeline, depthPass.pipelineLayout);
 }
 
 void VulkanOffscreen::EndOffscreenRenderpass()

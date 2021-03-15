@@ -36,6 +36,8 @@ struct DescriptorSetData {
 	VkDescriptorSet object;
 	/* Dynamic offset for 'object' descriptor set */
 	uint32_t objectOffset;
+
+	std::vector <VkDescriptorSet> cascadeSets; 
 };
 
 struct DrawCall {

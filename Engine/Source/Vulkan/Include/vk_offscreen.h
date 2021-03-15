@@ -6,6 +6,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "mesh_core.h"
+#include "vk_descriptors.h"
 
 #define SHADOW_MAP_CASCADE_COUNT 4
 class VulkanRenderer;
@@ -16,27 +17,22 @@ struct PushConstBlock {
     uint32_t cascadeIndex;
 };
 
-struct Shadow{
-    //shadows
-	Texture shadowImage;
-	VkFramebuffer shadowFramebuffer;
-	VkExtent2D shadowExtent{4096, 4096};
+struct DepthPass {
+    VkRenderPass renderPass;
+    VkPipelineLayout pipelineLayout;
+    VkPipeline pipeline;
 
-    VkRenderPass shadowPass;
-    VkPipeline shadowPipeline;
-    VkPipelineLayout shadowPipelineLayout;
-
-
-    struct LightMatrixData {
+    struct UniformBlock {
         std::array<glm::mat4, SHADOW_MAP_CASCADE_COUNT> cascadeViewProjMat;
-    } lightMatrixData;
+    } ubo;
 
-    VkSampler shadowMapSampler;
+    AllocatedBuffer uboBuffer;
 
-    // Constant depth bias factor (always applied)
-	float depthBiasConstant = 1.25f;
-	// Slope depth bias factor, applied depending on polygon's slope
-	float depthBiasSlope = 1.75f;
+} ;
+struct DepthImage {
+    Texture depthImage;
+    VkSampler sampler;
+    VkExtent2D imageSize {2048, 2048};
 };
 struct Cascade {
 		VkFramebuffer frameBuffer;
@@ -45,6 +41,7 @@ struct Cascade {
 
 		float splitDepth;
 		glm::mat4 viewProjMatrix;
+        vkcomponent::DescriptorAllocator* p_dynamicDescriptorAllocator;
 
     void destroy(VkDevice device) {
         vkDestroyImageView(device, view, nullptr);
@@ -59,13 +56,13 @@ class VulkanOffscreen
 public:
     void InitOffscreen(VulkanRenderer& renderer);
     void InitFramebuffer();
-    void BeginOffscreenRenderpass();
+    void BeginOffscreenRenderpass(uint32_t count);
     void drawOffscreenShadows(const std::vector<RenderObject>& objects);
     void debugShadows(bool debug = false);
     void EndOffscreenRenderpass();
 
-    Shadow& GetShadow(){return shadow;}
-    Shadow::LightMatrixData light;
+    // Shadow& GetShadow(){return shadow;}
+    // Shadow::LightMatrixData light;
 private:
     VulkanRenderer* p_renderer;
     void InitRenderpass();
@@ -73,19 +70,17 @@ private:
     void InitPipelines();
     void BuildImage();
 
-    Shadow shadow;
+    //Shadow shadow;
+    DepthImage depth;
+    DepthPass depthPass;
     std::array<Cascade, SHADOW_MAP_CASCADE_COUNT> cascades;
 
     VkPipeline shadowDebug;
     VkPipelineLayout shadowDebugLayout;
 
     VkDescriptorSetLayout debugSetLayout{};
-    VkDescriptorSet debugTextureSet;
-
     VkDescriptorSetLayout depthSetLayout{};
-
-    VkDescriptorSetLayout depthSetLayoutGlobal{};
-    VkDescriptorSet depthTextureSet;
+    VkDescriptorSet depthSet;
 	
 
 };

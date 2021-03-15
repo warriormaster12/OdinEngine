@@ -36,15 +36,19 @@ void RendererCore::UpdateRenderer()
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
 	imgui_layer::UpdateUi();
     vkRenderer.BeginCommands();
-	vkRenderer.GetOffscreen().BeginOffscreenRenderpass();
+	for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
 	{
-		//vkRenderer.GetOffscreen().drawOffscreenShadows(shadowObjects);
+		vkRenderer.GetOffscreen().BeginOffscreenRenderpass(i);
+		{
+			//vkRenderer.GetOffscreen().drawOffscreenShadows(shadowObjects);
+		}
+		vkRenderer.GetOffscreen().EndOffscreenRenderpass();
 	}
-	vkRenderer.GetOffscreen().EndOffscreenRenderpass();
 	//In between commands we can specify in which renderPass we are going to draw
 	vkRenderer.BeginRenderpass();
 	{
 		vkRenderer.GetOffscreen().debugShadows(true);
+		//vkRenderer.GetOffscreen().drawOffscreenShadows(shadowObjects);
 		//vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
 		//Draw UI after drawing the 3D world
 		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());

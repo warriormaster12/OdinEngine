@@ -10,7 +10,7 @@ layout(push_constant) uniform PushConsts {
 	uint cascadeIndex;
 } pushConsts;
 
-layout(set = 1, binding = 0) uniform LightMatrixData{   
+layout(set = 0, binding = 0) uniform LightMatrixData{   
 	mat4[SHADOW_MAP_CASCADE_COUNT] cascadeViewProjMat;
 } lightMatrixData;
 
