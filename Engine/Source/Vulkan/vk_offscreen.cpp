@@ -519,6 +519,7 @@ void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& obje
 	DescriptorSetData descriptorSets;
 	descriptorSets.cascadeSets = cascades[count].descriptorSet;
 	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);	
+	UploadDrawCalls(p_renderer->GetAllocator(), p_renderer->GetCurrentFrame().indirectDrawBuffer.allocation, objects);
 	IssueDrawCalls(p_renderer->GetCommandBuffer(), p_renderer->GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, depthPass.pipeline, depthPass.pipelineLayout);
 	ENGINE_CORE_ERROR("failed here");
 }

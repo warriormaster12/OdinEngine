@@ -49,7 +49,7 @@ void RendererCore::UpdateRenderer()
 	{
 		vkRenderer.GetOffscreen().debugShadows(true);
 		//vkRenderer.GetOffscreen().drawOffscreenShadows(shadowObjects);
-		vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
+		//vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
 		//Draw UI after drawing the 3D world
 		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
 		vkRenderer.EndRenderpass();
