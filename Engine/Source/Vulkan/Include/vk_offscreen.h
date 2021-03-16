@@ -57,7 +57,7 @@ public:
     void InitOffscreen(VulkanRenderer& renderer);
     void InitFramebuffer();
     void BeginOffscreenRenderpass(uint32_t count);
-    void drawOffscreenShadows(const std::vector<RenderObject>& objects);
+    void drawOffscreenShadows(const std::vector<RenderObject>& objects, uint32_t count);
     void debugShadows(bool debug = false);
     void EndOffscreenRenderpass();
 

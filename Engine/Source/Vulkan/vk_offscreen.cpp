@@ -14,13 +14,12 @@ glm::vec3 lightPos = glm::vec3(0.0f, 50.0f, 50.0f);
 
 namespace 
 {
-	void UploadLightData(const VmaAllocator& allocator, const VmaAllocation& allocation, std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
+	void UploadLightData(const VmaAllocator& allocator, DepthPass& depthPass, std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
     {
-        DepthPass::UniformBlock lightData;
 		for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
-			lightData.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
+			depthPass.ubo.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
 		}
-		UploadSingleData(allocator, allocation, lightData);
+		UploadSingleData(allocator, depthPass.uboBuffer.allocation, depthPass);
     }
 	void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation& allocation, const std::vector<RenderObject>& objects)
     {
@@ -51,7 +50,7 @@ namespace
 
 		UploadVectorData(allocator, allocation, data);
     }
-	std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, DescriptorSetData descriptorSets)
+	std::vector<DrawCall> BatchDrawCalls(const std::vector<RenderObject>& objects, const DescriptorSetData& descriptorSets)
     {
         std::vector<DrawCall> batch;
 
@@ -68,7 +67,9 @@ namespace
                 dc.pMesh = objects[i].p_mesh;
                 dc.pMaterial = objects[i].p_material;
 				
+				
                	dc.descriptorSets = descriptorSets;
+				
 	
                 dc.transformMatrix = objects[0].transformMatrix;
                 dc.index = i;
@@ -87,11 +88,11 @@ namespace
 
 	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls, const VkPipeline& pipeline, const VkPipelineLayout& layout)
 	{
-		PushConstBlock pushConstBlock = {};
-		pushConstBlock.cascadeIndex = SHADOW_MAP_CASCADE_COUNT - 1;
 
 		for (const DrawCall& dc : drawCalls)
 		{
+			PushConstBlock pushConstBlock = {};
+			pushConstBlock.cascadeIndex = 0;
 			glm::vec3 position;
 			glm::vec3 scale;
 			glm::quat rotation;
@@ -100,12 +101,10 @@ namespace
 			glm::decompose(dc.transformMatrix, scale, rotation, position, scew, perspective);
 			pushConstBlock.position = glm::vec4(position, 0.0f);
 			vkCmdPushConstants(cmd,layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
-	
+			
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-			for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
-			{
-				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 1, 1, &dc.descriptorSets.cascadeSets[i], 0, nullptr);
-			}
+			
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &dc.descriptorSets.cascadeSets, 0, nullptr);
 
 			VkDeviceSize vertexOffset = 0;
         	vkCmdBindVertexBuffers(cmd, 0, 1, &dc.pMesh->vertexBuffer.buffer, &vertexOffset);
@@ -275,15 +274,8 @@ void VulkanOffscreen::InitDescriptors()
 			CreateBuffer(p_renderer->GetAllocator(), &depthPass.uboBuffer, info);
 		}
 
-		VkDescriptorBufferInfo lightInfo;
-		lightInfo.buffer = depthPass.uboBuffer.buffer;
-		lightInfo.offset = 0;
-		lightInfo.range = sizeof(DepthPass::UniformBlock);
-
 		
-		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), cascades[i].p_dynamicDescriptorAllocator)
-		.BindBuffer(0, &lightInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-		.Build(depthSet);
+		
 
 		p_renderer->EnqueueCleanup([=]()
 		{
@@ -416,8 +408,14 @@ void VulkanOffscreen::BuildImage()
 		imageBufferInfo.sampler = depth.sampler;
 		imageBufferInfo.imageView = depth.depthImage.imageView;
 		imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+		VkDescriptorBufferInfo lightInfo;
+		lightInfo.buffer = depthPass.uboBuffer.buffer;
+		lightInfo.offset = 0;
+		lightInfo.range = sizeof(DepthPass::UniformBlock);
 		
 		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), cascades[i].p_dynamicDescriptorAllocator)
+		.BindBuffer(0, &lightInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
 		.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 		.Build(cascades[i].descriptorSet);
 	}
@@ -430,6 +428,7 @@ void VulkanOffscreen::BuildImage()
 	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
 	.BindImage(0, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 	.Build(depthSet);
+
 	 p_renderer->EnqueueCleanup([=]() {
 		vkDestroySampler(p_renderer->GetDevice(), depth.sampler, nullptr);
 	});
@@ -496,7 +495,7 @@ void VulkanOffscreen::debugShadows(bool debug /*= false*/)
 
 }
 
-void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& objects)
+void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& objects, uint32_t count)
 {
 	VkViewport viewport;
 	viewport.x = 0.0f;
@@ -513,15 +512,15 @@ void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& obje
 	vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 	vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
 
+	
+	
+	ENGINE_CORE_ERROR(count);
+	UploadLightData(p_renderer->GetAllocator(), depthPass, cascades);
 	DescriptorSetData descriptorSets;
-	for(int i=0; i < SHADOW_MAP_CASCADE_COUNT; i++)
-	{
-		descriptorSets.cascadeSets[i] = cascades[i].descriptorSet;
-	}
-	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);
-
-	UploadLightData(p_renderer->GetAllocator(), GetCurrentFrame().cameraBuffer.allocation, cascades);
-	IssueDrawCalls(p_renderer->GetCommandBuffer(), GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, depthPass.pipeline, depthPass.pipelineLayout);
+	descriptorSets.cascadeSets = cascades[count].descriptorSet;
+	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);	
+	IssueDrawCalls(p_renderer->GetCommandBuffer(), p_renderer->GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, depthPass.pipeline, depthPass.pipelineLayout);
+	ENGINE_CORE_ERROR("failed here");
 }
 
 void VulkanOffscreen::EndOffscreenRenderpass()
