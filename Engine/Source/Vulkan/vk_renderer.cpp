@@ -28,14 +28,14 @@ VkResult drawResult;
 // Utility (pure) functions are put in an anonymous namespace
 
 namespace {
-    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, const Camera& cam, const glm::mat4& space)
+    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, const Camera& cam)
     {
         GPUCameraData camData;
         camData.view = cam.GetViewMatrix();
         camData.proj = cam.GetProjectionMatrix(false);
         camData.viewproj = camData.proj * camData.view;
         camData.camPos = glm::vec4(glm::vec3(cam.position), 0.0f);
-		camData.lightSpace = space;
+		//camData.lightSpace = space;
 
 		UploadSingleData(allocator, allocation, camData);
     }
@@ -369,7 +369,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	descriptorSets.object = GetCurrentFrame().objectDescriptor;
 	descriptorSets.objectOffset = 0;
 
-	//UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera, offscreen.light.lightSpaceMatrix);
+	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera);
 	UploadSceneData(allocator, sceneParameterBuffer.allocation, sceneParameters, uniformOffset);
 	UploadObjectData(allocator, GetCurrentFrame().objectBuffer.allocation, objects);
 	
@@ -627,9 +627,11 @@ void VulkanRenderer::InitVulkan()
 	feats.multiDrawIndirect = true;
 	feats.drawIndirectFirstInstance = true;
 	feats.alphaToOne = false;
+	feats.depthClamp = true;
 
 	
 	//feats.samplerAnisotropy = true;
+	
 
 	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
 	descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;

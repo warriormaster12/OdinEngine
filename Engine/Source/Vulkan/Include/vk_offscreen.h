@@ -41,7 +41,6 @@ struct Cascade {
 
 		float splitDepth;
 		glm::mat4 viewProjMatrix;
-        vkcomponent::DescriptorAllocator* p_dynamicDescriptorAllocator;
 
     void destroy(VkDevice device) {
         vkDestroyImageView(device, view, nullptr);
@@ -56,10 +55,14 @@ class VulkanOffscreen
 public:
     void InitOffscreen(VulkanRenderer& renderer);
     void InitFramebuffer();
-    void BeginOffscreenRenderpass(uint32_t count);
+    void BeginOffscreenRenderpass(const uint32_t& count);
+    void updateLight(float dt);
+    void calculateCascades(VulkanRenderer* p_renderer,std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades);
     void drawOffscreenShadows(const std::vector<RenderObject>& objects, uint32_t count);
     void debugShadows(bool debug = false);
     void EndOffscreenRenderpass();
+
+    std::array<Cascade, SHADOW_MAP_CASCADE_COUNT> cascades;
 
     // Shadow& GetShadow(){return shadow;}
     // Shadow::LightMatrixData light;
@@ -73,7 +76,6 @@ private:
     //Shadow shadow;
     DepthImage depth;
     DepthPass depthPass;
-    std::array<Cascade, SHADOW_MAP_CASCADE_COUNT> cascades;
 
     VkPipeline shadowDebug;
     VkPipelineLayout shadowDebugLayout;

@@ -32,10 +32,14 @@ void RendererCore::UpdateRenderer()
     end = std::chrono::system_clock::now();
     using ms = std::chrono::duration<float, std::milli>;
     deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+	float timer;
+	timer += deltaTime;
     start = std::chrono::system_clock::now();
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
 	imgui_layer::UpdateUi();
     vkRenderer.BeginCommands();
+	vkRenderer.GetOffscreen().updateLight(timer);
+	vkRenderer.GetOffscreen().calculateCascades(&vkRenderer, vkRenderer.GetOffscreen().cascades);
 	for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
 	{
 		vkRenderer.GetOffscreen().BeginOffscreenRenderpass(i);
@@ -47,13 +51,19 @@ void RendererCore::UpdateRenderer()
 	//In between commands we can specify in which renderPass we are going to draw
 	vkRenderer.BeginRenderpass();
 	{
-		vkRenderer.GetOffscreen().debugShadows(true);
-		//vkRenderer.GetOffscreen().drawOffscreenShadows(shadowObjects);
-		//vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
+		if(windowHandler.GetKInput(GLFW_KEY_TAB) == GLFW_PRESS)
+		{
+			vkRenderer.GetOffscreen().debugShadows(true);
+		}
+		else if (windowHandler.GetKInput(GLFW_KEY_1) == GLFW_PRESS)
+		{
+			vkRenderer.GetOffscreen().debugShadows(false);
+		}
+		vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
 		//Draw UI after drawing the 3D world
 		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
-		vkRenderer.EndRenderpass();
 	}
+	vkRenderer.EndRenderpass();
 	vkRenderer.EndCommands();
 }
 
@@ -301,6 +311,7 @@ void RendererCore::LoadRenderables()
 	{
 		shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
 	}
+
 
 	RenderObject skyBox;
 	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));

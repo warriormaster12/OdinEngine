@@ -109,7 +109,7 @@ glm::mat4 Camera::GetViewMatrix() const
 {
 	glm::vec3 camPos = position;
 
-	glm::mat4 cam_rot = (get_rotation_matrix());
+	glm::mat4 cam_rot = get_rotation_matrix();
 
 	glm::mat4 view = glm::translate(glm::mat4{ 1 }, camPos) * cam_rot;
 

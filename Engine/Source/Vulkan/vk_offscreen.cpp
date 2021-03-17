@@ -14,6 +14,7 @@ glm::vec3 lightPos = glm::vec3(0.0f, 50.0f, 50.0f);
 
 namespace 
 {
+	
 	void UploadLightData(const VmaAllocator& allocator, DepthPass& depthPass, std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
     {
 		for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
@@ -86,25 +87,29 @@ namespace
         return batch;
     }
 
-	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls, const VkPipeline& pipeline, const VkPipelineLayout& layout)
+	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls, const VkPipeline& pipeline, const VkPipelineLayout& layout, const VkDescriptorSet& currentDescriptor, uint32_t& index)
 	{
+		std::vector<glm::vec3> positions = {
+			glm::vec3{ 0,0,0 },
+			glm::vec3{ 3,2,0 }, 
+			glm::vec3{ -3,2,0 }, 
+			glm::vec3{ 0,1.0f,3.0f },
+			glm::vec3{ 0,3.0f,-5.0f },
+			glm::vec3{ 0,1.0f,10.0f },
+			glm::vec3{ 5,-2,0 }
+		};
 
 		for (const DrawCall& dc : drawCalls)
 		{
-			PushConstBlock pushConstBlock = {};
-			pushConstBlock.cascadeIndex = 0;
-			glm::vec3 position;
-			glm::vec3 scale;
-			glm::quat rotation;
-			glm::vec3 scew;
-			glm::vec4 perspective;
-			glm::decompose(dc.transformMatrix, scale, rotation, position, scew, perspective);
-			pushConstBlock.position = glm::vec4(position, 0.0f);
-			vkCmdPushConstants(cmd,layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
+			for(auto& position : positions)
+			{
+				PushConstBlock pushConstBlock = { glm::vec4(glm::vec3(position),0.0f), index};
+				vkCmdPushConstants(cmd,layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
+			}
 			
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 			
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &dc.descriptorSets.cascadeSets, 0, nullptr);
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &currentDescriptor, 0, nullptr);
 
 			VkDeviceSize vertexOffset = 0;
         	vkCmdBindVertexBuffers(cmd, 0, 1, &dc.pMesh->vertexBuffer.buffer, &vertexOffset);
@@ -257,15 +262,13 @@ void VulkanOffscreen::InitDescriptors()
 	VkDescriptorSetLayoutBinding depthBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT,0);
 	VkDescriptorSetLayoutBinding depthImageBind = vkinit::DescriptorsetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT,1);
 
-	std::vector<VkDescriptorSetLayoutBinding> depthBindings = {depthBind, depthImageBind};
+	std::vector<VkDescriptorSetLayoutBinding> depthBindings = {depthBind};
 	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(depthBindings);
 	depthSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set2);
 
 	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
 	{
-		cascades[i].p_dynamicDescriptorAllocator = new vkcomponent::DescriptorAllocator{};
-		cascades[i].p_dynamicDescriptorAllocator->Init(p_renderer->GetDevice());
-	 	cascades[i].p_dynamicDescriptorAllocator->Allocate(&cascades[i].descriptorSet, depthSetLayout);
+	 	p_renderer->GetDescriptorAllocator()->Allocate(&cascades[i].descriptorSet, depthSetLayout);
 		{
 			CreateBufferInfo info;
 			info.allocSize = sizeof(DepthPass::UniformBlock);
@@ -273,15 +276,6 @@ void VulkanOffscreen::InitDescriptors()
 			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 			CreateBuffer(p_renderer->GetAllocator(), &depthPass.uboBuffer, info);
 		}
-
-		
-		
-
-		p_renderer->EnqueueCleanup([=]()
-		{
-			vmaDestroyBuffer(p_renderer->GetAllocator(), depthPass.uboBuffer.buffer, depthPass.uboBuffer.allocation);
-			cascades[i].p_dynamicDescriptorAllocator->CleanUp();
-		});
 		
 	}
 	p_renderer->EnqueueCleanup([=]()
@@ -328,7 +322,7 @@ void VulkanOffscreen::InitPipelines()
 	offscreenBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
 	//configure the rasterizer to draw filled triangles
-	offscreenBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE);
+	offscreenBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT);
 
 	offscreenBuilder.multisampling = vkinit::MultisamplingStateCreateInfo();
 	
@@ -342,7 +336,6 @@ void VulkanOffscreen::InitPipelines()
 	shadowDebugLayout = debugPass->layout;
 
 
-	VkShaderModule depthVertex;
 	vkcomponent::ShaderModule depthVertShader;
 	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/depthpass.vert").c_str(), & depthVertShader, p_renderer->GetDevice());
 	//VkShaderModule depthFrag;
@@ -375,7 +368,10 @@ void VulkanOffscreen::InitPipelines()
 	offscreenBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
 	offscreenBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
 
-	offscreenBuilder.rasterizer.depthClampEnable = false;
+	offscreenBuilder.colorBlendAttachment = {};
+	offscreenBuilder.rasterizer.cullMode = VK_CULL_MODE_NONE;
+
+	offscreenBuilder.rasterizer.depthClampEnable = true;
 
 
 	vkcomponent::ShaderPass* offscreenPass = vkcomponent::BuildShader(p_renderer->GetDevice(), depthPass.renderPass, offscreenBuilder, offscreenEffect);
@@ -401,29 +397,28 @@ void VulkanOffscreen::BuildImage()
 	sampler.maxLod = 1.0f;
 	sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(p_renderer->GetDevice(), &sampler, nullptr, &depth.sampler));
-	
-	for(int i =0; i < SHADOW_MAP_CASCADE_COUNT; i++)
-	{
-		VkDescriptorImageInfo imageBufferInfo = {};
-		imageBufferInfo.sampler = depth.sampler;
-		imageBufferInfo.imageView = depth.depthImage.imageView;
-		imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
-		VkDescriptorBufferInfo lightInfo;
-		lightInfo.buffer = depthPass.uboBuffer.buffer;
-		lightInfo.offset = 0;
-		lightInfo.range = sizeof(DepthPass::UniformBlock);
-		
-		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), cascades[i].p_dynamicDescriptorAllocator)
-		.BindBuffer(0, &lightInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-		.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-		.Build(cascades[i].descriptorSet);
-	}
-	p_renderer->GetDescriptorAllocator()->Allocate(&depthSet, debugSetLayout);
 	VkDescriptorImageInfo imageBufferInfo = {};
 	imageBufferInfo.sampler = depth.sampler;
 	imageBufferInfo.imageView = depth.depthImage.imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+	VkDescriptorBufferInfo lightInfo = {};
+	lightInfo.buffer = depthPass.uboBuffer.buffer;
+	lightInfo.offset = 0;
+	lightInfo.range = sizeof(DepthPass::UniformBlock);
+
+	p_renderer->GetDescriptorAllocator()->Allocate(&depthSet, debugSetLayout);
+	
+	for(int i =0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+	{
+		
+		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
+		.BindBuffer(0, &lightInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+		.Build(cascades[i].descriptorSet);
+		//.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+		
+	}
 	
 	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
 	.BindImage(0, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -434,7 +429,7 @@ void VulkanOffscreen::BuildImage()
 	});
 }
 
-void VulkanOffscreen::BeginOffscreenRenderpass(uint32_t count)
+void VulkanOffscreen::BeginOffscreenRenderpass(const uint32_t& count)
 {
 	VkClearValue clearValues[1];
 	clearValues[0].depthStencil = { 1.0f, 0 };
@@ -485,8 +480,8 @@ void VulkanOffscreen::debugShadows(bool debug /*= false*/)
 
 		vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 		vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
-		vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0, 1, &depthSet, 0, nullptr);
 		vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebug);
+		vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0, 1, &depthSet, 0, nullptr);
 		PushConstBlock pushConstBlock = {};
 		pushConstBlock.cascadeIndex = 1;
 		vkCmdPushConstants(p_renderer->GetCommandBuffer(), shadowDebugLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
@@ -511,20 +506,104 @@ void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& obje
 
 	vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 	vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
-
-	
-	
-	ENGINE_CORE_ERROR(count);
 	UploadLightData(p_renderer->GetAllocator(), depthPass, cascades);
 	DescriptorSetData descriptorSets;
 	descriptorSets.cascadeSets = cascades[count].descriptorSet;
 	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);	
 	UploadDrawCalls(p_renderer->GetAllocator(), p_renderer->GetCurrentFrame().indirectDrawBuffer.allocation, objects);
-	IssueDrawCalls(p_renderer->GetCommandBuffer(), p_renderer->GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, depthPass.pipeline, depthPass.pipelineLayout);
-	ENGINE_CORE_ERROR("failed here");
+	IssueDrawCalls(p_renderer->GetCommandBuffer(), p_renderer->GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, depthPass.pipeline, depthPass.pipelineLayout,cascades[count].descriptorSet,count);
 }
 
 void VulkanOffscreen::EndOffscreenRenderpass()
 {
 	vkCmdEndRenderPass(p_renderer->GetCommandBuffer());
+}
+
+void VulkanOffscreen::calculateCascades(VulkanRenderer* p_renderer,std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
+{
+	float cascadeSplitLambda = 0.95f;
+	float cascadeSplits[SHADOW_MAP_CASCADE_COUNT];
+
+	float nearClip = p_renderer->GetCamera().zNear;
+	float farClip = p_renderer->GetCamera().zFar;
+	float clipRange = farClip - nearClip;
+
+	float minZ = nearClip;
+	float maxZ = nearClip + clipRange;
+
+	float range = maxZ - minZ;
+	float ratio = maxZ / minZ;
+
+	// Calculate split depths based on view camera frustum
+	// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
+	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
+		float p = (i + 1) / static_cast<float>(SHADOW_MAP_CASCADE_COUNT);
+		float log = minZ * std::pow(ratio, p);
+		float uniform = minZ + range * p;
+		float d = cascadeSplitLambda * (log - uniform) + uniform;
+		cascadeSplits[i] = (d - nearClip) / clipRange;
+	}
+
+	// Calculate orthographic projection matrix for each cascade
+	float lastSplitDist = 0.0;
+	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+	{ 
+		float splitDist = cascadeSplits[i];
+		glm::vec3 frustumCorners[8] = {
+			glm::vec3(-1.0f,  1.0f, -1.0f),
+			glm::vec3( 1.0f,  1.0f, -1.0f),
+			glm::vec3( 1.0f, -1.0f, -1.0f),
+			glm::vec3(-1.0f, -1.0f, -1.0f),
+			glm::vec3(-1.0f,  1.0f,  1.0f),
+			glm::vec3( 1.0f,  1.0f,  1.0f),
+			glm::vec3( 1.0f, -1.0f,  1.0f),
+			glm::vec3(-1.0f, -1.0f,  1.0f),
+		};
+
+		// Project frustum corners into world space
+		glm::mat4 perspective = p_renderer->GetCamera().GetProjectionMatrix(false);
+		glm::mat4 view = p_renderer->GetCamera().GetViewMatrix();
+		glm::mat4 invCam =  perspective * glm::inverse(view);
+		for (uint32_t i = 0; i < 8; i++) {
+			glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[i], 1.0f);
+			frustumCorners[i] = invCorner / invCorner.w;
+		}
+
+		for (uint32_t i = 0; i < 4; i++) {
+			glm::vec3 dist = frustumCorners[i + 4] - frustumCorners[i];
+			frustumCorners[i + 4] = frustumCorners[i] + (dist * splitDist);
+			frustumCorners[i] = frustumCorners[i] + (dist * lastSplitDist);
+		}
+
+		// Get frustum center
+		glm::vec3 frustumCenter = glm::vec3(0.0f);
+		for (uint32_t i = 0; i < 8; i++) {
+			frustumCenter += frustumCorners[i];
+		}
+		frustumCenter /= 8.0f;
+
+		float radius = 0.0f;
+		for (uint32_t i = 0; i < 8; i++) {
+			float distance = glm::length(frustumCorners[i] - frustumCenter);
+			radius = glm::max(radius, distance);
+		}
+		radius = std::ceil(radius * 16.0f) / 16.0f;
+
+		glm::vec3 maxExtents = glm::vec3(radius);
+		glm::vec3 minExtents = -maxExtents;
+
+		glm::vec3 lightDir = normalize(-lightPos);
+		glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
+
+
+		cascades[i].viewProjMatrix = lightOrthoMatrix * lightViewMatrix;
+	}
+}
+
+void VulkanOffscreen::updateLight(float dt)
+{
+	float angle = glm::radians(0.0f);
+	float radius = 20.0f;
+	lightPos = glm::vec3(cos(angle) * radius, -radius, sin(angle) * radius);
 }
