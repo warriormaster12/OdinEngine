@@ -319,10 +319,7 @@ void RendererCore::LoadRenderables()
 	Barrel.p_material = GetMaterial("BarrelMat");  
 
 	RendererCore::CreateRenderObject(Barrel);
-	for(size_t i = 0; i < RendererCore::GetRenderObjects().size(); i++)
-	{
-		shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
-	}
+	
 
 	RenderObject map;
 	map.position = glm::vec3( 5,-2,0 );
@@ -330,6 +327,10 @@ void RendererCore::LoadRenderables()
 	map.p_mesh =  GetMesh("empire");
 	map.p_material = GetMaterial("texturedmesh"); 
 	RendererCore::CreateRenderObject(map); 
+	for(size_t i = 0; i < RendererCore::GetRenderObjects().size(); i++)
+	{
+		shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
+	}
 	
 
 	

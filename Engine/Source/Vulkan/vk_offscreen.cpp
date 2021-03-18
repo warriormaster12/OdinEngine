@@ -611,5 +611,5 @@ void VulkanOffscreen::updateLight(float dt)
 {
 	float angle = glm::radians(dt * 360.0f);
 	float radius = 20.0f;
-	lightPos = glm::vec3(cos(angle) * radius, -radius, sin(angle) * radius);
+	lightPos = glm::vec3(cos(angle) * radius, radius, sin(angle) * radius);
 }
