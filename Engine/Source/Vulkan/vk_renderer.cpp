@@ -28,7 +28,7 @@ VkResult drawResult;
 // Utility (pure) functions are put in an anonymous namespace
 
 namespace {
-    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, const Camera& cam)
+    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, Camera& cam)
     {
         GPUCameraData camData;
         camData.view = cam.GetViewMatrix();

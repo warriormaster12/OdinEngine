@@ -33,17 +33,19 @@ void RendererCore::UpdateRenderer()
     using ms = std::chrono::duration<float, std::milli>;
     deltaTime = std::chrono::duration_cast<ms>(end - start).count();
 	float timer;
-	timer += deltaTime;
+	timer += deltaTime * 0.0001;
+	ENGINE_CORE_FATAL(timer);
     start = std::chrono::system_clock::now();
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
-	imgui_layer::UpdateUi();
-    vkRenderer.BeginCommands();
+	//imgui_layer::UpdateUi();
 	vkRenderer.GetOffscreen().updateLight(timer);
-	vkRenderer.GetOffscreen().calculateCascades(&vkRenderer, vkRenderer.GetOffscreen().cascades);
+	vkRenderer.GetOffscreen().calculateCascades(vkRenderer.GetCamera());
+    vkRenderer.BeginCommands();
 	for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
 	{
 		vkRenderer.GetOffscreen().BeginOffscreenRenderpass(i);
 		{
+			
 			vkRenderer.GetOffscreen().drawOffscreenShadows(shadowObjects, i);
 		}
 		vkRenderer.GetOffscreen().EndOffscreenRenderpass();
@@ -54,10 +56,6 @@ void RendererCore::UpdateRenderer()
 		if(windowHandler.GetKInput(GLFW_KEY_TAB) == GLFW_PRESS)
 		{
 			vkRenderer.GetOffscreen().debugShadows(true);
-		}
-		else if (windowHandler.GetKInput(GLFW_KEY_1) == GLFW_PRESS)
-		{
-			vkRenderer.GetOffscreen().debugShadows(false);
 		}
 		vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
 		//Draw UI after drawing the 3D world
@@ -275,6 +273,11 @@ void RendererCore::LoadRenderables()
 	RenderObject monkey;
 	monkey.transformMatrix = glm::translate(glm::vec3{ 0,0,0 });
 	RendererCore::CreateRenderObject("monkey", "texturedmesh2",monkey.transformMatrix);
+	for(size_t i = 0; i < RendererCore::GetRenderObjects().size(); i++)
+	{
+		shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
+	}
+
 
 	RenderObject monkey2;
 	monkey2.transformMatrix =  glm::translate(glm::vec3{ 3,2,0 });
@@ -306,11 +309,6 @@ void RendererCore::LoadRenderables()
 	map.transformMatrix = glm::translate(glm::vec3{ 5,-2,0 }); 
 
 	RendererCore::CreateRenderObject("empire", "texturedmesh",map.transformMatrix);
-
-	for(size_t i = 0; i < RendererCore::GetRenderObjects().size(); i++)
-	{
-		shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
-	}
 
 
 	RenderObject skyBox;

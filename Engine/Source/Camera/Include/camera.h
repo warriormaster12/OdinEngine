@@ -15,8 +15,12 @@ public:
 
     Camera(vkcomponent::SwapChain& swapChain);
 	glm::vec3 position;
+	glm::vec3 rotation;
 	glm::vec3 velocity;
 	glm::vec3 inputAxis;
+
+	glm::vec3 forward;
+	glm::vec3 up;
 
 	float pitch{ 0 }; //up-down rotation
 	float yaw{ 0 }; //left-right rotation

@@ -10,7 +10,19 @@ FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
 
 VkFormat depthFormat;
 
-glm::vec3 lightPos = glm::vec3(0.0f, 50.0f, 50.0f);
+
+float cascadeSplitLambda = 0.95f;
+
+glm::vec3 lightPos = glm::vec3();
+std::vector<glm::vec3> positions = {
+	glm::vec3{ 0,0,0 },
+	glm::vec3{ 3,2,0 }, 
+	glm::vec3{ -3,2,0 }, 
+	glm::vec3{ 0,1.0f,3.0f },
+	glm::vec3{ 0,3.0f,-5.0f },
+	glm::vec3{ 0,1.0f,10.0f },
+	glm::vec3{ 5,-2,0 }
+};
 
 namespace 
 {
@@ -19,8 +31,9 @@ namespace
     {
 		for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
 			depthPass.ubo.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
+			UploadSingleData(allocator, depthPass.uboBuffer.allocation, depthPass.ubo);
 		}
-		UploadSingleData(allocator, depthPass.uboBuffer.allocation, depthPass);
+		
     }
 	void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation& allocation, const std::vector<RenderObject>& objects)
     {
@@ -68,7 +81,6 @@ namespace
                 dc.pMesh = objects[i].p_mesh;
                 dc.pMaterial = objects[i].p_material;
 				
-				
                	dc.descriptorSets = descriptorSets;
 				
 	
@@ -89,23 +101,14 @@ namespace
 
 	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls, const VkPipeline& pipeline, const VkPipelineLayout& layout, const VkDescriptorSet& currentDescriptor, uint32_t& index)
 	{
-		std::vector<glm::vec3> positions = {
-			glm::vec3{ 0,0,0 },
-			glm::vec3{ 3,2,0 }, 
-			glm::vec3{ -3,2,0 }, 
-			glm::vec3{ 0,1.0f,3.0f },
-			glm::vec3{ 0,3.0f,-5.0f },
-			glm::vec3{ 0,1.0f,10.0f },
-			glm::vec3{ 5,-2,0 }
-		};
 
 		for (const DrawCall& dc : drawCalls)
 		{
-			for(auto& position : positions)
-			{
-				PushConstBlock pushConstBlock = { glm::vec4(glm::vec3(position),0.0f), index};
-				vkCmdPushConstants(cmd,layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
-			}
+			PushConstBlock pushConstBlock = {};
+			pushConstBlock.position = glm::vec4(glm::vec3(positions[0]),0.0f);
+			pushConstBlock.cascadeIndex = index;
+			vkCmdPushConstants(cmd,layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
+			
 			
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 			
@@ -269,15 +272,15 @@ void VulkanOffscreen::InitDescriptors()
 	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
 	{
 	 	p_renderer->GetDescriptorAllocator()->Allocate(&cascades[i].descriptorSet, depthSetLayout);
-		{
-			CreateBufferInfo info;
-			info.allocSize = sizeof(DepthPass::UniformBlock);
-			info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-			CreateBuffer(p_renderer->GetAllocator(), &depthPass.uboBuffer, info);
-		}
-		
 	}
+	{
+		CreateBufferInfo info;
+		info.allocSize = sizeof(depthPass.uboBuffer);
+		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		CreateBuffer(p_renderer->GetAllocator(), &depthPass.uboBuffer, info);
+	}
+		
 	p_renderer->EnqueueCleanup([=]()
 	{
 		vmaDestroyBuffer(p_renderer->GetAllocator(), depthPass.uboBuffer.buffer, depthPass.uboBuffer.allocation);
@@ -406,7 +409,7 @@ void VulkanOffscreen::BuildImage()
 	VkDescriptorBufferInfo lightInfo = {};
 	lightInfo.buffer = depthPass.uboBuffer.buffer;
 	lightInfo.offset = 0;
-	lightInfo.range = sizeof(DepthPass::UniformBlock);
+	lightInfo.range = sizeof(depthPass.ubo);
 
 	p_renderer->GetDescriptorAllocator()->Allocate(&depthSet, debugSetLayout);
 	
@@ -480,8 +483,8 @@ void VulkanOffscreen::debugShadows(bool debug /*= false*/)
 
 		vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 		vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
-		vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebug);
 		vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0, 1, &depthSet, 0, nullptr);
+		vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebug);
 		PushConstBlock pushConstBlock = {};
 		pushConstBlock.cascadeIndex = 1;
 		vkCmdPushConstants(p_renderer->GetCommandBuffer(), shadowDebugLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
@@ -506,11 +509,12 @@ void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& obje
 
 	vkCmdSetViewport(p_renderer->GetCommandBuffer(), 0, 1, &viewport);
 	vkCmdSetScissor(p_renderer->GetCommandBuffer(), 0, 1, &scissor);
-	UploadLightData(p_renderer->GetAllocator(), depthPass, cascades);
 	DescriptorSetData descriptorSets;
 	descriptorSets.cascadeSets = cascades[count].descriptorSet;
-	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);	
+
+	UploadLightData(p_renderer->GetAllocator(), depthPass, cascades);
 	UploadDrawCalls(p_renderer->GetAllocator(), p_renderer->GetCurrentFrame().indirectDrawBuffer.allocation, objects);
+	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);	
 	IssueDrawCalls(p_renderer->GetCommandBuffer(), p_renderer->GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, depthPass.pipeline, depthPass.pipelineLayout,cascades[count].descriptorSet,count);
 }
 
@@ -519,13 +523,12 @@ void VulkanOffscreen::EndOffscreenRenderpass()
 	vkCmdEndRenderPass(p_renderer->GetCommandBuffer());
 }
 
-void VulkanOffscreen::calculateCascades(VulkanRenderer* p_renderer,std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
+void VulkanOffscreen::calculateCascades(Camera& camera)
 {
-	float cascadeSplitLambda = 0.95f;
 	float cascadeSplits[SHADOW_MAP_CASCADE_COUNT];
 
-	float nearClip = p_renderer->GetCamera().zNear;
-	float farClip = p_renderer->GetCamera().zFar;
+	float nearClip = camera.zNear;
+	float farClip = camera.zFar;
 	float clipRange = farClip - nearClip;
 
 	float minZ = nearClip;
@@ -546,9 +549,9 @@ void VulkanOffscreen::calculateCascades(VulkanRenderer* p_renderer,std::array<Ca
 
 	// Calculate orthographic projection matrix for each cascade
 	float lastSplitDist = 0.0;
-	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
-	{ 
+	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
 		float splitDist = cascadeSplits[i];
+
 		glm::vec3 frustumCorners[8] = {
 			glm::vec3(-1.0f,  1.0f, -1.0f),
 			glm::vec3( 1.0f,  1.0f, -1.0f),
@@ -561,9 +564,9 @@ void VulkanOffscreen::calculateCascades(VulkanRenderer* p_renderer,std::array<Ca
 		};
 
 		// Project frustum corners into world space
-		glm::mat4 perspective = p_renderer->GetCamera().GetProjectionMatrix(false);
-		glm::mat4 view = p_renderer->GetCamera().GetViewMatrix();
-		glm::mat4 invCam =  perspective * glm::inverse(view);
+		glm::mat4 proj = camera.GetProjectionMatrix(false);
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 invCam = glm::inverse(proj * view);
 		for (uint32_t i = 0; i < 8; i++) {
 			glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[i], 1.0f);
 			frustumCorners[i] = invCorner / invCorner.w;
@@ -596,14 +599,17 @@ void VulkanOffscreen::calculateCascades(VulkanRenderer* p_renderer,std::array<Ca
 		glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
-
+		// Store split distance and matrix in cascade
+		cascades[i].splitDepth = (camera.zNear + splitDist * clipRange) * -1.0f;
 		cascades[i].viewProjMatrix = lightOrthoMatrix * lightViewMatrix;
+
+		lastSplitDist = cascadeSplits[i];
 	}
 }
 
 void VulkanOffscreen::updateLight(float dt)
 {
-	float angle = glm::radians(0.0f);
+	float angle = glm::radians(dt * 360.0f);
 	float radius = 20.0f;
 	lightPos = glm::vec3(cos(angle) * radius, -radius, sin(angle) * radius);
 }

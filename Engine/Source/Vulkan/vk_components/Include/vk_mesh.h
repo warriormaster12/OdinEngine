@@ -33,7 +33,7 @@ struct Vertex {
 
 struct Mesh {
 	std::vector<Vertex> vertices;
-	
+
 
 	AllocatedBuffer vertexBuffer;
 	

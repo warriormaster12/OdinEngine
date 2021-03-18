@@ -7,6 +7,7 @@
 
 #include "mesh_core.h"
 #include "vk_descriptors.h"
+#include "camera.h"
 
 #define SHADOW_MAP_CASCADE_COUNT 4
 class VulkanRenderer;
@@ -32,7 +33,7 @@ struct DepthPass {
 struct DepthImage {
     Texture depthImage;
     VkSampler sampler;
-    VkExtent2D imageSize {2048, 2048};
+    VkExtent2D imageSize {4096, 4096};
 };
 struct Cascade {
 		VkFramebuffer frameBuffer;
@@ -57,7 +58,7 @@ public:
     void InitFramebuffer();
     void BeginOffscreenRenderpass(const uint32_t& count);
     void updateLight(float dt);
-    void calculateCascades(VulkanRenderer* p_renderer,std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades);
+    void calculateCascades(Camera& camera);
     void drawOffscreenShadows(const std::vector<RenderObject>& objects, uint32_t count);
     void debugShadows(bool debug = false);
     void EndOffscreenRenderpass();
