@@ -49,15 +49,9 @@ layout(set = 2, binding = 0) uniform MaterialData{
     vec4 emissionPower; // float
 } materialData;
 
-layout (set = 2, binding = 1) uniform sampler2DArray shadowMap;
+//layout(set = 2, binding = 1) uniform sampler2D shadowMap;
 layout(set = 2, binding = 2) uniform sampler2D textureMaps[];
 
-const mat4 biasMat = mat4( 
-    0.5, 0.0, 0.0, 0.0,
-    0.0, 0.5, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.5, 0.5, 0.0, 1.0 
-);
 
 
 

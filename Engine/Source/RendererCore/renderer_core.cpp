@@ -34,7 +34,6 @@ void RendererCore::UpdateRenderer()
     deltaTime = std::chrono::duration_cast<ms>(end - start).count();
 	float timer;
 	timer += deltaTime * 0.0001;
-	ENGINE_CORE_FATAL(timer);
     start = std::chrono::system_clock::now();
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
 	//imgui_layer::UpdateUi();

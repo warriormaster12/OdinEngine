@@ -275,7 +275,7 @@ void VulkanOffscreen::InitDescriptors()
 	}
 	{
 		CreateBufferInfo info;
-		info.allocSize = sizeof(depthPass.uboBuffer);
+		info.allocSize = sizeof(DepthPass::UniformBlock);
 		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 		CreateBuffer(p_renderer->GetAllocator(), &depthPass.uboBuffer, info);
@@ -409,7 +409,7 @@ void VulkanOffscreen::BuildImage()
 	VkDescriptorBufferInfo lightInfo = {};
 	lightInfo.buffer = depthPass.uboBuffer.buffer;
 	lightInfo.offset = 0;
-	lightInfo.range = sizeof(depthPass.ubo);
+	lightInfo.range = sizeof(DepthPass::UniformBlock);
 
 	p_renderer->GetDescriptorAllocator()->Allocate(&depthSet, debugSetLayout);
 	
