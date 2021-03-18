@@ -63,10 +63,11 @@ public:
     void debugShadows(bool debug = false);
     void EndOffscreenRenderpass();
 
-    std::array<Cascade, SHADOW_MAP_CASCADE_COUNT> cascades;
+    Cascade& GetCurrenCascade(uint32_t cascadeIndex = 0) { return cascades[cascadeIndex];}
+    DepthImage& GetDepthImage() { return depth;}
+    glm::vec3 GetLightDir() {return lightDir;}
 
-    // Shadow& GetShadow(){return shadow;}
-    // Shadow::LightMatrixData light;
+    
 private:
     VulkanRenderer* p_renderer;
     void InitRenderpass();
@@ -81,9 +82,12 @@ private:
     VkPipeline shadowDebug;
     VkPipelineLayout shadowDebugLayout;
 
+    std::array<Cascade, SHADOW_MAP_CASCADE_COUNT> cascades;
+
     VkDescriptorSetLayout debugSetLayout{};
     VkDescriptorSetLayout depthSetLayout{};
     VkDescriptorSet depthSet;
+    glm::vec3 lightDir;
 	
 
 };

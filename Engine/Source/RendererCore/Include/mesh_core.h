@@ -15,6 +15,8 @@ struct RenderObject {
 
 	Material* p_material;
 
+    glm::vec3 position;
+
 	glm::mat4 transformMatrix;
 
     bool shadowEnabled = true;
@@ -27,5 +29,5 @@ namespace RendererCore
     Mesh* GetMesh(const std::string& name);
 
     std::vector<RenderObject> GetRenderObjects();
-    RenderObject CreateRenderObject(const std::string& meshName, const std::string& materialName, glm::mat4 m_transformMatrix);
+    void CreateRenderObject(RenderObject& inputObject);
 }

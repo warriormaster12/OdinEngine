@@ -39,15 +39,8 @@ namespace RendererCore
         return renderables;
     }
 
-    RenderObject CreateRenderObject(const std::string& meshName, const std::string& materialName, glm::mat4 m_transformMatrix)
+    void CreateRenderObject(RenderObject& inputObject)
     {
-        RenderObject outpuObject;
-        outpuObject.p_mesh = GetMesh(meshName);
-        outpuObject.p_material = GetMaterial(materialName);
-        outpuObject.transformMatrix = m_transformMatrix;
-
-        renderables.push_back(outpuObject);
-        
-        return outpuObject;
+        renderables.push_back(inputObject);
     }
 }

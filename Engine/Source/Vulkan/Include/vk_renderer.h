@@ -46,6 +46,9 @@ struct DrawCall {
 	/* Descriptor sets to bind during draw call*/
 	DescriptorSetData descriptorSets;
 	/* Transform matrix of the object */
+
+	glm::vec3 position;
+
 	glm::mat4 transformMatrix;
 	/* Start index of the first object to draw */
 	uint32_t index;
@@ -108,8 +111,15 @@ struct PointLight
 	glm::vec4 intensity; //float
 };
 
+struct GpuCascadeData
+{
+	float cascadeSplits[4];
+	glm::mat4 cascadeViewProjMat[SHADOW_MAP_CASCADE_COUNT];
+};
+
 struct GPUSceneData {
 	glm::vec4 plightCount; //int
+	GpuCascadeData cascadeData;
 	DirectionLight dLight;
 	PointLight pointLights[3];
 };

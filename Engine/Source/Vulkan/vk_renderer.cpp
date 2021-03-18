@@ -25,6 +25,7 @@ uint32_t swapchainImageIndex;
 VkCommandBuffer cmd;
 VkResult drawResult;
 
+
 // Utility (pure) functions are put in an anonymous namespace
 
 namespace {
@@ -156,8 +157,19 @@ namespace {
 
 	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls)
 	{
+		PushConstBlock pushConstBlock = {};
 		for (const DrawCall& dc : drawCalls)
 		{
+			
+			
+			for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+			{
+				pushConstBlock.position = glm::vec4(glm::vec3(dc.position),0.0f);
+				pushConstBlock.cascadeIndex = i;
+				vkCmdPushConstants(cmd,dc.pMaterial->materialPass.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
+			}
+			
+
 			BindDynamicStates();
 
 			BindMaterial(dc.pMaterial, dc.descriptorSets);
@@ -338,19 +350,24 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 
 	// Static light data, can be moved away
 	//TODO: make proper pointlight, spotlight and directional light
-	sceneParameters.dLight.intensity = glm::vec4(3.0f);
+	for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+	{
+		sceneParameters.cascadeData.cascadeViewProjMat[i] = offscreen.GetCurrenCascade(i).viewProjMatrix;
+		sceneParameters.cascadeData.cascadeSplits[i] = offscreen.GetCurrenCascade(i).splitDepth;
+	}
+	sceneParameters.dLight.intensity = glm::vec4(10.0f);
 	sceneParameters.dLight.color = glm::vec4(1.0f);
-	sceneParameters.dLight.direction = glm::vec4(glm::vec3( -0.2f, -1.0f, -0.3f), 0.0f);
+	sceneParameters.dLight.direction = glm::vec4(glm::vec3(-offscreen.GetLightDir()), 0.0f);
 	sceneParameters.plightCount = glm::vec4(3);
-	sceneParameters.pointLights[0].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[0].intensity = glm::vec4(0.0f);
 	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);
 	sceneParameters.pointLights[0].color = glm::vec4(glm::vec3(1.0f,1.0f,1.0f),1.0f);
 	sceneParameters.pointLights[0].radius = glm::vec4(10.0f);
-	sceneParameters.pointLights[1].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[1].intensity = glm::vec4(0.0f);
 	sceneParameters.pointLights[1].position = glm::vec4(glm::vec3(0.0f,  4.0f, 7.0f),1.0f);
 	sceneParameters.pointLights[1].color = glm::vec4(glm::vec3(1.0f,0.0f,0.0f),1.0f);
 	sceneParameters.pointLights[1].radius = glm::vec4(5.0f);
-	sceneParameters.pointLights[2].intensity = glm::vec4(100.0f);
+	sceneParameters.pointLights[2].intensity = glm::vec4(0.0f);
 	sceneParameters.pointLights[2].position = glm::vec4(glm::vec3(4.0f,  1.0f, 7.0f),1.0f);
 	sceneParameters.pointLights[2].color = glm::vec4(glm::vec3(0.0f,0.0f,1.0f),1.0f);
 	sceneParameters.pointLights[2].radius = glm::vec4(15.0f);
@@ -494,13 +511,13 @@ void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, const st
 
 	materials[name].isOutdated = true;
 
-	// VkDescriptorImageInfo imageBufferInfo;
-	// imageBufferInfo.sampler = offscreen.GetShadow().shadowMapSampler;
-	// imageBufferInfo.imageView = offscreen.GetShadow().shadowImage.imageView;
-	// imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	VkDescriptorImageInfo imageBufferInfo;
+	imageBufferInfo.sampler = offscreen.GetDepthImage().sampler;
+	imageBufferInfo.imageView = offscreen.GetDepthImage().depthImage.imageView;
+	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
-	// VkWriteDescriptorSet shadowImage = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materials[name].materialSet, &imageBufferInfo, 1);
-	// vkUpdateDescriptorSets(device, 1, &shadowImage, 0, nullptr);
+	VkWriteDescriptorSet shadowImage = vkinit::WriteDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materials[name].materialSet, &imageBufferInfo, 1);
+	vkUpdateDescriptorSets(device, 1, &shadowImage, 0, nullptr);
 	
 
 	EnqueueCleanup([=]() {
@@ -990,8 +1007,14 @@ void VulkanRenderer::InitPipelines()
 	std::vector<vkcomponent::ShaderModule> shaderModules = {meshVertShader, texturedMeshShader};
 	std::array<VkDescriptorSetLayout, 3> layouts= {globalSetLayout, objectSetLayout, materialTextureSetLayout};
 	VkPipelineLayoutCreateInfo meshpipInfo = vkinit::PipelineLayoutCreateInfo();
+	VkPushConstantRange pushConstant;
+	pushConstant.offset = 0;
+	pushConstant.size = sizeof(PushConstBlock);
+	pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	meshpipInfo.pSetLayouts = layouts.data();
 	meshpipInfo.setLayoutCount = layouts.size();
+	meshpipInfo.pushConstantRangeCount = 1;
+	meshpipInfo.pPushConstantRanges = &pushConstant;
 	defaultEffect = vkcomponent::BuildEffect(device, shaderModules, meshpipInfo);
 
 	//hook the push constants layout
@@ -1054,39 +1077,39 @@ void VulkanRenderer::InitPipelines()
 	CreateMaterial(defaultPass, "defaultMat");
 
 	//VkShaderModule skyFragShader;
-	vkcomponent::ShaderModule skyFragShader;
-	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_frag.frag").c_str(), &skyFragShader, device);
+	// vkcomponent::ShaderModule skyFragShader;
+	// vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_frag.frag").c_str(), &skyFragShader, device);
 
-	//VkShaderModule skyVertShader;
-	vkcomponent::ShaderModule skyVertShader;
-	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_vert.vert").c_str(), &skyVertShader, device);
+	// //VkShaderModule skyVertShader;
+	// vkcomponent::ShaderModule skyVertShader;
+	// vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/skybox_vert.vert").c_str(), &skyVertShader, device);
 
-	vkcomponent::ShaderEffect* skyEffect = new vkcomponent::ShaderEffect();
-	std::vector<vkcomponent::ShaderModule> skyShaderModules = {skyVertShader, skyFragShader};
-	std::array<VkDescriptorSetLayout, 1> skyLayouts= {globalSetLayout};
-	VkPipelineLayoutCreateInfo skypipInfo = meshpipInfo;
-	meshpipInfo.pSetLayouts = skyLayouts.data();
-	meshpipInfo.setLayoutCount = skyLayouts.size();
-	skyEffect = vkcomponent::BuildEffect(device, skyShaderModules, skypipInfo);
+	// vkcomponent::ShaderEffect* skyEffect = new vkcomponent::ShaderEffect();
+	// std::vector<vkcomponent::ShaderModule> skyShaderModules = {skyVertShader, skyFragShader};
+	// std::array<VkDescriptorSetLayout, 1> skyLayouts= {globalSetLayout};
+	// VkPipelineLayoutCreateInfo skypipInfo = meshpipInfo;
+	// meshpipInfo.pSetLayouts = skyLayouts.data();
+	// meshpipInfo.setLayoutCount = skyLayouts.size();
+	// skyEffect = vkcomponent::BuildEffect(device, skyShaderModules, skypipInfo);
 
-	//hook the push constants layout
-	pipelineBuilder.pipelineLayout = skyEffect->builtLayout;
-	//we have copied layout to builder so now we can flush old one
-	skyEffect->FlushLayout();
-	pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
-	locations.resize(1);
-	vertexDescription = Vertex::GetVertexDescription(locations);
+	// //hook the push constants layout
+	// pipelineBuilder.pipelineLayout = skyEffect->builtLayout;
+	// //we have copied layout to builder so now we can flush old one
+	// skyEffect->FlushLayout();
+	// pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
+	// locations.resize(1);
+	// vertexDescription = Vertex::GetVertexDescription(locations);
 
-	//connect the pipeline builder vertex input info to the one we get from Vertex
-	pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
-	pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
+	// //connect the pipeline builder vertex input info to the one we get from Vertex
+	// pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
+	// pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
 
-	pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
-	pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
+	// pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
+	// pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
 
-	vkcomponent::ShaderPass* skyPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, skyEffect);
+	// vkcomponent::ShaderPass* skyPass = vkcomponent::BuildShader(device, renderPass, pipelineBuilder, skyEffect);
 
-	CreateMaterial(skyPass, "skyMat");
+	// CreateMaterial(skyPass, "skyMat");
 
 
 	//currently only testing if creating compute pipeline works
@@ -1098,7 +1121,7 @@ void VulkanRenderer::InitPipelines()
 
 	EnqueueCleanup([=]() {
 		defaultPass->FlushPass(device);
-		skyPass->FlushPass(device);
+		//skyPass->FlushPass(device);
 	});
 }
 

@@ -12,6 +12,7 @@ WindowHandler windowHandler;
 auto start = std::chrono::system_clock::now();
 auto end = std::chrono::system_clock::now();
 float deltaTime;
+float timer;
 float fps;
 
 std::vector<RenderObject> shadowObjects;
@@ -32,7 +33,6 @@ void RendererCore::UpdateRenderer()
     end = std::chrono::system_clock::now();
     using ms = std::chrono::duration<float, std::milli>;
     deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-	float timer;
 	timer += deltaTime * 0.0001;
     start = std::chrono::system_clock::now();
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
@@ -270,51 +270,81 @@ void RendererCore::LoadRenderables()
 {
 
 	RenderObject monkey;
-	monkey.transformMatrix = glm::translate(glm::vec3{ 0,0,0 });
-	RendererCore::CreateRenderObject("monkey", "texturedmesh2",monkey.transformMatrix);
+	monkey.position = glm::vec3( 0,0,0 );
+	monkey.p_mesh = GetMesh("monkey");
+	monkey.p_material = GetMaterial("texturedmesh2");
+	monkey.transformMatrix = glm::translate(monkey.position);
+	RendererCore::CreateRenderObject(monkey);
+	
+
+
+	RenderObject monkey2;
+	monkey2.position = glm::vec3( 3,2,0 );
+	monkey2.p_mesh = GetMesh("monkey");
+	monkey2.p_material = GetMaterial("texturedmesh2");
+	monkey2.transformMatrix =  glm::translate(monkey2.position);
+
+	RendererCore::CreateRenderObject(monkey2);
+
+	RenderObject monkey3;
+	monkey3.position = glm::vec3( -3,2,0 );
+	monkey3.transformMatrix = glm::translate(monkey3.position);
+	monkey3.p_mesh = GetMesh("monkey");
+	monkey3.p_material = GetMaterial("texturedmesh2");
+
+	RendererCore::CreateRenderObject(monkey3);
+
+	RenderObject viking_room;
+	viking_room.position = glm::vec3( 0,1.0f,3.0f );
+	viking_room.p_mesh =  GetMesh("viking_room");
+	viking_room.p_material = GetMaterial("texturedmesh3");
+	viking_room.transformMatrix = glm::translate(viking_room.position); 
+
+	RendererCore::CreateRenderObject(viking_room);
+
+
+	RenderObject DamagedHelmet;
+	DamagedHelmet.position = glm::vec3( 0,3.0f,-5.0f );
+	DamagedHelmet.transformMatrix = glm::translate(DamagedHelmet.position);
+	DamagedHelmet.p_mesh =  GetMesh("DamagedHelmet");
+	DamagedHelmet.p_material = GetMaterial("DamagedHelmetMat"); 
+
+	RendererCore::CreateRenderObject(DamagedHelmet);
+
+
+	RenderObject Barrel;
+	Barrel.position = glm::vec3(0,1.0f,10.0f);
+	Barrel.transformMatrix = glm::translate(Barrel.position);
+	Barrel.p_mesh =  GetMesh("Barrel");
+	Barrel.p_material = GetMaterial("BarrelMat");  
+
+	RendererCore::CreateRenderObject(Barrel);
 	for(size_t i = 0; i < RendererCore::GetRenderObjects().size(); i++)
 	{
 		shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
 	}
 
-
-	RenderObject monkey2;
-	monkey2.transformMatrix =  glm::translate(glm::vec3{ 3,2,0 });
-
-	RendererCore::CreateRenderObject("monkey", "texturedmesh2",monkey2.transformMatrix);
-
-	RenderObject monkey3;
-	monkey3.transformMatrix =  glm::translate(glm::vec3{ -3,2,0 });
-
-	RendererCore::CreateRenderObject("monkey", "texturedmesh2",monkey3.transformMatrix);
-
-	RenderObject viking_room;
-	viking_room.transformMatrix = glm::translate(glm::vec3{ 0,1.0f,3.0f }); 
-
-	RendererCore::CreateRenderObject("viking_room", "texturedmesh3",viking_room.transformMatrix);
-
-	RenderObject DamagedHelmet;
-	DamagedHelmet.transformMatrix = glm::translate(glm::vec3{ 0,3.0f,-5.0f }); 
-
-	RendererCore::CreateRenderObject("DamagedHelmet", "DamagedHelmetMat",DamagedHelmet.transformMatrix);
-
-
-	RenderObject Barrel;
-	Barrel.transformMatrix = glm::translate(glm::vec3{ 0,1.0f,10.0f }); 
-
-	RendererCore::CreateRenderObject("Barrel", "BarrelMat",Barrel.transformMatrix);
-
 	RenderObject map;
-	map.transformMatrix = glm::translate(glm::vec3{ 5,-2,0 }); 
+	map.position = glm::vec3( 5,-2,0 );
+	map.transformMatrix = glm::translate(map.position); 
+	map.p_mesh =  GetMesh("empire");
+	map.p_material = GetMaterial("texturedmesh"); 
+	RendererCore::CreateRenderObject(map); 
+	
 
-	RendererCore::CreateRenderObject("empire", "texturedmesh",map.transformMatrix);
+	
+
+	
+	
 
 
-	RenderObject skyBox;
-	glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
-	glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
-	skyBox.transformMatrix = translation * scale;
-	RendererCore::CreateRenderObject("skyBox", "skyMat", skyBox.transformMatrix);
+	// RenderObject skyBox;
+	// glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(0, 2, 0));
+	// glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1.0f, 1.0f, 1.0f));
+	// skyBox.transformMatrix = translation * scale;
+	// skyBox.p_mesh =  GetMesh("skyBox");
+	// skyBox.p_material = GetMaterial("skyMat");  
+	// RendererCore::CreateRenderObject(skyBox);
 
 	
 }

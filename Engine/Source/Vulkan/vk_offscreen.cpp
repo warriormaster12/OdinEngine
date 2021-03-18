@@ -11,6 +11,7 @@ FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
 VkFormat depthFormat;
 
 
+
 float cascadeSplitLambda = 0.95f;
 
 glm::vec3 lightPos = glm::vec3();
@@ -80,6 +81,7 @@ namespace
                 DrawCall dc;
                 dc.pMesh = objects[i].p_mesh;
                 dc.pMaterial = objects[i].p_material;
+				dc.position = objects[i].position;
 				
                	dc.descriptorSets = descriptorSets;
 				
@@ -101,18 +103,19 @@ namespace
 
 	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls, const VkPipeline& pipeline, const VkPipelineLayout& layout, const VkDescriptorSet& currentDescriptor, uint32_t& index)
 	{
-
+		PushConstBlock pushConstBlock = {};
 		for (const DrawCall& dc : drawCalls)
 		{
-			PushConstBlock pushConstBlock = {};
-			pushConstBlock.position = glm::vec4(glm::vec3(positions[0]),0.0f);
+		
+			pushConstBlock.position = glm::vec4(glm::vec3(dc.position),0.0f);
 			pushConstBlock.cascadeIndex = index;
 			vkCmdPushConstants(cmd,layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
 			
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &currentDescriptor, 0, nullptr);
 			
+
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 			
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &currentDescriptor, 0, nullptr);
 
 			VkDeviceSize vertexOffset = 0;
         	vkCmdBindVertexBuffers(cmd, 0, 1, &dc.pMesh->vertexBuffer.buffer, &vertexOffset);
@@ -269,16 +272,25 @@ void VulkanOffscreen::InitDescriptors()
 	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(depthBindings);
 	depthSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set2);
 
-	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
-	{
-	 	p_renderer->GetDescriptorAllocator()->Allocate(&cascades[i].descriptorSet, depthSetLayout);
-	}
+	
 	{
 		CreateBufferInfo info;
 		info.allocSize = sizeof(DepthPass::UniformBlock);
 		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 		CreateBuffer(p_renderer->GetAllocator(), &depthPass.uboBuffer, info);
+	}
+	VkDescriptorBufferInfo cascadeInfo = {};
+	cascadeInfo.buffer = depthPass.uboBuffer.buffer;
+	cascadeInfo.offset = 0;
+	cascadeInfo.range = sizeof(DepthPass::UniformBlock);
+
+	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+	{
+	 	p_renderer->GetDescriptorAllocator()->Allocate(&cascades[i].descriptorSet, depthSetLayout);
+		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
+		.BindBuffer(0, &cascadeInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+		.Build(cascades[i].descriptorSet);
 	}
 		
 	p_renderer->EnqueueCleanup([=]()
@@ -406,22 +418,10 @@ void VulkanOffscreen::BuildImage()
 	imageBufferInfo.imageView = depth.depthImage.imageView;
 	imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
-	VkDescriptorBufferInfo lightInfo = {};
-	lightInfo.buffer = depthPass.uboBuffer.buffer;
-	lightInfo.offset = 0;
-	lightInfo.range = sizeof(DepthPass::UniformBlock);
+	
 
 	p_renderer->GetDescriptorAllocator()->Allocate(&depthSet, debugSetLayout);
-	
-	for(int i =0; i < SHADOW_MAP_CASCADE_COUNT; i++)
-	{
-		
-		vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
-		.BindBuffer(0, &lightInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-		.Build(cascades[i].descriptorSet);
-		//.BindImage(1, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-		
-	}
+
 	
 	vkcomponent::DescriptorBuilder::Begin(p_renderer->GetDescriptorLayoutCache(), p_renderer->GetDescriptorAllocator())
 	.BindImage(0, &imageBufferInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -595,7 +595,7 @@ void VulkanOffscreen::calculateCascades(Camera& camera)
 		glm::vec3 maxExtents = glm::vec3(radius);
 		glm::vec3 minExtents = -maxExtents;
 
-		glm::vec3 lightDir = normalize(-lightPos);
+		lightDir = normalize(-lightPos);
 		glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
