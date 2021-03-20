@@ -43,7 +43,7 @@ namespace {
 			camData.cascadeData.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
 			camData.cascadeData.cascadeSplits[i] = cascades[i].splitDepth;
 		}
-		
+		camData.cascadeData.cascadeSplitsDebug = 1;
 
 		UploadSingleData(allocator, allocation, camData);
     }

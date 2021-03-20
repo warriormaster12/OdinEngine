@@ -362,8 +362,7 @@ void VulkanOffscreen::InitPipelines()
 	offscreenpipInfo.pPushConstantRanges = &pushConstant;
 	offscreenEffect = vkcomponent::BuildEffect(p_renderer->GetDevice(), shaderModules, offscreenpipInfo);
 
-	std::vector <LocationInfo> locations = {{VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
-		{VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex, uv)}
+	std::vector <LocationInfo> locations = {{VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)}
 	};
 	VertexInputDescription vertexDescription = Vertex::GetVertexDescription(locations);
 

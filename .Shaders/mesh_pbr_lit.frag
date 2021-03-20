@@ -17,6 +17,8 @@ layout (location = 0) out vec4 outFragColor;
 struct Cascade{
 	vec4 cascadeSplits;
 	mat4 cascadeViewProjMat[SHADOW_MAP_CASCADE_COUNT];
+
+    uint cascadeSplitsDebug;
 };
 
 layout(set = 0, binding = 0) uniform  CameraBuffer{   
@@ -131,6 +133,8 @@ vec3 calcPointLight(int index, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 alb
 // ----------------------------------------------------------------------------
 vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0);
 // ----------------------------------------------------------------------------
+
+uint globalCascadeIndex;
 
 float textureProj(vec4 shadowCoord, vec2 offset, uint cascadeIndex)
 {
@@ -265,6 +269,24 @@ void main()
     //color = pow(color, vec3(1.0/2.2)); 
 
     outFragColor = vec4(color, albedo.a);
+    if(cameraData.cascadeData.cascadeSplitsDebug == 1)
+    {
+        switch(globalCascadeIndex) {
+            case 0 : 
+                outFragColor.rgb *= vec3(1.0f, 0.25f, 0.25f);
+                break;
+            case 1 : 
+                outFragColor.rgb *= vec3(0.25f, 1.0f, 0.25f);
+                break;
+            case 2 : 
+                outFragColor.rgb *= vec3(0.25f, 0.25f, 1.0f);
+                break;
+            case 3 : 
+                outFragColor.rgb *= vec3(1.0f, 1.0f, 0.25f);
+                break;
+        }
+    }
+
 }
 
 vec3 calcPointLight(int index, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 albedo, float rough, float metal, vec3 F0,  float viewDistance)
@@ -320,6 +342,7 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
 			cascadeIndex = i + 1;
 		}
 	}
+    globalCascadeIndex = cascadeIndex;
     vec4 shadowCoord = (biasMat * cameraData.cascadeData.cascadeViewProjMat[cascadeIndex]) * vec4(WorldPos, 1.0);	
     //Variables common to BRDFs
     vec3 lightDir = normalize(vec3(-light.direction));

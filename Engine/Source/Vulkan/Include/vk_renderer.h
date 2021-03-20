@@ -80,6 +80,8 @@ struct GpuCascadeData
 {
 	float cascadeSplits[4];
 	glm::mat4 cascadeViewProjMat[SHADOW_MAP_CASCADE_COUNT];
+
+	int cascadeSplitsDebug;
 };
 
 struct GPUCameraData{

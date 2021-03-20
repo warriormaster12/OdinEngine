@@ -1,7 +1,6 @@
 #version 450
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec2 inUV;
 
 #define SHADOW_MAP_CASCADE_COUNT 4
 
@@ -18,7 +17,6 @@ layout (location = 0) out vec2 outUV;
 
 void main()
 {
-	outUV = inUV;
 	vec3 pos = inPos + pushConsts.position.xyz;
 	gl_Position =  lightMatrixData.cascadeViewProjMat[pushConsts.cascadeIndex] * vec4(pos, 1.0);
 }
