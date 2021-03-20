@@ -14,12 +14,18 @@ layout (location = 4) in vec3 inViewPos;
 //output write
 layout (location = 0) out vec4 outFragColor;
 
+struct Cascade{
+	vec4 cascadeSplits;
+	mat4 cascadeViewProjMat[SHADOW_MAP_CASCADE_COUNT];
+};
 
 layout(set = 0, binding = 0) uniform  CameraBuffer{   
     mat4 view;
     mat4 proj;
 	mat4 viewproj;
 	vec4 camPos; // vec3
+
+    Cascade cascadeData;
 } cameraData;
 
 struct DirectionLight{
@@ -35,14 +41,10 @@ struct PointLight
     vec4 intensity; //float
 };
 
-struct Cascade{
-	vec4 cascadeSplits;
-	mat4 cascadeViewProjMat[SHADOW_MAP_CASCADE_COUNT];
-};
+
 
 layout(std430, set = 0, binding = 1)  readonly buffer SceneData{ 
     vec4 plightCount; //int
-    Cascade cascadeData;
     DirectionLight dLight;
 	PointLight pointLights[];
 } sceneData;
@@ -314,11 +316,11 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
 {
     uint cascadeIndex = 0;
 	for(uint i = 0; i < SHADOW_MAP_CASCADE_COUNT - 1; ++i) {
-		if(inViewPos.z < sceneData.cascadeData.cascadeSplits[i]) {	
+		if(inViewPos.z < cameraData.cascadeData.cascadeSplits[i]) {	
 			cascadeIndex = i + 1;
 		}
 	}
-    vec4 shadowCoord = (biasMat * sceneData.cascadeData.cascadeViewProjMat[cascadeIndex]) * vec4(WorldPos, 1.0);	
+    vec4 shadowCoord = (biasMat * cameraData.cascadeData.cascadeViewProjMat[cascadeIndex]) * vec4(WorldPos, 1.0);	
     //Variables common to BRDFs
     vec3 lightDir = normalize(vec3(-light.direction));
     vec3 halfway  = normalize(lightDir + viewDir);

@@ -14,16 +14,7 @@ VkFormat depthFormat;
 
 float cascadeSplitLambda = 0.95f;
 
-glm::vec3 lightPos = glm::vec3();
-std::vector<glm::vec3> positions = {
-	glm::vec3{ 0,0,0 },
-	glm::vec3{ 3,2,0 }, 
-	glm::vec3{ -3,2,0 }, 
-	glm::vec3{ 0,1.0f,3.0f },
-	glm::vec3{ 0,3.0f,-5.0f },
-	glm::vec3{ 0,1.0f,10.0f },
-	glm::vec3{ 5,-2,0 }
-};
+
 
 namespace 
 {
@@ -32,8 +23,8 @@ namespace
     {
 		for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
 			depthPass.ubo.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
-			UploadSingleData(allocator, depthPass.uboBuffer.allocation, depthPass.ubo);
 		}
+		UploadSingleData(allocator, depthPass.uboBuffer.allocation, depthPass.ubo);
 		
     }
 	void UploadDrawCalls(const VmaAllocator& allocator, const VmaAllocation& allocation, const std::vector<RenderObject>& objects)
@@ -209,7 +200,10 @@ void VulkanOffscreen::InitFramebuffer()
     /*
 		Layered depth image and views
 	*/
-	VkExtent3D shadowExtent3D = {depth.imageSize.width, depth.imageSize.height, 1};
+	VkExtent3D shadowExtent3D = {};
+	shadowExtent3D.width =depth.imageSize.width;
+	shadowExtent3D.height = depth.imageSize.height;
+	shadowExtent3D.depth = 1;
 	VkImageCreateInfo imageInfo = vkinit::ImageCreateInfo(depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,shadowExtent3D);
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
 	imageInfo.mipLevels = 1;
@@ -353,13 +347,11 @@ void VulkanOffscreen::InitPipelines()
 
 	vkcomponent::ShaderModule depthVertShader;
 	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/depthpass.vert").c_str(), & depthVertShader, p_renderer->GetDevice());
-	//VkShaderModule depthFrag;
-	vkcomponent::ShaderModule depthFragShader;
-	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/depthpass.frag").c_str(), & depthFragShader, p_renderer->GetDevice());
+	
 
 	vkcomponent::ShaderEffect* offscreenEffect = new vkcomponent::ShaderEffect();
 	shaderModules.clear();
-	shaderModules = {depthVertShader, depthFragShader};
+	shaderModules = {depthVertShader};
 
     
 	std::array<VkDescriptorSetLayout, 1> offscreenLayouts= {depthSetLayout};
@@ -475,8 +467,8 @@ void VulkanOffscreen::debugShadows(bool debug /*= false*/)
 		viewport.maxDepth = 1.0f;
 
 		VkExtent2D imageExtent;
-		imageExtent.width = p_renderer->GetWidth();
-		imageExtent.height = p_renderer->GetHeight();
+		imageExtent.width = (float)p_renderer->GetWidth();
+		imageExtent.height = (float)p_renderer->GetHeight();
 		VkRect2D scissor;
 		scissor.offset = { 0, 0 };
 		scissor.extent = imageExtent;
@@ -486,7 +478,8 @@ void VulkanOffscreen::debugShadows(bool debug /*= false*/)
 		vkCmdBindDescriptorSets(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebugLayout, 0, 1, &depthSet, 0, nullptr);
 		vkCmdBindPipeline(p_renderer->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, shadowDebug);
 		PushConstBlock pushConstBlock = {};
-		pushConstBlock.cascadeIndex = 1;
+		pushConstBlock.cascadeIndex = displayIndex;
+		pushConstBlock.position = glm::vec4(0.0f);
 		vkCmdPushConstants(p_renderer->GetCommandBuffer(), shadowDebugLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
 		vkCmdDraw(p_renderer->GetCommandBuffer(), 3, 1, 0, 0);
 	}
@@ -564,9 +557,7 @@ void VulkanOffscreen::calculateCascades(Camera& camera)
 		};
 
 		// Project frustum corners into world space
-		glm::mat4 proj = camera.GetProjectionMatrix(false);
-		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 invCam = glm::inverse(proj * view);
+		glm::mat4 invCam = glm::inverse(camera.GetProjectionMatrix(false, false) * camera.GetViewMatrix());
 		for (uint32_t i = 0; i < 8; i++) {
 			glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[i], 1.0f);
 			frustumCorners[i] = invCorner / invCorner.w;
@@ -595,21 +586,22 @@ void VulkanOffscreen::calculateCascades(Camera& camera)
 		glm::vec3 maxExtents = glm::vec3(radius);
 		glm::vec3 minExtents = -maxExtents;
 
-		lightDir = normalize(-lightPos);
+		glm::vec3 lightDir = normalize(-lightPos);
 		glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
 		// Store split distance and matrix in cascade
-		cascades[i].splitDepth = (camera.zNear + splitDist * clipRange) * -1.0f;
+		cascades[i].splitDepth = (nearClip + splitDist * clipRange) * -1.0f;
 		cascades[i].viewProjMatrix = lightOrthoMatrix * lightViewMatrix;
 
 		lastSplitDist = cascadeSplits[i];
 	}
+	
 }
 
 void VulkanOffscreen::updateLight(float dt)
 {
 	float angle = glm::radians(dt * 360.0f);
 	float radius = 20.0f;
-	lightPos = glm::vec3(cos(angle) * radius, radius, sin(angle) * radius);
+	lightPos = glm::vec3(cos(angle) * radius, -radius,sin(angle) * radius);
 }

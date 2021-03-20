@@ -22,6 +22,8 @@ public:
 	glm::vec3 forward;
 	glm::vec3 up;
 
+	glm::vec4 viewPos;
+
 	float pitch{ 0 }; //up-down rotation
 	float yaw{ 0 }; //left-right rotation
 
@@ -38,7 +40,8 @@ public:
 
 
 	glm::mat4 GetViewMatrix() const;
-	glm::mat4 GetProjectionMatrix(bool bReverse = true) const;
+	glm::mat4 GetOffscreenViewMatrix();
+	glm::mat4 GetProjectionMatrix(bool bReverse = true, bool flipY =true) const;
 	glm::mat4 get_rotation_matrix() const ;
 private: 
     vkcomponent::SwapChain* p_swapChain;

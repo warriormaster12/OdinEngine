@@ -33,10 +33,10 @@ void RendererCore::UpdateRenderer()
     end = std::chrono::system_clock::now();
     using ms = std::chrono::duration<float, std::milli>;
     deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-	timer += deltaTime * 0.0001;
     start = std::chrono::system_clock::now();
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
 	//imgui_layer::UpdateUi();
+	timer += deltaTime * 0.00001;
 	vkRenderer.GetOffscreen().updateLight(timer);
 	vkRenderer.GetOffscreen().calculateCascades(vkRenderer.GetCamera());
     vkRenderer.BeginCommands();
@@ -55,7 +55,19 @@ void RendererCore::UpdateRenderer()
 		if(windowHandler.GetKInput(GLFW_KEY_TAB) == GLFW_PRESS)
 		{
 			vkRenderer.GetOffscreen().debugShadows(true);
+			if(windowHandler.GetKInput(GLFW_KEY_1) == GLFW_PRESS)
+			{
+				if(vkRenderer.GetOffscreen().displayIndex > 3)
+				{
+					vkRenderer.GetOffscreen().displayIndex = 0;
+				}
+				else
+				{
+					vkRenderer.GetOffscreen().displayIndex += 1;
+				}
+			}
 		}
+		
 		vkRenderer.DrawObjects(RendererCore::GetRenderObjects());
 		//Draw UI after drawing the 3D world
 		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkRenderer.GetCommandBuffer());
@@ -269,30 +281,30 @@ void RendererCore::LoadMaterials()
 void RendererCore::LoadRenderables()
 {
 
-	RenderObject monkey;
-	monkey.position = glm::vec3( 0,0,0 );
-	monkey.p_mesh = GetMesh("monkey");
-	monkey.p_material = GetMaterial("texturedmesh2");
-	monkey.transformMatrix = glm::translate(monkey.position);
-	RendererCore::CreateRenderObject(monkey);
+	// RenderObject monkey;
+	// monkey.position = glm::vec3( 0,0,0 );
+	// monkey.p_mesh = GetMesh("monkey");
+	// monkey.p_material = GetMaterial("texturedmesh2");
+	// monkey.transformMatrix = glm::translate(monkey.position);
+	// RendererCore::CreateRenderObject(monkey);
 	
 
 
-	RenderObject monkey2;
-	monkey2.position = glm::vec3( 3,2,0 );
-	monkey2.p_mesh = GetMesh("monkey");
-	monkey2.p_material = GetMaterial("texturedmesh2");
-	monkey2.transformMatrix =  glm::translate(monkey2.position);
+	// RenderObject monkey2;
+	// monkey2.position = glm::vec3( 3,2,0 );
+	// monkey2.p_mesh = GetMesh("monkey");
+	// monkey2.p_material = GetMaterial("texturedmesh2");
+	// monkey2.transformMatrix =  glm::translate(monkey2.position);
 
-	RendererCore::CreateRenderObject(monkey2);
+	// RendererCore::CreateRenderObject(monkey2);
 
-	RenderObject monkey3;
-	monkey3.position = glm::vec3( -3,2,0 );
-	monkey3.transformMatrix = glm::translate(monkey3.position);
-	monkey3.p_mesh = GetMesh("monkey");
-	monkey3.p_material = GetMaterial("texturedmesh2");
+	// RenderObject monkey3;
+	// monkey3.position = glm::vec3( -3,2,0 );
+	// monkey3.transformMatrix = glm::translate(monkey3.position);
+	// monkey3.p_mesh = GetMesh("monkey");
+	// monkey3.p_material = GetMaterial("texturedmesh2");
 
-	RendererCore::CreateRenderObject(monkey3);
+	// RendererCore::CreateRenderObject(monkey3);
 
 	RenderObject viking_room;
 	viking_room.position = glm::vec3( 0,1.0f,3.0f );
@@ -320,10 +332,14 @@ void RendererCore::LoadRenderables()
 
 	RendererCore::CreateRenderObject(Barrel);
 	
+	
+	
+	
+	
 
 	RenderObject map;
 	map.position = glm::vec3( 5,-2,0 );
-	map.transformMatrix = glm::translate(map.position); 
+	map.transformMatrix = glm::translate(glm::vec3( 0,0,0 )); 
 	map.p_mesh =  GetMesh("empire");
 	map.p_material = GetMaterial("texturedmesh"); 
 	RendererCore::CreateRenderObject(map); 
@@ -331,6 +347,8 @@ void RendererCore::LoadRenderables()
 	{
 		shadowObjects.push_back(RendererCore::GetRenderObjects()[i]);
 	}
+	
+	
 	
 
 	

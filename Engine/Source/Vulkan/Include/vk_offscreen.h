@@ -65,8 +65,9 @@ public:
 
     Cascade& GetCurrenCascade(uint32_t cascadeIndex = 0) { return cascades[cascadeIndex];}
     DepthImage& GetDepthImage() { return depth;}
-    glm::vec3 GetLightDir() {return lightDir;}
+    glm::vec3 GetLightPos() {return lightPos;}
 
+    uint32_t displayIndex;
     
 private:
     VulkanRenderer* p_renderer;
@@ -87,7 +88,7 @@ private:
     VkDescriptorSetLayout debugSetLayout{};
     VkDescriptorSetLayout depthSetLayout{};
     VkDescriptorSet depthSet;
-    glm::vec3 lightDir;
+    glm::vec3 lightPos = glm::vec3();
 	
 
 };

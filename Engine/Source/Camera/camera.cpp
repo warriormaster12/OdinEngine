@@ -89,16 +89,11 @@ void Camera::UpdateCamera(float deltaTime)
 	forward = cam_rot * glm::vec4(forward, 0.f);
 	right = cam_rot * glm::vec4(right, 0.f);
 	
-	if(possessCamera == true)
-	{
-		velocity = inputAxis.x * forward + inputAxis.y * right + inputAxis.z * up;
 
-		velocity *= 10 * deltaTime;
-	}
-	else
-	{
-		velocity = glm::vec3(0.0f);
-	}
+	velocity = inputAxis.x * forward + inputAxis.y * right + inputAxis.z * up;
+
+	velocity *= 10 * deltaTime;
+
 	position += velocity;
 	
 
@@ -107,11 +102,9 @@ void Camera::UpdateCamera(float deltaTime)
 
 glm::mat4 Camera::GetViewMatrix() const
 {
-	glm::vec3 camPos = position;
-
 	glm::mat4 cam_rot = get_rotation_matrix();
 
-	glm::mat4 view = glm::translate(glm::mat4{ 1 }, camPos) * cam_rot;
+	glm::mat4 view = glm::translate(glm::mat4{ 1 }, position) * cam_rot;
 
 	//we need to invert the camera matrix
 	view = glm::inverse(view);
@@ -119,17 +112,39 @@ glm::mat4 Camera::GetViewMatrix() const
 	return view;
 }
 
-glm::mat4 Camera::GetProjectionMatrix(bool bReverse /*= true*/) const
+glm::mat4 Camera::GetOffscreenViewMatrix()
+{
+	glm::mat4 rotM = glm::mat4(1.0f);
+	glm::mat4 transM;
+
+	rotM = glm::rotate(rotM, glm::radians(rotation.x * (1.0f)), glm::vec3(1.0f, 0.0f, 0.0f));
+	rotM = glm::rotate(rotM, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	rotM = glm::rotate(rotM, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	glm::vec3 translation = position;
+	transM = glm::translate(glm::mat4(1.0f), translation);
+	glm::mat4 view = rotM * transM;
+
+	return view;
+}
+
+glm::mat4 Camera::GetProjectionMatrix(bool bReverse /*= true*/, bool flipY /*=true*/) const
 {
 	if (bReverse)
 	{
 		glm::mat4 pro = glm::perspective(glm::radians(Fov), (float)p_swapChain->actualExtent.width / (float)p_swapChain->actualExtent.height, zFar, zNear);
-		pro[1][1] *= -1;
+		if(flipY == true)
+		{
+			pro[1][1] *= -1;
+		}
 		return pro;
 	}
 	else {
 		glm::mat4 pro = glm::perspective(glm::radians(Fov), (float)p_swapChain->actualExtent.width / (float)p_swapChain->actualExtent.height, zNear, zFar);
-		pro[1][1] *= -1;
+		if(flipY == true)
+		{
+			pro[1][1] *= -1;
+		}
 		return pro;
 	}
 }

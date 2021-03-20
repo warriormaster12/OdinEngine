@@ -29,14 +29,21 @@ VkResult drawResult;
 // Utility (pure) functions are put in an anonymous namespace
 
 namespace {
-    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, Camera& cam)
+    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, Camera& cam, std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
     {
+		
         GPUCameraData camData;
         camData.view = cam.GetViewMatrix();
         camData.proj = cam.GetProjectionMatrix(false);
         camData.viewproj = camData.proj * camData.view;
         camData.camPos = glm::vec4(glm::vec3(cam.position), 0.0f);
-		//camData.lightSpace = space;
+
+		for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+		{
+			camData.cascadeData.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
+			camData.cascadeData.cascadeSplits[i] = cascades[i].splitDepth;
+		}
+		
 
 		UploadSingleData(allocator, allocation, camData);
     }
@@ -115,6 +122,7 @@ namespace {
                 dc.pMesh = objects[i].p_mesh;
                 dc.pMaterial = objects[i].p_material;
                 dc.descriptorSets = descriptorSets;
+				dc.position = objects[i].position;
                 dc.transformMatrix = objects[0].transformMatrix;
                 dc.index = i;
                 dc.count = 1;
@@ -158,16 +166,17 @@ namespace {
 	void IssueDrawCalls(const VkCommandBuffer& cmd, const VkBuffer& drawCommandBuffer, const std::vector<DrawCall>& drawCalls)
 	{
 		PushConstBlock pushConstBlock = {};
+		for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+		{
+			
+			pushConstBlock.cascadeIndex = 0;
+			
+		}
 		for (const DrawCall& dc : drawCalls)
 		{
 			
+			pushConstBlock.position = glm::vec4(glm::vec3(dc.position),0.0f);
 			
-			for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
-			{
-				pushConstBlock.position = glm::vec4(glm::vec3(dc.position),0.0f);
-				pushConstBlock.cascadeIndex = i;
-				
-			}
 			vkCmdPushConstants(cmd,dc.pMaterial->materialPass.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
 
 			BindDynamicStates();
@@ -350,14 +359,10 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 
 	// Static light data, can be moved away
 	//TODO: make proper pointlight, spotlight and directional light
-	for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
-	{
-		sceneParameters.cascadeData.cascadeViewProjMat[i] = offscreen.GetCurrenCascade(i).viewProjMatrix;
-		sceneParameters.cascadeData.cascadeSplits[i] = offscreen.GetCurrenCascade(i).splitDepth;
-	}
+	
 	sceneParameters.dLight.intensity = glm::vec4(10.0f);
 	sceneParameters.dLight.color = glm::vec4(1.0f);
-	sceneParameters.dLight.direction = glm::vec4(glm::vec3(offscreen.GetLightDir()), 0.0f);
+	sceneParameters.dLight.direction = glm::vec4(glm::vec3(glm::normalize(-offscreen.GetLightPos())), 0.0f);
 	sceneParameters.plightCount = glm::vec4(3);
 	sceneParameters.pointLights[0].intensity = glm::vec4(100.0f);
 	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);
@@ -386,7 +391,13 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	descriptorSets.object = GetCurrentFrame().objectDescriptor;
 	descriptorSets.objectOffset = 0;
 
-	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera);
+	std::array<Cascade, SHADOW_MAP_CASCADE_COUNT> m_cascades;
+	for(int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
+	{
+		m_cascades[i] = offscreen.GetCurrenCascade(i);
+	}
+
+	UploadCameraData(allocator, GetCurrentFrame().cameraBuffer.allocation, camera, m_cascades);
 	UploadSceneData(allocator, sceneParameterBuffer.allocation, sceneParameters, uniformOffset);
 	UploadObjectData(allocator, GetCurrentFrame().objectBuffer.allocation, objects);
 	
@@ -1142,6 +1153,7 @@ void VulkanRenderer::RecreateSwapchain()
 	//update parts of the pipeline that change dynamically
 	pipelineBuilder.viewport.width = (float)swapChainObj.actualExtent.width;
 	pipelineBuilder.viewport.height = (float)swapChainObj.actualExtent.height;
+
 	pipelineBuilder.scissor.extent = swapChainObj.actualExtent;
 }
 

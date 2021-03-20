@@ -76,6 +76,12 @@ struct FrameData {
 	VkDescriptorSet objectDescriptor;
 };
 
+struct GpuCascadeData
+{
+	float cascadeSplits[4];
+	glm::mat4 cascadeViewProjMat[SHADOW_MAP_CASCADE_COUNT];
+};
+
 struct GPUCameraData{
 	glm::mat4 view;
 	glm::mat4 proj;
@@ -83,7 +89,8 @@ struct GPUCameraData{
 
 	glm::vec4 camPos; // vec3
 
-	glm::mat4 lightSpace;
+	GpuCascadeData cascadeData;
+
 };
 
 struct GPUMaterialData 
@@ -111,15 +118,10 @@ struct PointLight
 	glm::vec4 intensity; //float
 };
 
-struct GpuCascadeData
-{
-	float cascadeSplits[4];
-	glm::mat4 cascadeViewProjMat[SHADOW_MAP_CASCADE_COUNT];
-};
+
 
 struct GPUSceneData {
 	glm::vec4 plightCount; //int
-	GpuCascadeData cascadeData;
 	DirectionLight dLight;
 	PointLight pointLights[3];
 };
