@@ -55,16 +55,17 @@ void RendererCore::UpdateRenderer()
 		if(windowHandler.GetKInput(GLFW_KEY_TAB) == GLFW_PRESS)
 		{
 			vkRenderer.GetOffscreen().debugShadows(true);
-			if(windowHandler.GetKInput(GLFW_KEY_1) == GLFW_PRESS)
+			
+		}
+		if(windowHandler.GetKInput(GLFW_KEY_1) == GLFW_PRESS)
+		{
+			if(vkRenderer.GetOffscreen().displayIndex > 3)
 			{
-				if(vkRenderer.GetOffscreen().displayIndex > 3)
-				{
-					vkRenderer.GetOffscreen().displayIndex = 0;
-				}
-				else
-				{
-					vkRenderer.GetOffscreen().displayIndex += 1;
-				}
+				vkRenderer.GetOffscreen().displayIndex = 0;
+			}
+			else
+			{
+				vkRenderer.GetOffscreen().displayIndex += 1;
 			}
 		}
 		

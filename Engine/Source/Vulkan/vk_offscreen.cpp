@@ -19,7 +19,7 @@ float cascadeSplitLambda = 0.95f;
 namespace 
 {
 	
-	void UploadLightData(const VmaAllocator& allocator, DepthPass& depthPass, std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
+	void UploadLightData(const VmaAllocator& allocator, DepthPass& depthPass, const std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
     {
 		for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
 			depthPass.ubo.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
@@ -77,7 +77,7 @@ namespace
                	dc.descriptorSets = descriptorSets;
 				
 	
-                dc.transformMatrix = objects[0].transformMatrix;
+            	
                 dc.index = i;
                 dc.count = 1;
                 batch.push_back(dc);
@@ -556,7 +556,7 @@ void VulkanOffscreen::calculateCascades(Camera& camera)
 		};
 
 		// Project frustum corners into world space
-		glm::mat4 invCam = glm::inverse(camera.GetProjectionMatrix(false, false) * camera.GetViewMatrix());
+		glm::mat4 invCam = glm::inverse(camera.GetProjectionMatrix(false) * camera.GetOffscreenViewMatrix());
 		for (uint32_t i = 0; i < 8; i++) {
 			glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[i], 1.0f);
 			frustumCorners[i] = invCorner / invCorner.w;
@@ -586,7 +586,7 @@ void VulkanOffscreen::calculateCascades(Camera& camera)
 		glm::vec3 minExtents = -maxExtents;
 
 		glm::vec3 lightDir = normalize(-lightPos);
-		glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * minExtents.z, frustumCenter, glm::vec3(0.0f, -1.0f, 0.0f));
 		glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
 		// Store split distance and matrix in cascade

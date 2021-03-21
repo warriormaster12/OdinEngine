@@ -29,7 +29,7 @@ VkResult drawResult;
 // Utility (pure) functions are put in an anonymous namespace
 
 namespace {
-    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, Camera& cam, std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
+    void UploadCameraData(const VmaAllocator& allocator, const VmaAllocation& allocation, const Camera& cam, const std::array<Cascade, SHADOW_MAP_CASCADE_COUNT>& cascades)
     {
 		
         GPUCameraData camData;
@@ -362,7 +362,7 @@ void VulkanRenderer::DrawObjects(const std::vector<RenderObject>& objects)
 	
 	sceneParameters.dLight.intensity = glm::vec4(10.0f);
 	sceneParameters.dLight.color = glm::vec4(1.0f);
-	sceneParameters.dLight.direction = glm::vec4(glm::vec3(glm::normalize(-offscreen.GetLightPos())), 0.0f);
+	sceneParameters.dLight.direction = glm::vec4(glm::vec3(glm::normalize(offscreen.GetLightPos())), 0.0f);
 	sceneParameters.plightCount = glm::vec4(3);
 	sceneParameters.pointLights[0].intensity = glm::vec4(100.0f);
 	sceneParameters.pointLights[0].position = glm::vec4(glm::vec3(0.0f,  5.0f, -3.0f),1.0f);

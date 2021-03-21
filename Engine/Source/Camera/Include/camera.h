@@ -15,7 +15,7 @@ public:
 
     Camera(vkcomponent::SwapChain& swapChain);
 	glm::vec3 position;
-	glm::vec3 rotation;
+	glm::vec3 rotation ;
 	glm::vec3 velocity;
 	glm::vec3 inputAxis;
 
