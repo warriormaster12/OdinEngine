@@ -19,6 +19,7 @@ public:
     void DestroyWindow();
 
     bool WindowShouldClose();
+    bool MouseMovedFlag();
     void WindowClose();
     int GetKInput(int key);
     int GetMInput(int button);
@@ -27,9 +28,14 @@ public:
     GLFWwindow* p_window;
 
     bool frameBufferResized = false;
-    bool mouseMotion = false;
+    bool mouseMoved = false;
+    
 
     float xoffset;
     float yoffset;
-
+private: 
+    //window callbacks
+    static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+    static void MouseCallback(GLFWwindow* window, double xpos, double ypos);
+    
 };

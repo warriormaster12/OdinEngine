@@ -97,7 +97,6 @@ namespace
 		PushConstBlock pushConstBlock = {};
 		for (const DrawCall& dc : drawCalls)
 		{
-		
 			pushConstBlock.position = glm::vec4(glm::vec3(dc.position),0.0f);
 			pushConstBlock.cascadeIndex = index;
 			vkCmdPushConstants(cmd,layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstBlock), &pushConstBlock);
@@ -601,6 +600,6 @@ void VulkanOffscreen::calculateCascades(Camera& camera)
 void VulkanOffscreen::updateLight(float dt)
 {
 	float angle = glm::radians(dt * 360.0f);
-	float radius = 20.0f;
+	float radius = 5.0f;
 	lightPos = glm::vec3(cos(angle) * radius, -radius,sin(angle) * radius);
 }

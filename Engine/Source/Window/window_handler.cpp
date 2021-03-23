@@ -8,12 +8,8 @@ float lastY =  600.0 / 2.0;
 bool firstMouse = true;
 
 
-static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-    auto app = reinterpret_cast<WindowHandler*>(glfwGetWindowUserPointer(window));
-    app->frameBufferResized = true;
-}
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
 
 void WindowHandler::CreateWindow(uint32_t width, uint32_t height)
 {
@@ -27,8 +23,8 @@ void WindowHandler::CreateWindow(uint32_t width, uint32_t height)
 	
 	p_window = glfwCreateWindow(resolution.width, resolution.height, "Vulkan Engine", nullptr, nullptr);
 	glfwSetWindowUserPointer(p_window, this);
-    glfwSetCursorPosCallback(p_window, mouse_callback);
-	glfwSetFramebufferSizeCallback(p_window, framebufferResizeCallback);
+    glfwSetCursorPosCallback(p_window, MouseCallback);
+	glfwSetFramebufferSizeCallback(p_window, FramebufferResizeCallback);
 
     ENGINE_CORE_INFO("window intialized");
 }
@@ -59,7 +55,7 @@ void WindowHandler::WindowClose()
 	glfwSetWindowShouldClose(p_window, true);
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void WindowHandler::MouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
     auto app = reinterpret_cast<WindowHandler*>(glfwGetWindowUserPointer(window));
     if(firstMouse)
@@ -73,9 +69,14 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     app->xoffset = xoffset;
     app->yoffset = -yoffset;
     
-    app->mouseMotion = true;
+    app->mouseMoved = true;
     lastX = xpos;
     lastY = ypos;
+}
+
+void WindowHandler::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+    auto app = reinterpret_cast<WindowHandler*>(glfwGetWindowUserPointer(window));
+    app->frameBufferResized = true;
 }
 
 

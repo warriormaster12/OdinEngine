@@ -40,7 +40,7 @@ public:
 
 
 	glm::mat4 GetViewMatrix() const;
-	glm::mat4 GetOffscreenViewMatrix();
+	glm::mat4 GetOffscreenViewMatrix() const;
 	glm::mat4 GetProjectionMatrix(bool bReverse = true, bool flipY =true) const;
 	glm::mat4 get_rotation_matrix() const ;
 private: 

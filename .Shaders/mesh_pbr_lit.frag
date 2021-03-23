@@ -346,7 +346,7 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
     vec4 shadowCoord = (biasMat * cameraData.cascadeData.cascadeViewProjMat[cascadeIndex]) * vec4(WorldPos, 1.0);	
     //Variables common to BRDFs
     vec3 lightDir = normalize(vec3(-light.direction));
-    vec3 halfway  = normalize(lightDir + inViewPos);
+    vec3 halfway  = normalize(lightDir + viewDir);
     float nDotV = max(dot(normal, viewDir), 0.0);
     float nDotL = max(dot(normal, lightDir), 0.0);
     vec3 radianceIn = light.color.rgb * float(light.intensity);
@@ -354,7 +354,7 @@ vec3 calcDirLight(DirectionLight light, vec3 normal, vec3 viewDir, vec3 albedo, 
     //Cook-Torrance BRDF
     float NDF = DistributionGGX(normal, halfway, rough);
     float G   = GeometrySmith(nDotV, nDotL, rough);
-    vec3  F   = fresnelSchlick(max(dot(halfway,inViewPos), 0.0), F0);
+    vec3  F   = fresnelSchlick(max(dot(halfway,viewDir), 0.0), F0);
 
     //Finding specular and diffuse component
     vec3 kS = F;

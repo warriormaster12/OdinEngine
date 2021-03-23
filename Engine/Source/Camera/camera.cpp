@@ -46,7 +46,7 @@ void Camera::ProcessInputEvent(WindowHandler& windowHandler)
 	}
 	if (possessCamera)
 	{
-		if(windowHandler.mouseMotion == true)
+		if(windowHandler.mouseMoved == true)
 		{
 			pitch += windowHandler.yoffset * 0.003f;
 			yaw += windowHandler.xoffset * 0.003f;
@@ -59,7 +59,7 @@ void Camera::ProcessInputEvent(WindowHandler& windowHandler)
 			{
 				pitch = -1.56f;
 			}
-			windowHandler.mouseMotion = false;
+			windowHandler.mouseMoved = false;
 		}
 	}
 	if(windowHandler.GetMInput(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
@@ -112,7 +112,7 @@ glm::mat4 Camera::GetViewMatrix() const
 	return view;
 }
 
-glm::mat4 Camera::GetOffscreenViewMatrix()
+glm::mat4 Camera::GetOffscreenViewMatrix() const
 {
 	glm::mat4 rotM = glm::mat4(1.0f);
 	glm::mat4 transM;

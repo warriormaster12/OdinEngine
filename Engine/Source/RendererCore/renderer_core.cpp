@@ -36,7 +36,7 @@ void RendererCore::UpdateRenderer()
     start = std::chrono::system_clock::now();
     vkRenderer.GetCamera().UpdateCamera(deltaTime);
 	//imgui_layer::UpdateUi();
-	timer += deltaTime * 0.00001;
+	timer += deltaTime * 0.0001;
 	vkRenderer.GetOffscreen().updateLight(timer);
 	vkRenderer.GetOffscreen().calculateCascades(vkRenderer.GetCamera());
     vkRenderer.BeginCommands();
