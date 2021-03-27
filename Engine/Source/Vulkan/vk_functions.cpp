@@ -4,13 +4,10 @@
 #include "vk_init.h"
 
 
-void vk_functions::CreateFramebuffer(VkFramebuffer& frameBuffer, VkRenderPass& renderPass,std::vector <VkImageView> attachments, VkExtent2D& imageExtent, const uint32_t& imageCount /*= 1*/)
+void vk_functions::CreateFramebuffer(VkFramebuffer& frameBuffer, VkRenderPass& renderPass,std::vector <VkImageView> attachments, VkExtent2D& imageExtent)
 {
     VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(renderPass, imageExtent);
-    for (int i = 0; i < imageCount; i++)
-    {
-        fbInfo.attachmentCount = attachments.size();
-        fbInfo.pAttachments = attachments.data();
-        vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &frameBuffer);
-    }
+    fbInfo.attachmentCount = attachments.size();
+    fbInfo.pAttachments = attachments.data();
+    VK_CHECK(vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &frameBuffer));
 }

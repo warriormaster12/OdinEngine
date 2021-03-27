@@ -8,6 +8,6 @@
 class vk_functions
 {
 public:
-    static void CreateFramebuffer(VkFramebuffer& frameBuffer, VkRenderPass& renderPass,std::vector <VkImageView> attachments, VkExtent2D& imageExtent, const uint32_t& imageCount = 1);
+    static void CreateFramebuffer(VkFramebuffer& frameBuffer, VkRenderPass& renderPass,std::vector <VkImageView> attachments, VkExtent2D& imageExtent);
 private:
 };

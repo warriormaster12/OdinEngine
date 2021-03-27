@@ -716,15 +716,9 @@ void VulkanRenderer::InitFramebuffers()
 {
 	const uint32_t swapchainImageCount = swapChainObj.swapchainImageViews.size();
 	framebuffers = std::vector<VkFramebuffer>(swapchainImageCount);
+	
 	for (int i = 0; i < swapchainImageCount; i++) {
-		//create the framebuffers for the swapchain images. This will connect the render-pass to the images for rendering
-		VkFramebufferCreateInfo fb_info = vkinit::FramebufferCreateInfo(renderPass, swapChainObj.actualExtent);
-		std::array <VkImageView, 2> attachments = {swapChainObj.swapchainImageViews[i], swapChainObj.depthImageView};
-
-
-		fb_info.attachmentCount = attachments.size();
-		fb_info.pAttachments = attachments.data();
-		VK_CHECK(vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fb_info, nullptr, &framebuffers[i]));
+		vk_functions::CreateFramebuffer(framebuffers[i], renderPass, {swapChainObj.swapchainImageViews[i], swapChainObj.depthImageView}, swapChainObj.actualExtent);
 		EnqueueCleanup([=]() {
 			vkDestroyFramebuffer(VkDeviceManager::GetDevice(), framebuffers[i], nullptr);
 		},&swapDeletionQueue);
