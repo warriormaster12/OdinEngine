@@ -1,7 +1,10 @@
 #include "Include/vk_offscreen.h"
 #include "Include/vk_renderer.h"
+#include "vk_device.h"
 #include "vk_pipelinebuilder.h"
 #include "vk_utils.h"
+#include "vk_check.h"
+#include "vk_functions.h"
 #include <glm/gtx/matrix_decompose.hpp>
 
 vkcomponent::PipelineBuilder offscreenBuilder;
@@ -132,7 +135,7 @@ void VulkanOffscreen::InitOffscreen(VulkanRenderer& renderer)
 
 void VulkanOffscreen::InitRenderpass()
 {
-    depthFormat = vkinit::GetSupportedDepthFormat(true, p_renderer->GetPhysicalDevice());
+    depthFormat = vkinit::GetSupportedDepthFormat(true, VkDeviceManager::GetPhysicalDevice());
 
 	/*
 		Depth map renderpass
@@ -185,11 +188,11 @@ void VulkanOffscreen::InitRenderpass()
 	renderPassCreateInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 	renderPassCreateInfo.pDependencies = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass(p_renderer->GetDevice(), &renderPassCreateInfo, nullptr, &depthPass.renderPass));
+	VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassCreateInfo, nullptr, &depthPass.renderPass));
 
 
 	p_renderer->EnqueueCleanup([=]() {
-		vkDestroyRenderPass(p_renderer->GetDevice(), depthPass.renderPass, nullptr);
+		vkDestroyRenderPass(VkDeviceManager::GetDevice(), depthPass.renderPass, nullptr);
 	});
 }
 
@@ -211,7 +214,7 @@ void VulkanOffscreen::InitFramebuffer()
 	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	VmaAllocationCreateInfo dimg_allocinfo = {};
     dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-	VK_CHECK(vmaCreateImage(p_renderer->GetAllocator(),&imageInfo, &dimg_allocinfo, &depth.depthImage.image.image, &depth.depthImage.image.allocation, nullptr));
+	VK_CHECK(vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &depth.depthImage.image.image, &depth.depthImage.image.allocation, nullptr));
 	// Full depth map view (all layers)
 	VkImageViewCreateInfo viewInfo = vkinit::ImageViewCreateInfo(depthFormat, depth.depthImage.image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
@@ -219,7 +222,8 @@ void VulkanOffscreen::InitFramebuffer()
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = SHADOW_MAP_CASCADE_COUNT;
-	VK_CHECK(vkCreateImageView(p_renderer->GetDevice(), &viewInfo, nullptr, &depth.depthImage.imageView));
+	VK_CHECK(vkCreateImageView(VkDeviceManager::GetDevice(), &viewInfo, nullptr, &depth.depthImage.imageView));
+
 
 	// One image and framebuffer per cascade
 	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
@@ -231,21 +235,17 @@ void VulkanOffscreen::InitFramebuffer()
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = i;
 		viewInfo.subresourceRange.layerCount = 1;
-		VK_CHECK(vkCreateImageView(p_renderer->GetDevice(), &viewInfo, nullptr, &cascades[i].view));
+		VK_CHECK(vkCreateImageView(VkDeviceManager::GetDevice(), &viewInfo, nullptr, &cascades[i].view));
 		// Framebuffer
-		VkFramebufferCreateInfo framebufferInfo = vkinit::FramebufferCreateInfo(depthPass.renderPass, depth.imageSize);
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &cascades[i].view;
-		framebufferInfo.layers = 1;
-		VK_CHECK(vkCreateFramebuffer(p_renderer->GetDevice(), &framebufferInfo, nullptr, &cascades[i].frameBuffer));
+		vk_functions::CreateFramebuffer(cascades[i].frameBuffer, depthPass.renderPass,{cascades[i].view}, depth.imageSize);
 		p_renderer->EnqueueCleanup([=]() {
-			cascades[i].destroy(p_renderer->GetDevice());
+			cascades[i].destroy(VkDeviceManager::GetDevice());
 		});
 	}
 
     p_renderer->EnqueueCleanup([=]() {
-		vmaDestroyImage(p_renderer->GetAllocator(), depth.depthImage.image.image, depth.depthImage.image.allocation);
-		vkDestroyImageView(p_renderer->GetDevice(), depth.depthImage.imageView, nullptr);
+		vmaDestroyImage(VkDeviceManager::GetAllocator(), depth.depthImage.image.image, depth.depthImage.image.allocation);
+		vkDestroyImageView(VkDeviceManager::GetDevice(), depth.depthImage.imageView, nullptr);
 	});
 
 }
@@ -271,7 +271,7 @@ void VulkanOffscreen::InitDescriptors()
 		info.allocSize = sizeof(DepthPass::UniformBlock);
 		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-		CreateBuffer(p_renderer->GetAllocator(), &depthPass.uboBuffer, info);
+		CreateBuffer(VkDeviceManager::GetAllocator(), &depthPass.uboBuffer, info);
 	}
 	VkDescriptorBufferInfo cascadeInfo = {};
 	cascadeInfo.buffer = depthPass.uboBuffer.buffer;
@@ -288,7 +288,7 @@ void VulkanOffscreen::InitDescriptors()
 		
 	p_renderer->EnqueueCleanup([=]()
 	{
-		vmaDestroyBuffer(p_renderer->GetAllocator(), depthPass.uboBuffer.buffer, depthPass.uboBuffer.allocation);
+		vmaDestroyBuffer(VkDeviceManager::GetAllocator(), depthPass.uboBuffer.buffer, depthPass.uboBuffer.allocation);
 	});
 	
 }
@@ -297,11 +297,11 @@ void VulkanOffscreen::InitPipelines()
 {
     //VkShaderModule debugVertexShader;
 	vkcomponent::ShaderModule debugVertShader;
-	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/debug.vert").c_str(), &debugVertShader, p_renderer->GetDevice());
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/debug.vert").c_str(), &debugVertShader, VkDeviceManager::GetDevice());
 
 	//VkShaderModule debugFragmentShader;
 	vkcomponent::ShaderModule debugFragShader;
-	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/debug.frag").c_str(), &debugFragShader, p_renderer->GetDevice());
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/debug.frag").c_str(), &debugFragShader, VkDeviceManager::GetDevice());
 
 	vkcomponent::ShaderEffect* shadowDebugEffect = new vkcomponent::ShaderEffect();
 	std::vector<vkcomponent::ShaderModule> shaderModules = {debugVertShader, debugFragShader};
@@ -317,7 +317,7 @@ void VulkanOffscreen::InitPipelines()
 	debugpipInfo.setLayoutCount = layouts.size();
 	debugpipInfo.pushConstantRangeCount = 1;
 	debugpipInfo.pPushConstantRanges = &pushConstant;
-	shadowDebugEffect = vkcomponent::BuildEffect(p_renderer->GetDevice(), shaderModules, debugpipInfo);
+	shadowDebugEffect = vkcomponent::BuildEffect(shaderModules, debugpipInfo);
 
 	//hook the push constants layout
 	offscreenBuilder.pipelineLayout = shadowDebugEffect->builtLayout;
@@ -339,13 +339,13 @@ void VulkanOffscreen::InitPipelines()
 	offscreenBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
 
 	//build the debug pipeline
-	vkcomponent::ShaderPass* debugPass = vkcomponent::BuildShader(p_renderer->GetDevice(), p_renderer->GetRenderPass(), offscreenBuilder, shadowDebugEffect);
+	vkcomponent::ShaderPass* debugPass = vkcomponent::BuildShader(p_renderer->GetRenderPass(), offscreenBuilder, shadowDebugEffect);
 	shadowDebug = debugPass->pipeline;
 	shadowDebugLayout = debugPass->layout;
 
 
 	vkcomponent::ShaderModule depthVertShader;
-	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/depthpass.vert").c_str(), & depthVertShader, p_renderer->GetDevice());
+	vkcomponent::LoadShaderModule(vkcomponent::CompileGLSL(".Shaders/depthpass.vert").c_str(), & depthVertShader, VkDeviceManager::GetDevice());
 	
 
 	vkcomponent::ShaderEffect* offscreenEffect = new vkcomponent::ShaderEffect();
@@ -359,7 +359,7 @@ void VulkanOffscreen::InitPipelines()
 	offscreenpipInfo.setLayoutCount = offscreenLayouts.size();
 	offscreenpipInfo.pushConstantRangeCount = 1;
 	offscreenpipInfo.pPushConstantRanges = &pushConstant;
-	offscreenEffect = vkcomponent::BuildEffect(p_renderer->GetDevice(), shaderModules, offscreenpipInfo);
+	offscreenEffect = vkcomponent::BuildEffect(shaderModules, offscreenpipInfo);
 
 	std::vector <LocationInfo> locations = {{VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)}
 	};
@@ -379,15 +379,15 @@ void VulkanOffscreen::InitPipelines()
 	offscreenBuilder.rasterizer.depthClampEnable = true;
 
 
-	vkcomponent::ShaderPass* offscreenPass = vkcomponent::BuildShader(p_renderer->GetDevice(), depthPass.renderPass, offscreenBuilder, offscreenEffect);
+	vkcomponent::ShaderPass* offscreenPass = vkcomponent::BuildShader(depthPass.renderPass, offscreenBuilder, offscreenEffect);
 	depthPass.pipeline = offscreenPass->pipeline;
 	depthPass.pipelineLayout = offscreenPass->layout;
 
 
     p_renderer->EnqueueCleanup([=]()
     {
-        debugPass->FlushPass(p_renderer->GetDevice());
-		offscreenPass->FlushPass(p_renderer->GetDevice());
+        debugPass->FlushPass();
+		offscreenPass->FlushPass();
     });
 	
 }
@@ -401,7 +401,7 @@ void VulkanOffscreen::BuildImage()
 	sampler.minLod = 0.0f;
 	sampler.maxLod = 1.0f;
 	sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(p_renderer->GetDevice(), &sampler, nullptr, &depth.sampler));
+	VK_CHECK(vkCreateSampler(VkDeviceManager::GetDevice(), &sampler, nullptr, &depth.sampler));
 
 	VkDescriptorImageInfo imageBufferInfo = {};
 	imageBufferInfo.sampler = depth.sampler;
@@ -418,7 +418,7 @@ void VulkanOffscreen::BuildImage()
 	.Build(depthSet);
 
 	 p_renderer->EnqueueCleanup([=]() {
-		vkDestroySampler(p_renderer->GetDevice(), depth.sampler, nullptr);
+		vkDestroySampler(VkDeviceManager::GetDevice(), depth.sampler, nullptr);
 	});
 }
 
@@ -503,8 +503,8 @@ void VulkanOffscreen::drawOffscreenShadows(const std::vector<RenderObject>& obje
 	DescriptorSetData descriptorSets;
 	descriptorSets.cascadeSets = cascades[count].descriptorSet;
 
-	UploadLightData(p_renderer->GetAllocator(), depthPass, cascades);
-	UploadDrawCalls(p_renderer->GetAllocator(), p_renderer->GetCurrentFrame().indirectDrawBuffer.allocation, objects);
+	UploadLightData(VkDeviceManager::GetAllocator(), depthPass, cascades);
+	UploadDrawCalls(VkDeviceManager::GetAllocator(), p_renderer->GetCurrentFrame().indirectDrawBuffer.allocation, objects);
 	std::vector<DrawCall> drawCalls = BatchDrawCalls(objects, descriptorSets);	
 	IssueDrawCalls(p_renderer->GetCommandBuffer(), p_renderer->GetCurrentFrame().indirectDrawBuffer.buffer,drawCalls, depthPass.pipeline, depthPass.pipelineLayout,cascades[count].descriptorSet,count);
 }

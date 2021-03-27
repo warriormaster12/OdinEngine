@@ -25,7 +25,7 @@ namespace vkcomponent
         VkPipelineMultisampleStateCreateInfo multisampling;
         VkPipelineLayout pipelineLayout;
         VkPipelineDepthStencilStateCreateInfo depthStencil;
-        VkPipeline BuildPipeline(VkDevice& device, VkRenderPass& pass);
+        VkPipeline BuildPipeline(VkRenderPass& pass);
 
         void SetShaders(ShaderEffect* effect);
     };
@@ -36,7 +36,7 @@ public:
 
 	VkPipelineShaderStageCreateInfo  shaderStage;
 	VkPipelineLayout pipelineLayout;
-	VkPipeline BuildPipeline(VkDevice& device);
+	VkPipeline BuildPipeline();
 
     void SetShaders(ShaderEffect* effect);
 };
@@ -46,10 +46,10 @@ public:
 		VkPipeline pipeline{ VK_NULL_HANDLE };
 		VkPipelineLayout layout{ VK_NULL_HANDLE };
 
-        void FlushPass(VkDevice& device);
+        void FlushPass();
 	};
 
     //ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, std::vector<ShaderEffect::ReflectionOverrides> overrides={});
-    ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info);
-    ShaderPass* BuildShader(VkDevice& device, VkRenderPass renderPass,PipelineBuilder& builder, ShaderEffect* effect);
+    ShaderEffect* BuildEffect(std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info);
+    ShaderPass* BuildShader(VkRenderPass renderPass,PipelineBuilder& builder, ShaderEffect* effect);
 }

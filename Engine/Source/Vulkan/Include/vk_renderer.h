@@ -253,19 +253,17 @@ public:
 	void CreateTextures(const std::string& materialName, std::vector<std::string>& texturePaths);
 
 	Camera& GetCamera() { return camera; }
-	const VmaAllocator& GetAllocator() const { return allocator; }
+	
 
 	FrameData& GetFrameData(uint32_t frameOverlap) {return frames[frameOverlap];}
 	vkcomponent::DescriptorAllocator* GetDescriptorAllocator()  {return p_descriptorAllocator;}
 	vkcomponent::DescriptorLayoutCache* GetDescriptorLayoutCache()  {return p_descriptorLayoutCache;}
 
-	VkInstance& GetInstance() { return instance; }
-	VkPhysicalDevice& GetPhysicalDevice() { return chosenGPU; }
-	VkDevice& GetDevice() { return device; }
-	VkQueue& GetGraphicsQueue() { return graphicsQueue; }
+	
+	
 
 	VkRenderPass& GetRenderPass() { return renderPass; }
-	vkcomponent::SwapChain&  GetSwapChain() {return swapChainObj; }
+	SwapChain&  GetSwapChain() {return swapChainObj; }
 	FunctionQueuer& GetSwapQueue() {return swapDeletionQueue;}
 
 	uint32_t GetWidth() const { return swapChainObj.actualExtent.width; }
@@ -284,21 +282,15 @@ private:
 	int selectedShader{0};
 	WindowHandler* p_windowHandler;
 
-	VkInstance instance;
-	VkDebugUtilsMessengerEXT debugMessenger;
-	VkPhysicalDevice chosenGPU;
-	VkDevice device;
-	VkPhysicalDeviceProperties gpuProperties;
+	
 	FrameData frames[FRAME_OVERLAP];
-	VkQueue graphicsQueue;
-	uint32_t graphicsQueueFamily;
+	
 	VkRenderPass renderPass;
 	std::vector<VkFramebuffer> framebuffers;
 
     FunctionQueuer mainDeletionQueue;
 	FunctionQueuer swapDeletionQueue;
 
-	VmaAllocator allocator; //vma lib allocator
 	vkcomponent::DescriptorAllocator* p_descriptorAllocator;
 	vkcomponent::DescriptorLayoutCache* p_descriptorLayoutCache;
 
@@ -311,7 +303,7 @@ private:
 	GPUSceneData sceneParameters;
 	AllocatedBuffer sceneParameterBuffer;
 
-	vkcomponent::SwapChain swapChainObj{chosenGPU, device, allocator, swapDeletionQueue};
+	SwapChain swapChainObj;
 	Camera camera{swapChainObj};
 
 	UploadContext uploadContext;
@@ -324,7 +316,7 @@ private:
 	
 
 
-	void InitVulkan();
+	
 	void InitSwapchain();
 	void InitDefaultRenderpass();
 	void InitFramebuffers();

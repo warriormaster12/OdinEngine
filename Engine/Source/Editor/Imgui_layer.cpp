@@ -1,4 +1,6 @@
 #include "Include/Imgui_layer.h"
+#include "vk_device.h"
+#include "vk_check.h"
 
 VulkanRenderer* p_renderer;
 bool canShowWindow;
@@ -34,7 +36,7 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 		pool_info.pPoolSizes = poolSizes;
 
 		VkDescriptorPool imguiPool;
-		VK_CHECK(vkCreateDescriptorPool(renderer.GetDevice(), &pool_info, nullptr, &imguiPool));
+		VK_CHECK(vkCreateDescriptorPool(VkDeviceManager::GetDevice(), &pool_info, nullptr, &imguiPool));
 
 
 		// 2: initialize imgui library
@@ -92,10 +94,10 @@ void imgui_layer::InitImguiLayer(VulkanRenderer& renderer, bool showWindow /*= t
 
 		//this initializes imgui for Vulkan
 		ImGui_ImplVulkan_InitInfo init_info = {};
-		init_info.Instance = renderer.GetInstance();
-		init_info.PhysicalDevice = renderer.GetPhysicalDevice();
-		init_info.Device = renderer.GetDevice();
-		init_info.Queue = renderer.GetGraphicsQueue();
+		init_info.Instance = VkDeviceManager::GetInstance();
+		init_info.PhysicalDevice = VkDeviceManager::GetPhysicalDevice();
+		init_info.Device = VkDeviceManager::GetDevice();
+		init_info.Queue = VkDeviceManager::GetGraphicsQueue();
 		init_info.DescriptorPool = imguiPool;
 		init_info.MinImageCount = 3;
 		init_info.ImageCount = 3;

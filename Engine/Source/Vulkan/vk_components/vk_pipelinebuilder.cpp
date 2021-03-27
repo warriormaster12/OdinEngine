@@ -1,12 +1,14 @@
 #include "Include/vk_pipelinebuilder.h"
 #include <iostream>
 #include <array>
-#include "vk_renderer.h"
+#include "vk_device.h"
+#include "vk_check.h"
+
 
 
 namespace vkcomponent
 {
-    VkPipeline PipelineBuilder::BuildPipeline(VkDevice& device, VkRenderPass& pass)
+    VkPipeline PipelineBuilder::BuildPipeline(VkRenderPass& pass)
     {
         //make viewport state from our stored viewport and scissor.
             //at the moment we wont support multiple viewports or scissors
@@ -69,7 +71,7 @@ namespace vkcomponent
         //its easy to error out on create graphics pipeline, so we handle it a bit better than the common VK_CHECK case
         VkPipeline newPipeline;
         if (vkCreateGraphicsPipelines(
-            device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline) != VK_SUCCESS) {
+            VkDeviceManager::GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline) != VK_SUCCESS) {
             ENGINE_CORE_ERROR("failed to create pipline\n");
             return VK_NULL_HANDLE; // failed to create graphics pipeline
         }
@@ -87,7 +89,7 @@ namespace vkcomponent
         pipelineLayout = effect->builtLayout;
     }
 
-    VkPipeline ComputePipelineBuilder::BuildPipeline(VkDevice& device)
+    VkPipeline ComputePipelineBuilder::BuildPipeline()
     {
         VkComputePipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -99,7 +101,7 @@ namespace vkcomponent
 
         VkPipeline newPipeline;
         if (vkCreateComputePipelines(
-            device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline) != VK_SUCCESS) {
+            VkDeviceManager::GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline) != VK_SUCCESS) {
             ENGINE_CORE_ERROR("Failed to build compute pipeline");
             return VK_NULL_HANDLE;
         }
@@ -118,7 +120,7 @@ namespace vkcomponent
         pipelineLayout = effect->builtLayout;
     }
 
-    ShaderEffect* BuildEffect(VkDevice& device, std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info)
+    ShaderEffect* BuildEffect(std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info)
     {
         //textured defaultlit shader
         ShaderEffect* effect = new ShaderEffect();
@@ -126,13 +128,13 @@ namespace vkcomponent
         {
             effect->AddStage(&shaders[i], shaders[i].stage);
         }
-        VK_CHECK(vkCreatePipelineLayout(device, &info, nullptr, &effect->builtLayout));
+        VK_CHECK(vkCreatePipelineLayout(VkDeviceManager::GetDevice(), &info, nullptr, &effect->builtLayout));
         return effect; 
         
         delete effect;
     }
 
-    ShaderPass* BuildShader(VkDevice& device, VkRenderPass renderPass, PipelineBuilder& builder, ShaderEffect* effect)
+    ShaderPass* BuildShader(VkRenderPass renderPass, PipelineBuilder& builder, ShaderEffect* effect)
     {
         ShaderPass* pass = new ShaderPass;
 
@@ -143,18 +145,18 @@ namespace vkcomponent
 
         pipbuilder.SetShaders(effect);
 
-        pass->pipeline = pipbuilder.BuildPipeline(device, renderPass);
+        pass->pipeline = pipbuilder.BuildPipeline(renderPass);
 
-        pass->effect->FlushShaders(device);
+        pass->effect->FlushShaders(VkDeviceManager::GetDevice());
 
         return pass;
 
         delete pass;
     }
 
-    void ShaderPass::FlushPass(VkDevice& device)
+    void ShaderPass::FlushPass()
     {
-        vkDestroyPipeline(device, pipeline, nullptr);
-		vkDestroyPipelineLayout(device,  layout, nullptr);
+        vkDestroyPipeline(VkDeviceManager::GetDevice(), pipeline, nullptr);
+		vkDestroyPipelineLayout(VkDeviceManager::GetDevice(),  layout, nullptr);
     }
 }

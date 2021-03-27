@@ -2,7 +2,7 @@
 
 #include <glm/gtx/transform.hpp>
 
-Camera::Camera(vkcomponent::SwapChain& swapChain)
+Camera::Camera(SwapChain& swapChain)
 {
     p_swapChain = &swapChain;
 }
@@ -84,7 +84,7 @@ void Camera::UpdateCamera(float deltaTime)
 	glm::vec3 right = { cam_vel,0,0 };
 	glm::vec3 up = { 0,cam_vel,0 };
 
-	glm::mat4 cam_rot = get_rotation_matrix();
+	glm::mat4 cam_rot = GetRotationMatrix();
 
 	forward = cam_rot * glm::vec4(forward, 0.f);
 	right = cam_rot * glm::vec4(right, 0.f);
@@ -96,13 +96,12 @@ void Camera::UpdateCamera(float deltaTime)
 
 	position += velocity;
 	
-
 }
 
 
 glm::mat4 Camera::GetViewMatrix() const
 {
-	glm::mat4 cam_rot = get_rotation_matrix();
+	glm::mat4 cam_rot = GetRotationMatrix();
 
 	glm::mat4 view = glm::translate(glm::mat4{ 1 }, position) * cam_rot;
 
@@ -149,7 +148,7 @@ glm::mat4 Camera::GetProjectionMatrix(bool bReverse /*= true*/, bool flipY /*=tr
 	}
 }
 
-glm::mat4 Camera::get_rotation_matrix() const
+glm::mat4 Camera::GetRotationMatrix() const
 {
 	glm::mat4 yaw_rot = glm::rotate(glm::mat4{ 1 }, yaw, { 0,-1,0 });
 	glm::mat4 pitch_rot = glm::rotate(glm::mat4{ yaw_rot }, pitch, { -1,0,0 });

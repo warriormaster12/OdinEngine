@@ -13,7 +13,7 @@
 class Camera {
 public:
 
-    Camera(vkcomponent::SwapChain& swapChain);
+    Camera(SwapChain& swapChain);
 	glm::vec3 position;
 	glm::vec3 rotation ;
 	glm::vec3 velocity;
@@ -42,7 +42,7 @@ public:
 	glm::mat4 GetViewMatrix() const;
 	glm::mat4 GetOffscreenViewMatrix() const;
 	glm::mat4 GetProjectionMatrix(bool bReverse = true, bool flipY =true) const;
-	glm::mat4 get_rotation_matrix() const ;
+	glm::mat4 GetRotationMatrix() const ;
 private: 
-    vkcomponent::SwapChain* p_swapChain;
+    SwapChain* p_swapChain;
 };
