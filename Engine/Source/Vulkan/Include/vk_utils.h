@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vk_types.h"
+#include "vk_device.h"
 
 struct CreateBufferInfo {
     size_t allocSize;
@@ -33,4 +34,22 @@ template<typename T>
 void UploadSingleData(const VmaAllocator& allocator, const VmaAllocation& allocation, const T& data, size_t byteOffset = 0)
 {
     UploadArrayData(allocator, allocation, &data, 1, byteOffset);
+}
+
+static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inputBuffer, const size_t& dataSize, const VkBufferUsageFlags& bufferUsage,const size_t& dataOffset = 0)
+{
+    CreateBufferInfo info;
+    info.allocSize = dataSize;
+    info.bufferUsage = bufferUsage;
+    info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    CreateBuffer(VkDeviceManager::GetAllocator(), &inputBuffer, info);
+
+    VkDescriptorBufferInfo* descriptorBufferInfo = new VkDescriptorBufferInfo;
+    descriptorBufferInfo->buffer = inputBuffer.buffer;
+    descriptorBufferInfo->offset = dataOffset;
+    descriptorBufferInfo->range = dataSize;
+
+    return *descriptorBufferInfo;
+
+    delete descriptorBufferInfo;
 }

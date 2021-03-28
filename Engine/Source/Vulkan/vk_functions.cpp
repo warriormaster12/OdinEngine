@@ -11,3 +11,8 @@ void vk_functions::CreateFramebuffer(VkFramebuffer& frameBuffer, VkRenderPass& r
     fbInfo.pAttachments = attachments.data();
     VK_CHECK(vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &frameBuffer));
 }
+
+void vk_functions::DestroyFramebuffer(VkFramebuffer& frambuffer)
+{
+    vkDestroyFramebuffer(VkDeviceManager::GetDevice(), frambuffer, nullptr);
+}

@@ -9,5 +9,6 @@ class vk_functions
 {
 public:
     static void CreateFramebuffer(VkFramebuffer& frameBuffer, VkRenderPass& renderPass,std::vector <VkImageView> attachments, VkExtent2D& imageExtent);
+    static void DestroyFramebuffer(VkFramebuffer& frambuffer);
 private:
 };

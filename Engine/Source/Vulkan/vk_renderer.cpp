@@ -45,7 +45,7 @@ namespace {
 			camData.cascadeData.cascadeViewProjMat[i] = cascades[i].viewProjMatrix;
 			camData.cascadeData.cascadeSplits[i] = cascades[i].splitDepth;
 		}
-		camData.cascadeData.cascadeSplitsDebug = 1;
+		camData.cascadeData.cascadeSplitsDebug = 0;
 
 		UploadSingleData(allocator, allocation, camData);
     }
@@ -720,7 +720,7 @@ void VulkanRenderer::InitFramebuffers()
 	for (int i = 0; i < swapchainImageCount; i++) {
 		vk_functions::CreateFramebuffer(framebuffers[i], renderPass, {swapChainObj.swapchainImageViews[i], swapChainObj.depthImageView}, swapChainObj.actualExtent);
 		EnqueueCleanup([=]() {
-			vkDestroyFramebuffer(VkDeviceManager::GetDevice(), framebuffers[i], nullptr);
+			vk_functions::DestroyFramebuffer(framebuffers[i]);
 		},&swapDeletionQueue);
 	}
 	
@@ -827,14 +827,8 @@ void VulkanRenderer::InitDescriptors()
 	VkDescriptorSetLayoutCreateInfo _set3 = vkinit::DescriptorLayoutInfo(textureBindings, &info);
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
-	{
-		CreateBufferInfo info;
-		//info.allocSize = FRAME_OVERLAP * PadUniformBufferSize(sizeof(GPUSceneData));
-		info.allocSize = FRAME_OVERLAP * sizeof(GPUSceneData);
-		info.bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-		CreateBuffer(VkDeviceManager::GetAllocator(), &sceneParameterBuffer, info);
-	}
+	//create descriptor buffers
+	VkDescriptorBufferInfo sceneInfo = CreateDescriptorBuffer(sceneParameterBuffer,  FRAME_OVERLAP * sizeof(GPUSceneData), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 
     const int MAX_OBJECTS = 10000;
     const int MAX_COMMANDS = 1000;
@@ -848,42 +842,15 @@ void VulkanRenderer::InitDescriptors()
 
 		{
 			CreateBufferInfo info;
-			info.allocSize = sizeof(GPUCameraData);
-			info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-			CreateBuffer(VkDeviceManager::GetAllocator(), &frames[i].cameraBuffer, info);
-		}
-
-		{
-			CreateBufferInfo info;
-			info.allocSize = MAX_OBJECTS * sizeof(GPUObjectData);
-			info.bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-            CreateBuffer(VkDeviceManager::GetAllocator(), &frames[i].objectBuffer, info);
-		}
-
-		{
-			CreateBufferInfo info;
 			info.allocSize = MAX_COMMANDS * sizeof(VkDrawIndirectCommand);
 			info.bufferUsage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 			info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 			CreateBuffer(VkDeviceManager::GetAllocator(), &frames[i].indirectDrawBuffer, info);
 		}
 
-		VkDescriptorBufferInfo cameraInfo;
-		cameraInfo.buffer = frames[i].cameraBuffer.buffer;
-		cameraInfo.offset = 0;
-		cameraInfo.range = sizeof(GPUCameraData);
+		VkDescriptorBufferInfo cameraInfo = CreateDescriptorBuffer(frames[i].cameraBuffer, sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
-		VkDescriptorBufferInfo sceneInfo;
-		sceneInfo.buffer = sceneParameterBuffer.buffer;
-		sceneInfo.offset = 0;
-		sceneInfo.range = sizeof(GPUSceneData);
-
-		VkDescriptorBufferInfo objectBufferInfo;
-		objectBufferInfo.buffer = frames[i].objectBuffer.buffer;
-		objectBufferInfo.offset = 0;
-		objectBufferInfo.range = sizeof(GPUObjectData) * MAX_OBJECTS;
+		VkDescriptorBufferInfo objectBufferInfo = CreateDescriptorBuffer(frames[i].objectBuffer, sizeof(GPUObjectData) * MAX_OBJECTS, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 
 		vkcomponent::DescriptorBuilder::Begin(p_descriptorLayoutCache, frames[i].p_dynamicDescriptorAllocator)
 		.BindBuffer(0, &cameraInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
