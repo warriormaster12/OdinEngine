@@ -502,20 +502,8 @@ void VulkanRenderer::CreateMaterial(vkcomponent::ShaderPass* inputPass, const st
 	materials[name] = mat;
 	materialList.push_back(name);
 	p_descriptorAllocator->AllocateVariableSet(&materials[name].materialSet, materialTextureSetLayout, mat.textures.size());
-	
 
-	{
-		CreateBufferInfo info;
-		info.allocSize = sizeof(GPUMaterialData);
-		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-		CreateBuffer(VkDeviceManager::GetAllocator(), &materials[name].buffer, info);
-	}
-
-	VkDescriptorBufferInfo materialBufferInfo;
-	materialBufferInfo.buffer = materials[name].buffer.buffer;
-	materialBufferInfo.offset = 0;
-	materialBufferInfo.range = sizeof(GPUMaterialData);
+	VkDescriptorBufferInfo materialBufferInfo = CreateDescriptorBuffer(materials[name].buffer, sizeof(GPUMaterialData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
 	VkWriteDescriptorSet objectFragWrite = vkinit::WriteDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, materials[name].materialSet, &materialBufferInfo, 0);
 	vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &objectFragWrite, 0, nullptr);
@@ -828,7 +816,7 @@ void VulkanRenderer::InitDescriptors()
 	materialTextureSetLayout = p_descriptorLayoutCache->CreateDescriptorLayout(&_set3);
 
 	//create descriptor buffers
-	VkDescriptorBufferInfo sceneInfo = CreateDescriptorBuffer(sceneParameterBuffer,  FRAME_OVERLAP * sizeof(GPUSceneData), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	VkDescriptorBufferInfo sceneInfo = CreateDescriptorBuffer(sceneParameterBuffer,  FRAME_OVERLAP * sizeof(GPUSceneData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
     const int MAX_OBJECTS = 10000;
     const int MAX_COMMANDS = 1000;
@@ -850,7 +838,7 @@ void VulkanRenderer::InitDescriptors()
 
 		VkDescriptorBufferInfo cameraInfo = CreateDescriptorBuffer(frames[i].cameraBuffer, sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
-		VkDescriptorBufferInfo objectBufferInfo = CreateDescriptorBuffer(frames[i].objectBuffer, sizeof(GPUObjectData) * MAX_OBJECTS, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+		VkDescriptorBufferInfo objectBufferInfo = CreateDescriptorBuffer(frames[i].objectBuffer, sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
 		vkcomponent::DescriptorBuilder::Begin(p_descriptorLayoutCache, frames[i].p_dynamicDescriptorAllocator)
 		.BindBuffer(0, &cameraInfo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)

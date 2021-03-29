@@ -265,18 +265,7 @@ void VulkanOffscreen::InitDescriptors()
 	VkDescriptorSetLayoutCreateInfo _set2 = vkinit::DescriptorLayoutInfo(depthBindings);
 	depthSetLayout = p_renderer->GetDescriptorLayoutCache()->CreateDescriptorLayout(&_set2);
 
-	
-	{
-		CreateBufferInfo info;
-		info.allocSize = sizeof(DepthPass::UniformBlock);
-		info.bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-		CreateBuffer(VkDeviceManager::GetAllocator(), &depthPass.uboBuffer, info);
-	}
-	VkDescriptorBufferInfo cascadeInfo = {};
-	cascadeInfo.buffer = depthPass.uboBuffer.buffer;
-	cascadeInfo.offset = 0;
-	cascadeInfo.range = sizeof(DepthPass::UniformBlock);
+	VkDescriptorBufferInfo cascadeInfo = CreateDescriptorBuffer(depthPass.uboBuffer, sizeof(DepthPass::UniformBlock), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
 	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
 	{
