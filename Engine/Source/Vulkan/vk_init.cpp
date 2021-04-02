@@ -313,6 +313,7 @@ VkSamplerCreateInfo vkinit::SamplerCreateInfo(VkFilter filters, VkSamplerAddress
 
 	info.magFilter = filters;
 	info.minFilter = filters;
+    info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	info.addressModeU = samplerAdressMode;
 	info.addressModeV = samplerAdressMode;
 	info.addressModeW = samplerAdressMode;

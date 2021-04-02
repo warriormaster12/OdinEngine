@@ -40,7 +40,7 @@ void VkDeviceManager::InitVulkan(SwapChain& swapChainObj, WindowHandler& windowH
 	feats.depthClamp = true;
 
 	
-	//feats.samplerAnisotropy = true;
+	feats.samplerAnisotropy = true;
 	
 
 	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};

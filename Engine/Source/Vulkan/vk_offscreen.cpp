@@ -390,6 +390,7 @@ void VulkanOffscreen::BuildImage()
 	sampler.minLod = 0.0f;
 	sampler.maxLod = 1.0f;
 	sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	sampler.compareEnable = VK_TRUE;
 	VK_CHECK(vkCreateSampler(VkDeviceManager::GetDevice(), &sampler, nullptr, &depth.sampler));
 
 	VkDescriptorImageInfo imageBufferInfo = {};
@@ -544,7 +545,7 @@ void VulkanOffscreen::calculateCascades(Camera& camera)
 		};
 
 		// Project frustum corners into world space
-		glm::mat4 invCam = glm::inverse(camera.GetProjectionMatrix(false) * camera.GetOffscreenViewMatrix());
+		glm::mat4 invCam = glm::inverse(camera.GetProjectionMatrix(false) * camera.GetViewMatrix());
 		for (uint32_t i = 0; i < 8; i++) {
 			glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[i], 1.0f);
 			frustumCorners[i] = invCorner / invCorner.w;
