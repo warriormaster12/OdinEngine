@@ -21,7 +21,7 @@ void WindowHandler::CreateWindow(uint32_t width, uint32_t height)
     resolution.width = width;
     resolution.height = height;
 	
-	p_window = glfwCreateWindow(resolution.width, resolution.height, "Vulkan Engine", nullptr, nullptr);
+	p_window = glfwCreateWindow(resolution.width, resolution.height, "Odin Engine", nullptr, nullptr);
 	glfwSetWindowUserPointer(p_window, this);
     glfwSetCursorPosCallback(p_window, MouseCallback);
 	glfwSetFramebufferSizeCallback(p_window, FramebufferResizeCallback);

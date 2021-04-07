@@ -25,9 +25,9 @@ public:
     int GetMInput(int button);
 
     Resolution resolution;
-    GLFWwindow* p_window;
+    inline static GLFWwindow* p_window;
 
-    bool frameBufferResized = false;
+    inline static bool frameBufferResized = false;
     bool mouseMoved = false;
     
 
@@ -39,3 +39,5 @@ private:
     static void MouseCallback(GLFWwindow* window, double xpos, double ypos);
     
 };
+
+static WindowHandler windowHandler;
