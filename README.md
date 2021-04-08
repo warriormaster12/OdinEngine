@@ -1,5 +1,4 @@
-# VulkanEngine
-
+# Odin Engine
 ## Installation guide 
 
 ### Install the project and its dependencies
