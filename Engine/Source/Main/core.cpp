@@ -5,10 +5,13 @@
 
 //Temporary
 #include "vk_utils.h"
+#include "mesh.h"
 
 
 bool isInitialized{ false };
 AllocatedBuffer triangleBuffer;
+
+Mesh mesh;
 
 struct TriangleData
 {
@@ -43,6 +46,16 @@ void Core::CoreInit()
 
     Renderer::RemoveShaderUniformLayout("triangle color layout");
 
+    mesh.vertices.resize(4);
+    //vertex positions
+    mesh.vertices[0].position = {-0.5f, -0.5f, 0.0f };
+    mesh.vertices[1].position = {0.5f, -0.5f, 0.0f };
+    mesh.vertices[2].position = { 0.5f, 0.5f, 0.0f};
+    mesh.vertices[3].position = {-0.5f, 0.5f, 0.0f};
+    mesh.indices = {0, 1, 2, 2, 3, 0};
+
+    mesh.CreateMesh();
+
     //everything went fine
     isInitialized = true;
 }
@@ -74,7 +87,9 @@ void Core::CoreUpdate()
             UploadData(triangleData);
             
             Renderer::BindUniforms("triangle color", "triangle shader");
-            Renderer::Draw();
+            Renderer::BindVertexBuffer(mesh.vertexBuffer);
+            Renderer::BindIndexBuffer(mesh.indexBuffer);
+            Renderer::DrawIndexed(mesh.indices);
         });
     }
 }
@@ -84,6 +99,7 @@ void Core::CoreCleanup()
     if (isInitialized)
     {
         Renderer::RemoveAllocatedBuffer(triangleBuffer);
+        mesh.DestroyMesh();
         Renderer::CleanUpRenderer();
 		windowHandler.DestroyWindow();
     }

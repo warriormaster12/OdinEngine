@@ -53,7 +53,9 @@ namespace VulkanContext
 
     void BindGraphicsPipeline(const std::string& shaderName);
     void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName);
-    void Draw();
+    void BindIndexBuffer(AllocatedBuffer& indexBuffer);
+    void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
+    void DrawIndexed(std::vector<std::uint32_t>& indices);
 
     void BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass = VK_NULL_HANDLE);
     void EndRenderpass();

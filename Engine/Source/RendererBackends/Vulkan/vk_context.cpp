@@ -6,6 +6,7 @@
 #include "Include/vk_utils.h"
 
 #include "vk_check.h"
+#include "vk_meshhandler.h"
 #include "function_queuer.h"
 #include "window_handler.h"
 
@@ -29,6 +30,8 @@ vkcomponent::DescriptorLayoutCache descriptorLayoutCache;
 
 std::unordered_map<std::string, DescriptorSetLayout> descriptorSetLayouts;
 std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+
+
 
 namespace
 {  
@@ -56,7 +59,6 @@ namespace VulkanContext
         VkSwapChainManager::InitSwapchain();
         VkCommandbufferManager::InitCommands();
         VkCommandbufferManager::InitSyncStructures();
-
 
         descriptorAllocator.Init(VkDeviceManager::GetDevice());
         descriptorLayoutCache.Init(VkDeviceManager::GetDevice());
@@ -290,7 +292,20 @@ namespace VulkanContext
         //we are just going to draw triangle list
         pipelineBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
-        //build the mesh triangle pipeline
+        std::vector <LocationInfo> locations = {
+            {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)}
+        };
+        VertexInputDescription vertexDescription = Vertex::GetVertexDescription(locations);
+
+        //connect the pipeline builder vertex input info to the one we get from Vertex
+        pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
+        pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
+
+        pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
+        pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
+
+
+        //build the pipeline
         vkcomponent::ShaderPass shaderPass;
         if(renderPass != VK_NULL_HANDLE)
         {
@@ -319,9 +334,20 @@ namespace VulkanContext
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, 0, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
     }
 
-    void Draw()
+    void BindIndexBuffer(AllocatedBuffer& indexBuffer)
     {
-        vkCmdDraw(cmd, 3, 1, 0, 0);
+        VkDeviceSize offset = 0;
+        vkCmdBindIndexBuffer(cmd, indexBuffer.buffer,offset, VK_INDEX_TYPE_UINT32);
+    }
+    void BindVertexBuffer(AllocatedBuffer& vertexBuffer)
+    {
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.buffer, &offset);
+    }
+
+    void DrawIndexed(std::vector<std::uint32_t>& indices)
+    {   
+        vkCmdDrawIndexed(cmd, indices.size(), 1,0,0,0);
     }
 
     void BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)

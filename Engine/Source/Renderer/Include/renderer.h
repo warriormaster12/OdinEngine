@@ -50,5 +50,11 @@ namespace Renderer
     //Equivalent to binding descriptor sets
     void BindUniforms(const std::string& name, const std::string& shaderName);
 
-    void Draw();
+    void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
+    
+    void BindIndexBuffer(AllocatedBuffer& indexBuffer);
+
+    void DrawIndexed(std::vector<std::uint32_t>& indices);
+
+    AvailableBackends GetActiveAPI();
 };

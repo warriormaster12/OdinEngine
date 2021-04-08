@@ -6,6 +6,10 @@ AvailableBackends currentBackend;
 
 namespace Renderer
 {
+    AvailableBackends GetActiveAPI()
+    {
+        return currentBackend;
+    }
     void InitRenderer(AvailableBackends selectBackend)
     {
         currentBackend = selectBackend;
@@ -121,11 +125,29 @@ namespace Renderer
             VulkanContext::UpdateDraw(colors, [=]{drawCalls();});
         } 
     }
-    void Draw()
+
+    void BindVertexBuffer(AllocatedBuffer& vertexBuffer)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::Draw();
+            VulkanContext::BindVertexBuffer(vertexBuffer);
+        }
+    }
+    
+    void BindIndexBuffer(AllocatedBuffer& indexBuffer)
+    {
+        if(currentBackend == AvailableBackends::Vulkan)
+        {
+            VulkanContext::BindIndexBuffer(indexBuffer);
+        }
+    }
+
+
+    void DrawIndexed(std::vector<std::uint32_t>& indices)
+    {
+        if(currentBackend == AvailableBackends::Vulkan)
+        {
+            VulkanContext::DrawIndexed(indices);
         } 
     }
 
