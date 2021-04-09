@@ -120,9 +120,7 @@ namespace Renderer
     {
        if(currentBackend == AvailableBackends::Vulkan)
         {
-            float colors[4] = {clearColor[0], clearColor[1], clearColor[2], clearColor[3]};
-            
-            VulkanContext::UpdateDraw(colors, [=]{drawCalls();});
+            VulkanContext::UpdateDraw(clearColor.data(), [=]{drawCalls();});
         } 
     }
 
