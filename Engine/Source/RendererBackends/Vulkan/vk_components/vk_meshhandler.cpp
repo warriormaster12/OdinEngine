@@ -15,15 +15,15 @@ VertexInputDescription Vertex::GetVertexDescription(const std::vector<LocationIn
 	description.bindings.push_back(mainBinding);
 
 	
-	VkVertexInputAttributeDescription attributes[locations.size()];
-	for(int i = 0; i < locations.size(); i++)
+	for(size_t i = 0; i < locations.size(); i++)
 	{
-		attributes[i].binding = 0;
-		attributes[i].location = i;
-		attributes[i].format = locations[i].format;
-		attributes[i].offset = locations[i].offset;
+		VkVertexInputAttributeDescription attribute{};
+		attribute.binding = 0;
+		attribute.location = i;
+		attribute.format = locations[i].format;
+		attribute.offset = locations[i].offset;
 
-		description.attributes.push_back(attributes[i]);
+		description.attributes.push_back(attribute);
 	}
 	return description;
 }
