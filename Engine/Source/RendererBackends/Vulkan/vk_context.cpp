@@ -228,7 +228,14 @@ namespace VulkanContext
     void CreateDescriptorSetLayout(const std::string& layoutName)
     {
         VkDescriptorSetLayoutCreateInfo set = vkinit::DescriptorLayoutInfo(descriptorSetLayoutBindings);
-	    descriptorSetLayouts[layoutName].layouts.push_back(descriptorLayoutCache.CreateDescriptorLayout(&set));
+        if(FindUnorderdMap(layoutName, descriptorSetLayouts) == nullptr)
+        {
+	        descriptorSetLayouts[layoutName].layouts.push_back(descriptorLayoutCache.CreateDescriptorLayout(&set));
+        }
+        else
+        {
+            FindUnorderdMap(layoutName, descriptorSetLayouts)->layouts.push_back(descriptorLayoutCache.CreateDescriptorLayout(&set));
+        }
     }
 
     void RemoveDescriptorSetLayout(const std::string& layoutName)
