@@ -41,14 +41,17 @@ namespace Renderer
     void CreateShaderUniformLayout(const std::string& layoutName);
     void RemoveShaderUniformLayout(const std::string& layoutName);
     //create the shader
-    void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::string& layoutName);
+    void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames);
     //Equivalent to writing a descriptor set
-    void WriteShaderUniform(const std::string& name, AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0);
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0);
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
     //Bind the shader before drawing
     void BindShader(const std::string& shaderName);
+
+    
+
     //Equivalent to binding descriptor sets
-    void BindUniforms(const std::string& name, const std::string& shaderName);
+    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set = 0);
 
     void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     
@@ -57,4 +60,15 @@ namespace Renderer
     void DrawIndexed(std::vector<std::uint32_t>& indices);
 
     AvailableBackends GetActiveAPI();
+
+    //template functions 
+
+    template<typename T>
+    void UploadUniformDataToShader(const T& data, AllocatedBuffer& buffer)
+    {
+        if(GetActiveAPI() == AvailableBackends::Vulkan)
+        {
+            UploadSingleData(buffer.allocation, data);
+        }
+    }
 };

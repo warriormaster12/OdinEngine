@@ -9,15 +9,11 @@
 
 #include "vk_pipelinebuilder.h"
 #include "vk_types.h"
+#include "vk_utils.h"
 
 struct ShaderProgram 
 {
     vkcomponent::ShaderPass pass;
-};
-
-struct DescriptorSetLayout
-{
-    std::vector<VkDescriptorSetLayout> layouts;
 };
 
 struct DescripotrSetLayoutBindingInfo
@@ -26,6 +22,12 @@ struct DescripotrSetLayoutBindingInfo
     VkShaderStageFlags shaderStageFlags;
     uint32_t binding;
     uint32_t descriptorCount;
+};
+
+struct DescriptorSetInfo
+{
+    VkDescriptorSetLayout layout;
+    std::vector<VkDescriptorSetLayoutBinding> bindings;
 };
 
 
@@ -46,13 +48,13 @@ namespace VulkanContext
     void CreateDescriptorSetLayout(const std::string& layoutName);
     void RemoveDescriptorSetLayout(const std::string& layoutName);
 
-    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::string& layoutName, const VkRenderPass& renderPass = VK_NULL_HANDLE);
+    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE);
     
-    void CreateDescriptorSet(const std::string& descriptorName, AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0);
+    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0);
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
 
     void BindGraphicsPipeline(const std::string& shaderName);
-    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName);
+    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set = 0);
     void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     void DrawIndexed(std::vector<std::uint32_t>& indices);

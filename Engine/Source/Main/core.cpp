@@ -6,12 +6,14 @@
 //Temporary
 #include "vk_utils.h"
 #include "mesh.h"
+#include "camera.h"
 
 
 bool isInitialized{ false };
 AllocatedBuffer triangleBuffer;
 
 Mesh mesh;
+Camera camera;
 
 struct TriangleData
 {
@@ -19,10 +21,11 @@ struct TriangleData
 }triangleData;
 
 
-void UploadData(const TriangleData& data)
-{
-    UploadSingleData(VkDeviceManager::GetAllocator(), triangleBuffer.allocation, data);
-}
+
+auto start = std::chrono::system_clock::now();
+auto end = std::chrono::system_clock::now();
+float deltaTime;
+float timer;
 
 
 void Core::CoreInit()
@@ -37,14 +40,18 @@ void Core::CoreInit()
     //TODO: replace Vulkan bit fields with custom one
     Renderer::CreateShaderUniformLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT, 0);
     Renderer::CreateShaderUniformLayout("triangle color layout");
+    Renderer::CreateShaderUniformLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
+    Renderer::CreateShaderUniformLayout("triangle camera layout");
     
-    Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader", "triangle color layout");
+    Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader", {"triangle color layout", "triangle camera layout"});
 
-    Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader2", "triangle color layout");
+    Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader2", {"triangle color layout", "triangle camera layout"});
 
-    Renderer::WriteShaderUniform("triangle color", triangleBuffer, sizeof(TriangleData));
+    Renderer::WriteShaderUniform("triangle color", "triangle color layout",triangleBuffer, sizeof(TriangleData));
+    Renderer::WriteShaderUniform("camera data", "triangle camera layout",camera.cameraBuffer, sizeof(GPUCameraData));
 
     Renderer::RemoveShaderUniformLayout("triangle color layout");
+    Renderer::RemoveShaderUniformLayout("triangle camera layout");
 
     mesh.vertices.resize(4);
     //vertex positions
@@ -56,13 +63,14 @@ void Core::CoreInit()
 
     mesh.CreateMesh();
 
+    camera.position = glm::vec3(0.0f, 0.0f, 2.0f);
+
     //everything went fine
     isInitialized = true;
 }
 
 void Core::CoreUpdate()
 {
-	
 	//main loop
 	while (!windowHandler.WindowShouldClose())
 	{
@@ -74,7 +82,22 @@ void Core::CoreUpdate()
         }
 		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
         {
-            if(windowHandler.GetKInput(GLFW_KEY_E) == GLFW_PRESS)
+            end = std::chrono::system_clock::now();
+            using ms = std::chrono::duration<float, std::milli>;
+            deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+            start = std::chrono::system_clock::now();
+
+            timer += deltaTime * 0.0001;
+            
+            camera.UpdateCamera(deltaTime);
+
+            GPUCameraData camData{};
+            camData.modelMatrix = glm::rotate(glm::mat4(1.0f), timer * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            camData.viewMatrix = camera.GetViewMatrix();
+            camData.projectionMatrix = camera.GetProjectionMatrix();
+            Renderer::UploadUniformDataToShader(camData,camera.cameraBuffer);
+	
+            if(windowHandler.GetKInput(GLFW_KEY_G) == GLFW_PRESS)
             {
                 triangleData.color = glm::vec4(1.0f,0.0f,0.0f, 1.0f);
                 Renderer::BindShader("triangle shader");
@@ -84,9 +107,12 @@ void Core::CoreUpdate()
                 triangleData.color = glm::vec4(1.0f,1.0f,0.0f, 1.0f);
                 Renderer::BindShader("triangle shader2");
             }
-            UploadData(triangleData);
+            
+            
+            Renderer::UploadUniformDataToShader(triangleData, triangleBuffer);
             
             Renderer::BindUniforms("triangle color", "triangle shader");
+            Renderer::BindUniforms("camera data", "triangle shader", 1);
             Renderer::BindVertexBuffer(mesh.vertexBuffer);
             Renderer::BindIndexBuffer(mesh.indexBuffer);
             Renderer::DrawIndexed(mesh.indices);
@@ -99,6 +125,7 @@ void Core::CoreCleanup()
     if (isInitialized)
     {
         Renderer::RemoveAllocatedBuffer(triangleBuffer);
+        Renderer::RemoveAllocatedBuffer(camera.cameraBuffer);
         mesh.DestroyMesh();
         Renderer::CleanUpRenderer();
 		windowHandler.DestroyWindow();

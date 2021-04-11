@@ -31,9 +31,9 @@ void UploadVectorData(const VmaAllocator& allocator, const VmaAllocation& alloca
 }
 
 template<typename T>
-void UploadSingleData(const VmaAllocator& allocator, const VmaAllocation& allocation, const T& data, size_t byteOffset = 0)
+void UploadSingleData(const VmaAllocation& allocation, const T& data, size_t byteOffset = 0)
 {
-    UploadArrayData(allocator, allocation, &data, 1, byteOffset);
+    UploadArrayData(VkDeviceManager::GetAllocator(), allocation, &data, 1, byteOffset);
 }
 
 static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inputBuffer, const size_t& dataSize, const VkBufferUsageFlags& bufferUsage,const size_t& dataOffset = 0)

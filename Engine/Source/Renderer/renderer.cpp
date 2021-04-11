@@ -77,11 +77,11 @@ namespace Renderer
         }
     }
 
-    void WriteShaderUniform(const std::string& name, AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::CreateDescriptorSet(name, allocatedBuffer, dataSize, byteOffset);
+            VulkanContext::CreateDescriptorSet(name, layoutName, allocatedBuffer, dataSize, byteOffset);
         }
     }
 
@@ -93,11 +93,11 @@ namespace Renderer
         }
     }
 
-    void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::string& layoutName)
+    void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::CreateGraphicsPipeline(shaderPaths, shaderName, layoutName);
+            VulkanContext::CreateGraphicsPipeline(shaderPaths, shaderName, layoutNames);
         }
     }
 
@@ -108,11 +108,11 @@ namespace Renderer
             VulkanContext::BindGraphicsPipeline(shaderName);
         }   
     }
-    void BindUniforms(const std::string& name, const std::string& shaderName)
+    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set /*= 0*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::BindDescriptorSet(name, shaderName);
+            VulkanContext::BindDescriptorSet(name, shaderName, set);
         }
     }
 

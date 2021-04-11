@@ -28,7 +28,7 @@ std::unordered_map<std::string, VkDescriptorSet> descriptorSets;
 vkcomponent::DescriptorAllocator descriptorAllocator;
 vkcomponent::DescriptorLayoutCache descriptorLayoutCache;
 
-std::unordered_map<std::string, DescriptorSetLayout> descriptorSetLayouts;
+std::unordered_map<std::string, DescriptorSetInfo> descriptorSetLayout;
 std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
 
 
@@ -228,30 +228,36 @@ namespace VulkanContext
     void CreateDescriptorSetLayout(const std::string& layoutName)
     {
         VkDescriptorSetLayoutCreateInfo set = vkinit::DescriptorLayoutInfo(descriptorSetLayoutBindings);
-        if(FindUnorderdMap(layoutName, descriptorSetLayouts) == nullptr)
+        if(FindUnorderdMap(layoutName, descriptorSetLayout) == nullptr)
         {
-	        descriptorSetLayouts[layoutName].layouts.push_back(descriptorLayoutCache.CreateDescriptorLayout(&set));
+            //create a new list of known descriptorSetLayouts
+	        descriptorSetLayout[layoutName].layout = descriptorLayoutCache.CreateDescriptorLayout(&set);
+            FindUnorderdMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
         }
         else
         {
-            FindUnorderdMap(layoutName, descriptorSetLayouts)->layouts.push_back(descriptorLayoutCache.CreateDescriptorLayout(&set));
+            //add to existing list
+            FindUnorderdMap(layoutName, descriptorSetLayout)->layout = descriptorLayoutCache.CreateDescriptorLayout(&set);
+            FindUnorderdMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
         }
+        descriptorSetLayoutBindings.clear();
     }
 
     void RemoveDescriptorSetLayout(const std::string& layoutName)
     {
-        for(int i = 0; i < FindUnorderdMap(layoutName, descriptorSetLayouts)->layouts.size(); i++)
-        vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayouts)->layouts[i], nullptr);
+        vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
     }
     
-    void CreateDescriptorSet(const std::string& descriptorName, AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
+    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
     {
         VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, byteOffset);
-        vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-        .BindBuffer(descriptorSetLayoutBindings[0].binding, &BufferInfo, descriptorSetLayoutBindings[0].descriptorType, descriptorSetLayoutBindings[0].stageFlags)
-        .Build(descriptorSets[descriptorName]);
-
-        descriptorSetLayoutBindings.clear();
+        auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
+        for(int i = 0; i < bindings.size(); i++)
+        {
+            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+            .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+            .Build(descriptorSets[descriptorName]);
+        }
     }
 
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer)
@@ -261,7 +267,7 @@ namespace VulkanContext
     }
 
 
-    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::string& layoutName, const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)
+    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)
     {
         vkcomponent::PipelineBuilder pipelineBuilder;
 
@@ -273,8 +279,13 @@ namespace VulkanContext
         }
         vkcomponent::ShaderEffect shaderEffect;
 	    VkPipelineLayoutCreateInfo pipLayoutInfo = vkinit::PipelineLayoutCreateInfo();
-        pipLayoutInfo.pSetLayouts = FindUnorderdMap(layoutName, descriptorSetLayouts)->layouts.data();
-	    pipLayoutInfo.setLayoutCount = FindUnorderdMap(layoutName, descriptorSetLayouts)->layouts.size();
+        std::vector<VkDescriptorSetLayout> layouts;
+        for(int i = 0; i < layoutNames.size(); i++)
+        {
+            layouts.push_back(FindUnorderdMap(layoutNames[i], descriptorSetLayout)->layout);
+        }
+        pipLayoutInfo.pSetLayouts = layouts.data();
+	    pipLayoutInfo.setLayoutCount = layouts.size();
         shaderEffect = *vkcomponent::BuildEffect(shaderModules, pipLayoutInfo);
 
         pipelineBuilder.pipelineLayout = shaderEffect.builtLayout;
@@ -336,9 +347,9 @@ namespace VulkanContext
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.pipeline);
         
     }
-    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName)
+    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set /*= 0*/)
     {
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, 0, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
     }
 
     void BindIndexBuffer(AllocatedBuffer& indexBuffer)

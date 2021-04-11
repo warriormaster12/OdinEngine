@@ -28,11 +28,11 @@ public:
     inline static GLFWwindow* p_window;
 
     inline static bool frameBufferResized = false;
-    bool mouseMoved = false;
+    inline static bool mouseMoved = false;
     
 
-    float xoffset;
-    float yoffset;
+    inline static float xoffset;
+    inline static float yoffset;
 private: 
     //window callbacks
     static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);

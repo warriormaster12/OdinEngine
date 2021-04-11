@@ -3,19 +3,16 @@
 layout (location = 0) in vec3 inPosition;
 
 
-layout (location = 0) out vec3 outColor;
+layout(set = 1, binding = 0) uniform CameraData
+{
+	mat4 view;
+	mat4 projection;
+	mat4 model;
+}cameraData;
 
 void main()
 {
 
-	//const array of colors for the triangle
-	const vec3 colors[3] = vec3[3](
-		vec3(1.0f, 0.0f, 0.0f), //red
-		vec3(0.0f, 1.0f, 0.0f), //green
-		vec3(00.f, 0.0f, 1.0f)  //blue
-	);
-
 	//output the position of each vertex
-	gl_Position = vec4(inPosition, 1.0f);
-	outColor = colors[gl_VertexIndex];
+	gl_Position = cameraData.projection * cameraData.view * cameraData.model * vec4(inPosition, 1.0f);
 }
