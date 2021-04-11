@@ -101,7 +101,10 @@ void Camera::UpdateCamera(float deltaTime)
 
 	position += velocity;
 
-    
+    GPUCameraData camData{};
+	camData.viewMatrix = GetViewMatrix();
+	camData.projectionMatrix = GetProjectionMatrix();
+	Renderer::UploadUniformDataToShader(camData,cameraBuffer);
 	
 }
 

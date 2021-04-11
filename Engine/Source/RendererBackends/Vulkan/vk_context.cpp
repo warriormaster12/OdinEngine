@@ -248,9 +248,9 @@ namespace VulkanContext
         vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
     }
     
-    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
+    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
     {
-        VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, byteOffset);
+        VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
         for(int i = 0; i < bindings.size(); i++)
         {
@@ -312,6 +312,7 @@ namespace VulkanContext
 
         std::vector <LocationInfo> locations = {
             {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
+            {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, color)},
         };
         VertexInputDescription vertexDescription = Vertex::GetVertexDescription(locations);
 
