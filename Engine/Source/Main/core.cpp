@@ -53,13 +53,7 @@ void Core::CoreInit()
     Renderer::RemoveShaderUniformLayout("triangle color layout");
     Renderer::RemoveShaderUniformLayout("triangle camera layout");
 
-    mesh.vertices.resize(4);
-    //vertex positions
-    mesh.vertices[0].position = {-0.5f, -0.5f, 0.0f };
-    mesh.vertices[1].position = {0.5f, -0.5f, 0.0f };
-    mesh.vertices[2].position = { 0.5f, 0.5f, 0.0f};
-    mesh.vertices[3].position = {-0.5f, 0.5f, 0.0f};
-    mesh.indices = {0, 1, 2, 2, 3, 0};
+    mesh.LoadFromObj("EngineAssets/Meshes/monkey_smooth.obj");
 
     mesh.CreateMesh();
 
@@ -87,12 +81,12 @@ void Core::CoreUpdate()
             deltaTime = std::chrono::duration_cast<ms>(end - start).count();
             start = std::chrono::system_clock::now();
 
-            timer += deltaTime * 0.0001;
+            timer += deltaTime * 0.001;
             
             camera.UpdateCamera(deltaTime);
 
             GPUCameraData camData{};
-            camData.modelMatrix = glm::rotate(glm::mat4(1.0f), timer * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            camData.modelMatrix = glm::rotate(glm::mat4(1.0f), timer * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             camData.viewMatrix = camera.GetViewMatrix();
             camData.projectionMatrix = camera.GetProjectionMatrix();
             Renderer::UploadUniformDataToShader(camData,camera.cameraBuffer);

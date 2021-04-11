@@ -301,7 +301,7 @@ namespace VulkanContext
         pipelineBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
 
         //default depthtesting
-	    pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(false, false, VK_COMPARE_OP_EQUAL);
+	    pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
 
         //vertex input controls how to read vertices from vertex buffers. We arent using it yet
         pipelineBuilder.vertexInputInfo = vkinit::VertexInputStateCreateInfo();
@@ -311,7 +311,7 @@ namespace VulkanContext
         pipelineBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
         std::vector <LocationInfo> locations = {
-            {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)}
+            {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
         };
         VertexInputDescription vertexDescription = Vertex::GetVertexDescription(locations);
 

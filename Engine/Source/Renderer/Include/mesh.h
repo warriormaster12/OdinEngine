@@ -2,6 +2,7 @@
 
 #include "vk_meshhandler.h"
 
+
 struct Mesh
 {
     AllocatedBuffer indexBuffer;
@@ -13,4 +14,6 @@ struct Mesh
     void CreateMesh();
 
     void DestroyMesh();
+
+    void LoadFromObj(const std::string& path);
 };

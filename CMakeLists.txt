@@ -32,7 +32,7 @@ target_include_directories(OdinEngine PUBLIC
     Engine/Source/Third-Party/lz4/Include/
     Engine/Source/Third-Party/nlohmann_json/
     Engine/Source/Third-Party/stb_image/
-    Engine/Source/Third-Party/tinyobjloader/
+    Engine/Source/Third-Party/tinyobjloader/Include/
     Engine/Source/Third-Party/Vma/Include/
     Engine/Source/Third-Party/spirv-reflect/Include/
 )
