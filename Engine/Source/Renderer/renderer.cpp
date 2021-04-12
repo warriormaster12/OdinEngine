@@ -48,12 +48,12 @@ namespace Renderer
             }
         } 
     }
-    void CreateShaderUniformLayoutBinding(const VkDescriptorType& uniformName, const VkShaderStageFlags& shaderStage,const uint32_t& binding, const uint32_t& writeCount /*= 1*/)
+    void CreateShaderUniformLayoutBinding(const UniformType& uniformType, const ShaderStageFlags& shaderStage,const uint32_t& binding, const uint32_t& writeCount /*= 1*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
             DescripotrSetLayoutBindingInfo info = {};
-            info.descriptorType = uniformName;
+            info.descriptorType = (VkDescriptorType)uniformType;
             info.shaderStageFlags = shaderStage;
             info.binding = binding;
             info.descriptorCount = writeCount;
@@ -77,7 +77,7 @@ namespace Renderer
         }
     }
 
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {

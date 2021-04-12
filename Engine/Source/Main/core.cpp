@@ -37,24 +37,22 @@ void Core::CoreInit()
     Renderer::CreateRenderPass(RENDERPASS_MAIN);
     Renderer::CreateFramebuffer(FRAMEBUFFER_MAIN);
 
-    //TODO: replace Vulkan bit fields with custom one
-    Renderer::CreateShaderUniformLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayout("triangle camera layout");
     
-    Renderer::CreateShaderUniformLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_STORAGE_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayout("triangle object layout");
     
-    Renderer::CreateShaderUniformLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER,SHADER_STAGE_FRAGMENT_BIT, 0);
     Renderer::CreateShaderUniformLayout("triangle color layout");
     
     Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader", {"triangle camera layout", "triangle object layout","triangle color layout"});
 
     Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader2", {"triangle camera layout", "triangle object layout","triangle color layout"});
 
-    //TODO: replace Vulkan bit fields with custom one
-    Renderer::WriteShaderUniform("triangle color", "triangle color layout",VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,triangleBuffer, sizeof(TriangleData));
-    Renderer::WriteShaderUniform("camera data", "triangle camera layout",VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,camera.cameraBuffer, sizeof(GPUCameraData));
-    Renderer::WriteShaderUniform("object data", "triangle object layout",VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,mesh.meshBuffer, sizeof(GPUObjectData));
+    Renderer::WriteShaderUniform("triangle color", "triangle color layout",BUFFER_USAGE_UNIFORM_BUFFER_BIT,triangleBuffer, sizeof(TriangleData));
+    Renderer::WriteShaderUniform("camera data", "triangle camera layout",BUFFER_USAGE_UNIFORM_BUFFER_BIT,camera.cameraBuffer, sizeof(GPUCameraData));
+    Renderer::WriteShaderUniform("object data", "triangle object layout",BUFFER_USAGE_STORAGE_BUFFER_BIT,mesh.meshBuffer, sizeof(GPUObjectData));
 
     Renderer::RemoveShaderUniformLayout("triangle color layout");
     Renderer::RemoveShaderUniformLayout("triangle camera layout");

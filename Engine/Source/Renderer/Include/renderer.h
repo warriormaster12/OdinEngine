@@ -27,6 +27,37 @@ enum class ObjectType
     Offscreen = 0
 };
 
+typedef enum UniformType {
+    UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+    UNIFORM_TYPE_UNIFORM_BUFFER = 6,
+    UNIFORM_TYPE_STORAGE_BUFFER = 7,
+    UNIFORM_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+    UNIFORM_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+} UniformType;
+
+typedef enum BufferUsageFlagBits {
+    BUFFER_USAGE_UNIFORM_BUFFER_BIT = 0x00000010,
+    BUFFER_USAGE_STORAGE_BUFFER_BIT = 0x00000020,
+    BUFFER_USAGE_INDEX_BUFFER_BIT = 0x00000040,
+    BUFFER_USAGE_VERTEX_BUFFER_BIT = 0x00000080,
+    BUFFER_USAGE_INDIRECT_BUFFER_BIT = 0x00000100,
+} BufferUsageFlagBits;
+
+typedef enum ShaderStageFlagBits {
+    SHADER_STAGE_VERTEX_BIT = 0x00000001,
+    SHADER_STAGE_TESSELLATION_CONTROL_BIT = 0x00000002,
+    SHADER_STAGE_TESSELLATION_EVALUATION_BIT = 0x00000004,
+    SHADER_STAGE_GEOMETRY_BIT = 0x00000008,
+    SHADER_STAGE_FRAGMENT_BIT = 0x00000010,
+    SHADER_STAGE_COMPUTE_BIT = 0x00000020,
+    SHADER_STAGE_ALL_GRAPHICS = 0x0000001F,
+    SHADER_STAGE_ALL = 0x7FFFFFFF,
+} ShaderStageFlagBits;
+
+typedef uint32_t Flags;
+typedef Flags ShaderStageFlags;
+typedef Flags BufferCreateFlags;
+
 namespace Renderer
 {
     void InitRenderer(AvailableBackends selectBackend);
@@ -37,13 +68,13 @@ namespace Renderer
     void CreateRenderPass(ObjectType type);
 
     //Equivalent to creating a descriptor set layout 
-    void CreateShaderUniformLayoutBinding(const VkDescriptorType& uniformName, const VkShaderStageFlags& shaderStage,const uint32_t& binding, const uint32_t& writeCount = 1);
+    void CreateShaderUniformLayoutBinding(const UniformType& uniformType, const ShaderStageFlags& shaderStage,const uint32_t& binding, const uint32_t& writeCount = 1);
     void CreateShaderUniformLayout(const std::string& layoutName);
     void RemoveShaderUniformLayout(const std::string& layoutName);
     //create the shader
     void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames);
     //Equivalent to writing a descriptor set
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0);
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0);
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
     //Bind the shader before drawing
     void BindShader(const std::string& shaderName);
