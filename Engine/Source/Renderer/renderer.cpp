@@ -93,11 +93,12 @@ namespace Renderer
         }
     }
 
-    void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames)
+    void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const ShaderDescriptions* descriptions /*= nullptr*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::CreateGraphicsPipeline(shaderPaths, shaderName, layoutNames);
+            //for now custom renderpasses are null since we don't yet support offscreen rendering
+            VulkanContext::CreateGraphicsPipeline(shaderPaths, shaderName, layoutNames, 0, descriptions);
         }
     }
 

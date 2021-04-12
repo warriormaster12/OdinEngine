@@ -3,10 +3,8 @@
 #include "Include/vk_swapchain.h"
 #include "Include/vk_commandbuffer.h"
 #include "Include/vk_init.h"
-#include "Include/vk_utils.h"
 
 #include "vk_check.h"
-#include "vk_meshhandler.h"
 #include "function_queuer.h"
 #include "window_handler.h"
 
@@ -267,7 +265,7 @@ namespace VulkanContext
     }
 
 
-    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)
+    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/, const ShaderDescriptions* descriptions /*= nullptr*/)
     {
         vkcomponent::PipelineBuilder pipelineBuilder;
 
@@ -292,16 +290,19 @@ namespace VulkanContext
         shaderEffect.FlushLayout();
 
         //configure the rasterizer to draw filled triangles
-        pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE);
+        pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(descriptions->polygonMode, descriptions->cullMode);
 
         //we dont use multisampling, so just run the default one
         pipelineBuilder.multisampling = vkinit::MultisamplingStateCreateInfo();
 
         //a single blend attachment with no blending and writing to RGBA
-        pipelineBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
+        if(descriptions->colorBlending)
+        {
+            pipelineBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
+        }
 
         //default depthtesting
-	    pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
+        pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(descriptions->depthTesting, descriptions->depthTesting, descriptions->depthCompareType);
 
         //vertex input controls how to read vertices from vertex buffers. We arent using it yet
         pipelineBuilder.vertexInputInfo = vkinit::VertexInputStateCreateInfo();
@@ -314,7 +315,7 @@ namespace VulkanContext
             {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
             {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, color)},
         };
-        VertexInputDescription vertexDescription = Vertex::GetVertexDescription(locations);
+        VertexInputDescription vertexDescription = Vertex::GetVertexDescription(descriptions->vertexLocations);
 
         //connect the pipeline builder vertex input info to the one we get from Vertex
         pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();

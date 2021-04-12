@@ -72,7 +72,7 @@ namespace Renderer
     void CreateShaderUniformLayout(const std::string& layoutName);
     void RemoveShaderUniformLayout(const std::string& layoutName);
     //create the shader
-    void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames);
+    void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const ShaderDescriptions* descriptions = nullptr);
     //Equivalent to writing a descriptor set
     void WriteShaderUniform(const std::string& name, const std::string& layoutName,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0);
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);

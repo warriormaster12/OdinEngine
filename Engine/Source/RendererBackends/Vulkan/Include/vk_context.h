@@ -10,10 +10,25 @@
 #include "vk_pipelinebuilder.h"
 #include "vk_types.h"
 #include "vk_utils.h"
+#include "vk_meshhandler.h"
 
 struct ShaderProgram 
 {
     vkcomponent::ShaderPass pass;
+};
+
+struct ShaderDescriptions
+{
+    std::vector <LocationInfo> vertexLocations = {
+            {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
+    };
+
+    bool colorBlending = true;
+    VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL;
+    VkCullModeFlagBits cullMode = VK_CULL_MODE_NONE;
+
+    bool depthTesting = false;
+    VkCompareOp depthCompareType = VK_COMPARE_OP_EQUAL;
 };
 
 struct DescripotrSetLayoutBindingInfo
@@ -48,7 +63,7 @@ namespace VulkanContext
     void CreateDescriptorSetLayout(const std::string& layoutName);
     void RemoveDescriptorSetLayout(const std::string& layoutName);
 
-    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE);
+    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE, const ShaderDescriptions* descriptions = nullptr);
     
     void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0);
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
