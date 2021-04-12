@@ -19,9 +19,7 @@ struct ShaderProgram
 
 struct ShaderDescriptions
 {
-    std::vector <LocationInfo> vertexLocations = {
-            {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
-    };
+    std::vector <LocationInfo> vertexLocations;
 
     bool colorBlending = true;
     VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL;

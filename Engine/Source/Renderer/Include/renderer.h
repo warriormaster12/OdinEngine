@@ -53,6 +53,13 @@ typedef enum ShaderStageFlagBits {
     SHADER_STAGE_ALL_GRAPHICS = 0x0000001F,
     SHADER_STAGE_ALL = 0x7FFFFFFF,
 } ShaderStageFlagBits;
+enum  class ColorFormat
+{
+    SRGB32 = VK_FORMAT_R32G32B32_SFLOAT,
+    SRG32 = VK_FORMAT_R32G32_SFLOAT
+};
+#define SRGB32 (VkFormat)ColorFormat::SRGB32
+#define SRG32 (VkFormat)ColorFormat::SRG32
 
 typedef uint32_t Flags;
 typedef Flags ShaderStageFlags;

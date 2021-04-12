@@ -1,9 +1,10 @@
 #include "Include/vk_meshhandler.h"
+#include "mesh.h"
 
 
 
 
-VertexInputDescription Vertex::GetVertexDescription(const std::vector<LocationInfo>& locations)
+VertexInputDescription VkVertex::GetVertexDescription(const std::vector<LocationInfo>& locations)
 {
 	VertexInputDescription description;
 	//we will have just 1 vertex buffer binding, with a per-vertex rate

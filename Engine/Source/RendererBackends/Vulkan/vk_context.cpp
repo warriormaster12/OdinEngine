@@ -311,11 +311,7 @@ namespace VulkanContext
         //we are just going to draw triangle list
         pipelineBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
-        std::vector <LocationInfo> locations = {
-            {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
-            {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, color)},
-        };
-        VertexInputDescription vertexDescription = Vertex::GetVertexDescription(descriptions->vertexLocations);
+        VertexInputDescription vertexDescription = VkVertex::GetVertexDescription(descriptions->vertexLocations);
 
         //connect the pipeline builder vertex input info to the one we get from Vertex
         pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();

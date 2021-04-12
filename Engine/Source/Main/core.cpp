@@ -48,8 +48,8 @@ void Core::CoreInit()
     
     ShaderDescriptions descriptionInfo = {};
     descriptionInfo.vertexLocations = {
-        {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)},
-        {VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, color)},
+        {SRGB32,offsetof(Vertex, position)},
+        {SRGB32,offsetof(Vertex, color)},
     };
     descriptionInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     descriptionInfo.depthTesting = true;
