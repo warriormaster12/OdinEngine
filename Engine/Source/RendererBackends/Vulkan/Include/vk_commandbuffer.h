@@ -4,6 +4,8 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
+#include <string>
 
 constexpr unsigned int FRAME_OVERLAP = 2;
 static int frameNumber;
@@ -14,6 +16,8 @@ struct FrameData {
 
 	VkCommandPool commandPool;
 	VkCommandBuffer mainCommandBuffer;
+
+    std::unordered_map<std::string, VkDescriptorSet> descriptorSets;
 };
 struct UploadContext {
 	VkFence uploadFence;
@@ -31,10 +35,12 @@ public:
     //these functions are used to start drawing loop
     static void BeginCommands(VkCommandBuffer& cmd, uint32_t& imageIndex, std::function<void()>&& recreateSwapchain);
     static void EndCommands(std::function<void()>&& recreateSwapchain);
+
+    inline static FrameData frames[FRAME_OVERLAP];
+    static FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
     
 private:
-    inline static FrameData frames[FRAME_OVERLAP];
     inline static UploadContext uploadContext;
 
-    static FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
+    
 };

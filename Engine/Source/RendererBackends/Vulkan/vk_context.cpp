@@ -246,15 +246,30 @@ namespace VulkanContext
         vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
     }
     
-    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
+    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/, const bool& withFrameOverlap /*= false*/)
     {
         VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
-        for(int i = 0; i < bindings.size(); i++)
+        if(withFrameOverlap == true)
         {
-            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-            .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-            .Build(descriptorSets[descriptorName]);
+            for(int i = 0; i < FRAME_OVERLAP; i++)
+            {
+                for(int i = 0; i < bindings.size(); i++)
+                {
+                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                    .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                    .Build(VkCommandbufferManager::frames[i].descriptorSets[descriptorName]);
+                }
+            }
+        }
+        else
+        {   
+            for(int i = 0; i < bindings.size(); i++)
+            {
+                vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                .Build(descriptorSets[descriptorName]);
+            }
         }
     }
 
@@ -345,9 +360,17 @@ namespace VulkanContext
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.pipeline);
         
     }
-    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set /*= 0*/)
+    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set /*= 0*/, const bool& withFrameOverlap /*= false*/)
     {
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
+        if(withFrameOverlap == true)
+        {
+            auto& currentFrame = VkCommandbufferManager::GetCurrentFrame();
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 0, 0);
+        }
+        else
+        {
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
+        }
     }
 
     void BindIndexBuffer(AllocatedBuffer& indexBuffer)

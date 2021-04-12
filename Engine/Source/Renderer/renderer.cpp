@@ -77,7 +77,7 @@ namespace Renderer
         }
     }
 
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/)
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/, const bool& withFrameOverlap /*= false*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
@@ -109,7 +109,7 @@ namespace Renderer
             VulkanContext::BindGraphicsPipeline(shaderName);
         }   
     }
-    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set /*= 0*/)
+    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set /*= 0*/, const bool& withFrameOverlap /*= false*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {

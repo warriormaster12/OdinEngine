@@ -60,7 +60,7 @@ void Core::CoreInit()
     Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader2", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
 
     Renderer::WriteShaderUniform("triangle color", "triangle color layout",BUFFER_USAGE_UNIFORM_BUFFER_BIT,triangleBuffer, sizeof(TriangleData));
-    Renderer::WriteShaderUniform("camera data", "triangle camera layout",BUFFER_USAGE_UNIFORM_BUFFER_BIT,camera.cameraBuffer, sizeof(GPUCameraData));
+    Renderer::WriteShaderUniform("camera data", "triangle camera layout",BUFFER_USAGE_UNIFORM_BUFFER_BIT,camera.cameraBuffer, sizeof(GPUCameraData),0, true);
     Renderer::WriteShaderUniform("object data", "triangle object layout",BUFFER_USAGE_STORAGE_BUFFER_BIT,mesh.meshBuffer, sizeof(GPUObjectData));
 
     Renderer::RemoveShaderUniformLayout("triangle color layout");
@@ -123,7 +123,7 @@ void Core::CoreUpdate()
             Renderer::UploadUniformDataToShader(triangleData, triangleBuffer);
             
             
-            Renderer::BindUniforms("camera data", "triangle shader", 0);
+            Renderer::BindUniforms("camera data", "triangle shader", 0, true);
             Renderer::BindUniforms("object data", "triangle shader", 1);
             Renderer::BindUniforms("triangle color", "triangle shader",2);
             Renderer::BindVertexBuffer(mesh.vertexBuffer);
