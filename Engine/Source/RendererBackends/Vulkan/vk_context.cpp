@@ -29,6 +29,8 @@ vkcomponent::DescriptorLayoutCache descriptorLayoutCache;
 std::unordered_map<std::string, DescriptorSetInfo> descriptorSetLayout;
 std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
 
+std::unordered_map<std::string, VkSampler> samplers;
+
 
 
 namespace
@@ -245,6 +247,30 @@ namespace VulkanContext
     {
         vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
     }
+
+    void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter)
+    {
+        VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(samplerFilter);
+
+        vkCreateSampler(VkDeviceManager::GetDevice(), &samplerInfo, nullptr, &samplers[samplerName]);
+    }
+
+    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& texturePath, const std::string& layoutName, const VkFormat& imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
+    {
+        VkDescriptorImageInfo imageInfo = {};
+        imageInfo.imageView;
+        auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
+        for(int i = 0; i < bindings.size(); i++)
+        {
+            //we only want to process image data
+            if(bindings[i].descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+            {
+                vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                .BindImage(bindings[i].binding, &imageInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                .Build(descriptorSets[descriptorName]);
+            }
+        }
+    }
     
     void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/, const bool& withFrameOverlap /*= false*/)
     {
@@ -256,9 +282,13 @@ namespace VulkanContext
             {
                 for(int i = 0; i < bindings.size(); i++)
                 {
-                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                    .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                    .Build(VkCommandbufferManager::frames[i].descriptorSets[descriptorName]);
+                    //we only want to process buffer data 
+                    if(bindings[i].descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                    {
+                        vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                        .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                        .Build(VkCommandbufferManager::frames[i].descriptorSets[descriptorName]);
+                    }
                 }
             }
         }

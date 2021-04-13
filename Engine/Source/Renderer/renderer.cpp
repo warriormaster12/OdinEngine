@@ -85,12 +85,21 @@ namespace Renderer
         }
     }
 
+
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
             VulkanContext::RemoveAllocatedBuffer(allocatedBuffer);
         }
+    }
+
+    void CreateSampler(const std::string& samplerName, const ImageFilter& filter)
+    {
+        if(currentBackend == AvailableBackends::Vulkan)
+        {
+            VulkanContext::CreateSampler(samplerName, (VkFilter)filter);
+        }   
     }
 
     void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const ShaderDescriptions* descriptions /*= nullptr*/)

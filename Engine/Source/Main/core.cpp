@@ -44,6 +44,7 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayout("triangle object layout");
     
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER,SHADER_STAGE_FRAGMENT_BIT, 0);
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 1);
     Renderer::CreateShaderUniformLayout("triangle color layout");
     
     ShaderDescriptions descriptionInfo = {};

@@ -53,6 +53,13 @@ typedef enum ShaderStageFlagBits {
     SHADER_STAGE_ALL_GRAPHICS = 0x0000001F,
     SHADER_STAGE_ALL = 0x7FFFFFFF,
 } ShaderStageFlagBits;
+
+typedef enum ImageFilter {
+    FILTER_NEAREST = 0,
+    FILTER_LINEAR = 1,
+    FILTER_CUBIC_IMG = 1000015000,
+    FILTER_MAX_ENUM = 0x7FFFFFFF
+} ImageFilter;
 enum  class ColorFormat
 {
     SRGB32 = VK_FORMAT_R32G32B32_SFLOAT,
@@ -78,6 +85,9 @@ namespace Renderer
     void CreateShaderUniformLayoutBinding(const UniformType& uniformType, const ShaderStageFlags& shaderStage,const uint32_t& binding, const uint32_t& writeCount = 1);
     void CreateShaderUniformLayout(const std::string& layoutName);
     void RemoveShaderUniformLayout(const std::string& layoutName);
+
+    void CreateSampler(const std::string& samplerName, const ImageFilter& filter);
+
     //create the shader
     void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const ShaderDescriptions* descriptions = nullptr);
     //Equivalent to writing a descriptor set
@@ -85,6 +95,8 @@ namespace Renderer
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
     //Bind the shader before drawing
     void BindShader(const std::string& shaderName);
+
+    
 
     
 

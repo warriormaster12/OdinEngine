@@ -64,6 +64,11 @@ namespace VulkanContext
     void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE, const ShaderDescriptions* descriptions = nullptr);
     
     void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0, const bool& withFrameOverlap = false);
+    
+    void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter);
+
+    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& texturePath, const std::string& layoutName, const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
+
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
 
     void BindGraphicsPipeline(const std::string& shaderName);
