@@ -86,7 +86,7 @@ namespace {
 }
 
 
-bool vkcomponent::LoadImageFromFile(const std::string& filename /*=""*/, AllocatedImage& outImage, VkFormat imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
+bool vkcomponent::LoadImageFromFile(const std::string& filename, AllocatedImage& outImage, VkFormat imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
 {
 	if (filename == "")
 	{
@@ -130,7 +130,7 @@ bool vkcomponent::LoadImageFromFile(const std::string& filename /*=""*/, Allocat
 }
 
 
-bool vkcomponent::LoadImageFromAsset(const std::string& filename /*= ""*/, AllocatedImage& outImage)
+bool vkcomponent::LoadImageFromAsset(const std::string& filename, AllocatedImage& outImage)
 {
 	if (filename == "")
 	{

@@ -3,6 +3,8 @@
 #include "vk_types.h"
 #include "vk_device.h"
 
+#include <cstring>
+
 struct CreateBufferInfo {
     size_t allocSize;
     VkBufferUsageFlags bufferUsage;

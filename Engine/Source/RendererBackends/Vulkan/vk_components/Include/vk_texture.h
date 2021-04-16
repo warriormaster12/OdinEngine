@@ -15,7 +15,7 @@ namespace vkcomponent
      * @param outImage A pointer to write the result to
      * @return True, if the load was successful, false otherwise
      */
-    bool LoadImageFromFile(const std::string& filename = "", AllocatedImage& outImage, VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
+    bool LoadImageFromFile(const std::string& filename, AllocatedImage& outImage, VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
 
     /**
      * Loads and allocates a VkImage from a binary file.
@@ -26,7 +26,7 @@ namespace vkcomponent
      * @param outImage A pointer to write the result to
      * @return True, if the load was successful, false otherwise
      */
-    bool LoadImageFromAsset(const std::string& filename = "", AllocatedImage& outImage);
+    bool LoadImageFromAsset(const std::string& filename, AllocatedImage& outImage);
 
     /**
      * Loads and allocates a VkImage consisting of a 1x1 black and transparent pixel.
