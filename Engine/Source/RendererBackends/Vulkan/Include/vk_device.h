@@ -22,6 +22,8 @@ public:
     static const VmaAllocator& GetAllocator() { return allocator; }
     static VkDebugUtilsMessengerEXT& GetDebugMessenger() { return debugMessenger; }
 
+    static VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() {return gpuProperties; }
+
 private:
     inline static VkInstance instance;
     inline static VkDebugUtilsMessengerEXT debugMessenger;

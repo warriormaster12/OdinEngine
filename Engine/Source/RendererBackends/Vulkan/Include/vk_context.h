@@ -63,7 +63,7 @@ namespace VulkanContext
 
     void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE, const ShaderDescriptions* descriptions = nullptr);
     
-    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0, const bool& withFrameOverlap = false);
+    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset, const bool& isDynamic);
     
     void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter);
 
@@ -72,7 +72,7 @@ namespace VulkanContext
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
 
     void BindGraphicsPipeline(const std::string& shaderName);
-    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set = 0, const bool& withFrameOverlap = false);
+    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& isDynamic, const size_t& dataSize);
     void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     void DrawIndexed(std::vector<std::uint32_t>& indices);

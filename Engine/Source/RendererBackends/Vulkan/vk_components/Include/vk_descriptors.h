@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../Include/vk_types.h"
+#include "vk_types.h"
 #include <vector>
 #include <array>
 #include <unordered_map>

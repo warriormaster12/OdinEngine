@@ -55,3 +55,15 @@ static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inp
 
     delete descriptorBufferInfo;
 }
+
+static size_t PadUniformBufferSize(size_t originalSize)
+{
+	// Calculate required alignment based on minimum device offset alignment
+	size_t minUboAlignment = VkDeviceManager::GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
+	size_t alignedSize = originalSize;
+	if (minUboAlignment > 0) {
+		alignedSize = (alignedSize + minUboAlignment - 1) & ~(minUboAlignment - 1);
+	}
+	return alignedSize;
+}
+

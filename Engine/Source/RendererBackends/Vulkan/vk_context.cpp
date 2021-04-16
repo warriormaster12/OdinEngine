@@ -272,12 +272,12 @@ namespace VulkanContext
         }
     }
     
-    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/, const bool& withFrameOverlap /*= false*/)
+    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset, const bool& isDynamic)
     {
-        VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
-        if(withFrameOverlap == true)
+        if(isDynamic == true)
         {
+            VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, FRAME_OVERLAP * PadUniformBufferSize(dataSize), bufferUsage, byteOffset);
             for(int i = 0; i < FRAME_OVERLAP; i++)
             {
                 for(int i = 0; i < bindings.size(); i++)
@@ -293,7 +293,8 @@ namespace VulkanContext
             }
         }
         else
-        {   
+        { 
+            VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);  
             for(int i = 0; i < bindings.size(); i++)
             {
                 vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
@@ -390,12 +391,14 @@ namespace VulkanContext
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.pipeline);
         
     }
-    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set /*= 0*/, const bool& withFrameOverlap /*= false*/)
+    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& isDynamic, const size_t& dataSize)
     {
-        if(withFrameOverlap == true)
+        if(isDynamic == true)
         {
+            size_t frameIndex = frameNumber % FRAME_OVERLAP;
+            uint32_t descriptorOffset = PadUniformBufferSize(dataSize) * frameIndex;
             auto& currentFrame = VkCommandbufferManager::GetCurrentFrame();
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 0, 0);
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 1, &descriptorOffset);
         }
         else
         {
