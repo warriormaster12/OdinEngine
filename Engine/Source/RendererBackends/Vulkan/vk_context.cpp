@@ -8,6 +8,8 @@
 #include "function_queuer.h"
 #include "window_handler.h"
 
+#include "logger.h"
+
 
 
 VkRenderPass mainPass;
@@ -265,9 +267,19 @@ namespace VulkanContext
             //we only want to process image data
             if(bindings[i].descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
             {
-                vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                .BindImage(bindings[i].binding, &imageInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                .Build(descriptorSets[descriptorName]);
+                //Check if descriptorSet name already exists
+                if(FindUnorderdMap(descriptorName, descriptorSets) == nullptr)
+                {
+                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                    .BindImage(bindings[i].binding, &imageInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                    .Build(descriptorSets[descriptorName]);
+                }
+                else 
+                {
+                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                    .BindImage(bindings[i].binding, &imageInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                    .Build(*FindUnorderdMap(descriptorName, descriptorSets));
+                }
             }
         }
     }
@@ -285,9 +297,20 @@ namespace VulkanContext
                     //we only want to process buffer data 
                     if(bindings[i].descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
                     {
-                        vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                        .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                        .Build(VkCommandbufferManager::frames[i].descriptorSets[descriptorName]);
+                        //Check if descriptorSet name already exists
+                        if(FindUnorderdMap(descriptorName, VkCommandbufferManager::frames[i].descriptorSets) == nullptr)
+                        {
+                            
+                            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                            .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                            .Build(VkCommandbufferManager::frames[i].descriptorSets[descriptorName]);
+                        }
+                        else
+                        {
+                            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                            .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                            .Build(*FindUnorderdMap(descriptorName, VkCommandbufferManager::frames[i].descriptorSets)); 
+                        }
                     }
                 }
             }
@@ -297,9 +320,19 @@ namespace VulkanContext
             VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);  
             for(int i = 0; i < bindings.size(); i++)
             {
-                vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                .Build(descriptorSets[descriptorName]);
+                //Check if descriptorSet name already exists
+                if(FindUnorderdMap(descriptorName, descriptorSets) == nullptr)
+                {
+                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                    .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                    .Build(descriptorSets[descriptorName]);
+                }
+                else
+                {
+                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                    .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
+                    .Build(*FindUnorderdMap(descriptorName, descriptorSets));
+                }
             }
         }
     }
