@@ -91,7 +91,7 @@ namespace Renderer
     //create the shader
     void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const ShaderDescriptions* descriptions = nullptr);
     //Equivalent to writing a descriptor set
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset = 0, const bool& isDynamic = false);
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset =0);
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
     //Bind the shader before drawing
     void BindShader(const std::string& shaderName);

@@ -284,56 +284,27 @@ namespace VulkanContext
         }
     }
     
-    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset, const bool& isDynamic)
+    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset)
     {
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
-        if(isDynamic == true)
+        if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
         {
             VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, FRAME_OVERLAP * PadUniformBufferSize(dataSize), bufferUsage, byteOffset);
-            for(int i = 0; i < FRAME_OVERLAP; i++)
+            for(int j = 0; j < FRAME_OVERLAP; j++)
             {
-                for(int i = 0; i < bindings.size(); i++)
-                {
-                    //we only want to process buffer data 
-                    if(bindings[i].descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-                    {
-                        //Check if descriptorSet name already exists
-                        if(FindUnorderdMap(descriptorName, VkCommandbufferManager::frames[i].descriptorSets) == nullptr)
-                        {
-                            
-                            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                            .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                            .Build(VkCommandbufferManager::frames[i].descriptorSets[descriptorName]);
-                        }
-                        else
-                        {
-                            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                            .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                            .Build(*FindUnorderdMap(descriptorName, VkCommandbufferManager::frames[i].descriptorSets)); 
-                        }
-                    }
-                }
+               
+                vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+                .BindBuffer(bindings[binding].binding, &BufferInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
+                .Build(VkCommandbufferManager::frames[j].descriptorSets[descriptorName]);
             }
         }
         else
-        { 
-            VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);  
-            for(int i = 0; i < bindings.size(); i++)
-            {
-                //Check if descriptorSet name already exists
-                if(FindUnorderdMap(descriptorName, descriptorSets) == nullptr)
-                {
-                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                    .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                    .Build(descriptorSets[descriptorName]);
-                }
-                else
-                {
-                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                    .BindBuffer(bindings[i].binding, &BufferInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                    .Build(*FindUnorderdMap(descriptorName, descriptorSets));
-                }
-            }
+        {
+            VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);
+            //Check if descriptorSet name already exists
+            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+            .BindBuffer(bindings[binding].binding, &BufferInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
+            .Build(descriptorSets[descriptorName]);
         }
     }
 

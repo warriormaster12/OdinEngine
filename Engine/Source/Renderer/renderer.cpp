@@ -77,11 +77,11 @@ namespace Renderer
         }
     }
 
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, size_t byteOffset /*= 0*/, const bool& isDynamic /*= false*/)
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset /*=0*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::CreateDescriptorSet(name, layoutName, bufferUsage,allocatedBuffer, dataSize, byteOffset, isDynamic);
+            VulkanContext::CreateDescriptorSet(name, layoutName, binding,bufferUsage,allocatedBuffer, dataSize, byteOffset);
         }
     }
 
