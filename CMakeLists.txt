@@ -8,7 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 find_package(X11 REQUIRED)
-find_package(Vulkan REQUIRED)
 
 
 file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/Engine/Source/*)
@@ -42,18 +41,14 @@ target_include_directories(OdinEngine PUBLIC
 
 if (UNIX AND NOT APPLE)
     set (LINUX TRUE)
-	target_compile_definitions(OdinEngine PRIVATE -DVK_USE_PLATFORM_XLIB_KHR)
-	target_include_directories(OdinEngine PRIVATE Vulkan::Vulkan)
+    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
 	target_include_directories(OdinEngine PRIVATE ${X11+INCLUDE_DIR})
-	target_link_libraries(OdinEngine PRIVATE Vulkan::Vulkan)
 	target_link_libraries(OdinEngine PRIVATE ${X11_LIBRARIES} -lm)
 endif ()
 
 if (WIN32)
-	target_compile_definitions(OdinEngine PRIVATE -DVK_USE_PLATFORM_WIN32LIB_KHR)
-	target_include_directories(OdinEngine PRIVATE Vulkan::Vulkan)
+    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 	target_include_directories(OdinEngine PRIVATE ${WIN32+INCLUDE_DIR})
-	target_link_libraries(OdinEngine PRIVATE Vulkan::Vulkan)
 	target_link_libraries(OdinEngine PRIVATE ${WIN32_LIBRARIES})   
 endif ()
 
@@ -62,10 +57,13 @@ endif ()
 add_subdirectory(Third-Party/glfw EXCLUDE_FROM_ALL)
 target_link_libraries(OdinEngine PRIVATE glfw) 
 
+#volk
+add_subdirectory(Third-Party/volk EXCLUDE_FROM_ALL)
+target_link_libraries(OdinEngine PRIVATE volk) 
+
 #vk-bootstrap
 add_subdirectory(Third-Party/vk-bootstrap EXCLUDE_FROM_ALL)
 target_link_libraries(OdinEngine PUBLIC vk-bootstrap -ldl)
-
 
 #glm
 add_subdirectory(Third-Party/glm EXCLUDE_FROM_ALL)

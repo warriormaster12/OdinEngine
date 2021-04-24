@@ -11,6 +11,9 @@ constexpr bool bUseValidationLayers = true;
 
 void VkDeviceManager::InitDevice()
 {
+	//Init volk
+	volkInitialize();
+	
 	vkb::InstanceBuilder builder;
 
 	//make the vulkan instance, with basic debug features
@@ -24,6 +27,7 @@ void VkDeviceManager::InitDevice()
 
 	//grab the instance 
 	instance = vkb_inst.instance;
+	volkLoadInstance(instance);
 	debugMessenger = vkb_inst.debug_messenger;
 	
 	glfwCreateWindowSurface(instance, windowHandler.p_window, nullptr, &surface);
@@ -65,6 +69,7 @@ void VkDeviceManager::InitDevice()
 	vkb::Device vkbDevice = deviceBuilder.add_pNext(&descriptorIndexingFeatures).build().value();
 	// Get the VkDevice handle used in the rest of a vulkan application
 	device = vkbDevice.device;
+	volkLoadDevice(device);
 	chosenGPU = physicalDevice.physical_device;
 
 	// use vkbootstrap to get a Graphics queue
