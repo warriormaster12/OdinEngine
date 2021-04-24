@@ -6,14 +6,19 @@
 //Temporary
 #include "vk_utils.h"
 #include "mesh.h"
+#include "texture.h"
 #include "camera.h"
 
+#include "function_queuer.h"
 
 bool isInitialized{ false };
 AllocatedBuffer triangleBuffer;
 
 Mesh mesh;
+Texture albedo;
 Camera camera;
+
+FunctionQueuer additionalDeletion;
 
 struct TriangleData
 {
@@ -51,6 +56,7 @@ void Core::CoreInit()
     descriptionInfo.vertexLocations = {
         {SRGB32,offsetof(Vertex, position)},
         {SRGB32,offsetof(Vertex, color)},
+        {SRG32, offsetof(Vertex, uv)}
     };
     descriptionInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     descriptionInfo.depthTesting = true;
@@ -63,12 +69,16 @@ void Core::CoreInit()
     Renderer::WriteShaderUniform("triangle color", "triangle color layout",0,BUFFER_USAGE_UNIFORM_BUFFER_BIT,triangleBuffer, sizeof(TriangleData));
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,BUFFER_USAGE_UNIFORM_BUFFER_BIT,camera.cameraBuffer, sizeof(GPUCameraData));
     Renderer::WriteShaderUniform("object data", "triangle object layout",0,BUFFER_USAGE_STORAGE_BUFFER_BIT,mesh.meshBuffer, sizeof(GPUObjectData));
+    Renderer::CreateSampler("default sampler", FILTER_NEAREST);
+    //albedo.CreateTexture("EngineAssets/Textures/viking_room.png");
+    //Renderer::WriteShaderImage("triangle color", "triangle color layout", 1, "default sampler", albedo.imageView);
 
     Renderer::RemoveShaderUniformLayout("triangle color layout");
     Renderer::RemoveShaderUniformLayout("triangle camera layout");
     Renderer::RemoveShaderUniformLayout("triangle object layout");
 
-    mesh.LoadFromObj("EngineAssets/Meshes/monkey_smooth.obj");
+
+    mesh.LoadFromObj("EngineAssets/Meshes/viking_room.obj");
 
     mesh.CreateMesh();
 
@@ -138,11 +148,14 @@ void Core::CoreCleanup()
 {
     if (isInitialized)
     {
-        Renderer::RemoveAllocatedBuffer(mesh.meshBuffer);
-        Renderer::RemoveAllocatedBuffer(triangleBuffer);
-        Renderer::RemoveAllocatedBuffer(camera.cameraBuffer);
-        mesh.DestroyMesh();
-        Renderer::CleanUpRenderer();
+        additionalDeletion.PushFunction([=](){
+            Renderer::DestroySampler("default sampler");
+            Renderer::RemoveAllocatedBuffer(mesh.meshBuffer);
+            Renderer::RemoveAllocatedBuffer(triangleBuffer);
+            Renderer::RemoveAllocatedBuffer(camera.cameraBuffer);
+            mesh.DestroyMesh();
+        });
+        Renderer::CleanUpRenderer(&additionalDeletion);
 		windowHandler.DestroyWindow();
     }
 }

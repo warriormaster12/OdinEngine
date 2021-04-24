@@ -17,8 +17,5 @@ struct AllocatedImage {
 	int mipLevels;
 };
 
-struct Texture {
-	AllocatedImage image;
-	VkImageView imageView;
-};
+
 

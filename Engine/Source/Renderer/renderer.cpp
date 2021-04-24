@@ -85,6 +85,14 @@ namespace Renderer
         }
     }
 
+    void WriteShaderImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,VkImageView& view)
+    {
+        if(currentBackend == AvailableBackends::Vulkan)
+        {
+            VulkanContext::CreateDescriptorSetImage(name, layoutName, binding, sampler, view); 
+        }
+    }
+
 
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer)
     {
@@ -99,6 +107,14 @@ namespace Renderer
         if(currentBackend == AvailableBackends::Vulkan)
         {
             VulkanContext::CreateSampler(samplerName, (VkFilter)filter);
+        }   
+    }
+
+    void DestroySampler(const std::string& samplerName)
+    {
+        if(currentBackend == AvailableBackends::Vulkan)
+        {
+            VulkanContext::DestroySampler(samplerName);
         }   
     }
 
@@ -159,11 +175,11 @@ namespace Renderer
         } 
     }
 
-    void CleanUpRenderer()
+    void CleanUpRenderer(FunctionQueuer* p_additionalDeletion /*= nullptr*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::CleanUpVulkan();
+            VulkanContext::CleanUpVulkan(p_additionalDeletion);
         }
     }
 }

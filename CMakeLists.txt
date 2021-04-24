@@ -21,6 +21,7 @@ target_include_directories(OdinEngine PUBLIC
     Engine/Source/Editor/Include/
     Engine/Source/Helpers/Logger/Include/
     Engine/Source/Helpers/Queuer/
+    Engine/Source/Helpers/Unordered_Finder/
     Engine/Source/RendererBackends/Vulkan/Include/
     Engine/Source/RendererBackends/Vulkan/vk_components/Include
     Engine/Source/Main/Include/

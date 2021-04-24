@@ -5,10 +5,10 @@
 #include "Include/vk_init.h"
 
 #include "vk_check.h"
-#include "function_queuer.h"
 #include "window_handler.h"
 
 #include "logger.h"
+#include "unordered_finder.h"
 
 
 
@@ -21,6 +21,9 @@ VkCommandBuffer cmd;
 FunctionQueuer mainDeletionQueue;
 //objects deleted on application window resize
 FunctionQueuer swapDeletionQueue;
+
+//Object that calls ResizeWindow function
+FunctionQueuer windowRecreateQueue;
 
 std::unordered_map<std::string, ShaderProgram> shaderProgram;
 std::unordered_map<std::string, VkDescriptorSet> descriptorSets;
@@ -35,22 +38,7 @@ std::unordered_map<std::string, VkSampler> samplers;
 
 
 
-namespace
-{  
-    //find unordered_map
-    template<typename T>
-    T* FindUnorderdMap(const std::string& name, std::unordered_map<std::string, T>& data)
-    {
-        //search for the object, and return nullpointer if not found
-        auto it = data.find(name);
-        if (it == data.end()) {
-            return nullptr;
-        }
-        else {
-            return &it->second;
-        }
-    }
-}
+
 
 
 namespace VulkanContext 
@@ -78,18 +66,19 @@ namespace VulkanContext
     }
     void ResizeWindow()
     {
+        //we delete everything that was in the swapchain queue
         vkDeviceWaitIdle(VkDeviceManager::GetDevice());
+        swapDeletionQueue.Flush();
         int width = 0, height = 0;
         glfwGetFramebufferSize(windowHandler.p_window, &width, &height);
         while (width == 0 || height == 0) {
             glfwGetFramebufferSize(windowHandler.p_window, &width, &height);
             glfwWaitEvents();
         }
-        //we delete everything that was in the swapchain queue
-        swapDeletionQueue.Flush();
 
         //then we recreate and move deletion functions back to swapchain queue
         VkSwapChainManager::InitSwapchain();
+
         swapDeletionQueue.PushFunction([=]() {
             VkSwapChainManager::DeleteSwapchain();
         });
@@ -98,7 +87,11 @@ namespace VulkanContext
 
     void UpdateDraw(float clearColor[4],std::function<void()>&& drawCalls)
     {
-        VkCommandbufferManager::BeginCommands(cmd, swapchainImageIndex, [=] {ResizeWindow();});
+        if(windowHandler.frameBufferResized == true)
+        {
+            windowRecreateQueue.PushFunction([=]() {ResizeWindow();});
+        }
+        VkCommandbufferManager::BeginCommands(cmd, swapchainImageIndex,windowRecreateQueue);
         BeginRenderpass(clearColor);
         VkViewport viewport = {};
         viewport.width = VkSwapChainManager::GetSwapchainExtent().width;
@@ -116,12 +109,13 @@ namespace VulkanContext
 
         drawCalls();
         EndRenderpass();
-        VkCommandbufferManager::EndCommands([=] {ResizeWindow();});
+        VkCommandbufferManager::EndCommands(windowRecreateQueue);
     }
 
-    void CleanUpVulkan()
+    void CleanUpVulkan(FunctionQueuer* p_additionalDeletion)
     {
         vkDeviceWaitIdle(VkDeviceManager::GetDevice());
+        p_additionalDeletion->Flush();
         swapDeletionQueue.Flush();
         mainDeletionQueue.Flush();
         
@@ -257,30 +251,30 @@ namespace VulkanContext
         vkCreateSampler(VkDeviceManager::GetDevice(), &samplerInfo, nullptr, &samplers[samplerName]);
     }
 
-    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& texturePath, const std::string& layoutName, const VkFormat& imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
+    void DestroySampler(const std::string& samplerName)
+    {
+        vkDestroySampler(VkDeviceManager::GetDevice(), *FindUnorderdMap(samplerName, samplers), nullptr);
+    }
+
+    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,VkImageView& view,const VkFormat& imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
     {
         VkDescriptorImageInfo imageInfo = {};
-        imageInfo.imageView;
+        imageInfo.sampler = *FindUnorderdMap(sampler, samplers);
+        imageInfo.imageView = view;
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
-        for(int i = 0; i < bindings.size(); i++)
+
+        if(FindUnorderdMap(descriptorName,descriptorSets) == nullptr)
         {
-            //we only want to process image data
-            if(bindings[i].descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
-            {
-                //Check if descriptorSet name already exists
-                if(FindUnorderdMap(descriptorName, descriptorSets) == nullptr)
-                {
-                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                    .BindImage(bindings[i].binding, &imageInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                    .Build(descriptorSets[descriptorName]);
-                }
-                else 
-                {
-                    vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                    .BindImage(bindings[i].binding, &imageInfo, bindings[i].descriptorType, bindings[i].stageFlags)
-                    .Build(*FindUnorderdMap(descriptorName, descriptorSets));
-                }
-            }
+            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+            .BindImage(bindings[binding].binding, &imageInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
+            .Build(descriptorSets[descriptorName]);
+        }
+        else
+        {
+            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+            .BindImage(bindings[binding].binding, &imageInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
+            .Build(*FindUnorderdMap(descriptorName,descriptorSets));
         }
     }
     
@@ -310,7 +304,6 @@ namespace VulkanContext
 
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer)
     {
-        vkDeviceWaitIdle(VkDeviceManager::GetDevice());
         vmaDestroyBuffer(VkDeviceManager::GetAllocator(), allocatedBuffer.buffer, allocatedBuffer.allocation);
     }
 

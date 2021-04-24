@@ -11,6 +11,7 @@
 #include "vk_types.h"
 #include "vk_utils.h"
 #include "vk_meshhandler.h"
+#include "function_queuer.h"
 
 struct ShaderProgram 
 {
@@ -52,7 +53,7 @@ namespace VulkanContext
 
     void UpdateDraw(float clearColor[4],std::function<void()>&& drawCalls);
 
-    void CleanUpVulkan();
+    void CleanUpVulkan(FunctionQueuer* p_additionalDeletion);
 
     void CreateDefaultRenderpass();
     void CreateMainFramebuffer();
@@ -66,8 +67,10 @@ namespace VulkanContext
     void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset);
     
     void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter);
+    
+    void DestroySampler(const std::string& samplerName);
 
-    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& texturePath, const std::string& layoutName, const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
+    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,VkImageView& view,const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
 
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
 

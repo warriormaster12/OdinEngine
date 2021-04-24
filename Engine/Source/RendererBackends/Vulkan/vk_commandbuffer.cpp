@@ -124,7 +124,7 @@ void VkCommandbufferManager::CleanUpCommands()
     ENGINE_CORE_INFO("vulkan commands cleaned");
 }
 
-void VkCommandbufferManager::BeginCommands(VkCommandBuffer& cmd, uint32_t& imageIndex, std::function<void()>&& recreateSwapchain)
+void VkCommandbufferManager::BeginCommands(VkCommandBuffer& cmd, uint32_t& imageIndex, FunctionQueuer recreateSwapchain)
 {
 	//wait until the gpu has finished rendering the last frame. Timeout of 1 second
 	VK_CHECK(vkWaitForFences(VkDeviceManager::GetDevice(), 1, &GetCurrentFrame().renderFence, true, 1000000000));
@@ -137,7 +137,7 @@ void VkCommandbufferManager::BeginCommands(VkCommandBuffer& cmd, uint32_t& image
 	drawResult = vkAcquireNextImageKHR(VkDeviceManager::GetDevice(), VkSwapChainManager::GetSwapchain(), 1000000000, GetCurrentFrame().presentSemaphore, nullptr, &imageIndex);
 	currentIndex = imageIndex;
 	if (drawResult == VK_ERROR_OUT_OF_DATE_KHR) {
-		recreateSwapchain();
+		recreateSwapchain.Flush();
         return;
 	} else if (drawResult != VK_SUCCESS && drawResult != VK_SUBOPTIMAL_KHR) {
 		ENGINE_CORE_ERROR("failed to acquire swap chain image!");
@@ -153,7 +153,7 @@ void VkCommandbufferManager::BeginCommands(VkCommandBuffer& cmd, uint32_t& image
 	VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
 }
 
-void VkCommandbufferManager::EndCommands(std::function<void()>&& recreateSwapchain)
+void VkCommandbufferManager::EndCommands(FunctionQueuer recreateSwapchain)
 {
 	//finalize the command buffer (we can no longer add commands, but it can now be executed)
 	VK_CHECK(vkEndCommandBuffer(currentBuffer));
@@ -195,7 +195,7 @@ void VkCommandbufferManager::EndCommands(std::function<void()>&& recreateSwapcha
 
 	if (drawResult == VK_ERROR_OUT_OF_DATE_KHR || drawResult == VK_SUBOPTIMAL_KHR || windowHandler.frameBufferResized == true) {
 		windowHandler.frameBufferResized = false;
-		recreateSwapchain();
+		recreateSwapchain.Flush();
 		
 	} else if (drawResult != VK_SUCCESS) {
 		ENGINE_CORE_ERROR("failed to present swap chain image!");

@@ -1,8 +1,9 @@
 #pragma once 
 
 #include "vk_context.h"
+#include "function_queuer.h"
+
 #include <array>
-#include <functional>
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
@@ -76,7 +77,7 @@ namespace Renderer
 {
     void InitRenderer(AvailableBackends selectBackend);
     void UpdateRenderer(std::array<float, 4> clearColor, std::function<void()>&& drawCalls);
-    void CleanUpRenderer();
+    void CleanUpRenderer(FunctionQueuer* p_additionalDeletion = nullptr);
 
     void CreateFramebuffer(ObjectType type);
     void CreateRenderPass(ObjectType type);
@@ -87,11 +88,14 @@ namespace Renderer
     void RemoveShaderUniformLayout(const std::string& layoutName);
 
     void CreateSampler(const std::string& samplerName, const ImageFilter& filter);
+    
+    void DestroySampler(const std::string& samplerName);
 
     //create the shader
     void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const ShaderDescriptions* descriptions = nullptr);
     //Equivalent to writing a descriptor set
     void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset =0);
+    void WriteShaderImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,VkImageView& view);
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
     //Bind the shader before drawing
     void BindShader(const std::string& shaderName);

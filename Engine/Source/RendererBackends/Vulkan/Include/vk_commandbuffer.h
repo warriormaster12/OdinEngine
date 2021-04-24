@@ -1,7 +1,7 @@
 #pragma once 
 
 #include "vk_types.h"
-#include <functional>
+#include "function_queuer.h"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -33,8 +33,8 @@ public:
     static void CleanUpCommands();
 
     //these functions are used to start drawing loop
-    static void BeginCommands(VkCommandBuffer& cmd, uint32_t& imageIndex, std::function<void()>&& recreateSwapchain);
-    static void EndCommands(std::function<void()>&& recreateSwapchain);
+    static void BeginCommands(VkCommandBuffer& cmd, uint32_t& imageIndex, FunctionQueuer recreateSwapchain);
+    static void EndCommands(FunctionQueuer recreateSwapchain);
 
     inline static FrameData frames[FRAME_OVERLAP];
     static FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
