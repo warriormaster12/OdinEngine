@@ -35,6 +35,7 @@ target_include_directories(OdinEngine PUBLIC
     Engine/Source/Third-Party/tinyobjloader/Include/
     Engine/Source/Third-Party/Vma/Include/
     Engine/Source/Third-Party/spirv-reflect/Include/
+    Engine/Source/Third-Party/vk-bootstrap/Include/
 )
 
 
@@ -60,10 +61,6 @@ target_link_libraries(OdinEngine PRIVATE glfw)
 #volk
 add_subdirectory(Third-Party/volk EXCLUDE_FROM_ALL)
 target_link_libraries(OdinEngine PRIVATE volk) 
-
-#vk-bootstrap
-add_subdirectory(Third-Party/vk-bootstrap EXCLUDE_FROM_ALL)
-target_link_libraries(OdinEngine PUBLIC vk-bootstrap -ldl)
 
 #glm
 add_subdirectory(Third-Party/glm EXCLUDE_FROM_ALL)
