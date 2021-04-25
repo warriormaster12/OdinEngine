@@ -14,16 +14,11 @@
 
 VkRenderPass mainPass;
 std::vector<VkFramebuffer> mainFramebuffer;
-uint32_t swapchainImageIndex;
-VkCommandBuffer cmd;
 
 //objects deleted on application closed
 FunctionQueuer mainDeletionQueue;
 //objects deleted on application window resize
 FunctionQueuer swapDeletionQueue;
-
-//Object that calls ResizeWindow function
-FunctionQueuer windowRecreateQueue;
 
 std::unordered_map<std::string, ShaderProgram> shaderProgram;
 std::unordered_map<std::string, VkDescriptorSet> descriptorSets;
@@ -87,11 +82,7 @@ namespace VulkanContext
 
     void UpdateDraw(float clearColor[4],std::function<void()>&& drawCalls)
     {
-        if(windowHandler.frameBufferResized == true)
-        {
-            windowRecreateQueue.PushFunction([=]() {ResizeWindow();});
-        }
-        VkCommandbufferManager::BeginCommands(cmd, swapchainImageIndex,windowRecreateQueue);
+        VkCommandbufferManager::BeginCommands(ResizeWindow);
         BeginRenderpass(clearColor);
         VkViewport viewport = {};
         viewport.width = VkSwapChainManager::GetSwapchainExtent().width;
@@ -104,12 +95,12 @@ namespace VulkanContext
         scissor.extent = VkSwapChainManager::GetSwapchainExtent();
         scissor.offset = {0, 0};
 
-        vkCmdSetViewport(cmd, 0, 1, &viewport);
-        vkCmdSetScissor(cmd, 0, 1, &scissor);
+        vkCmdSetViewport(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &viewport);
+        vkCmdSetScissor(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &scissor);
 
         drawCalls();
         EndRenderpass();
-        VkCommandbufferManager::EndCommands(windowRecreateQueue);
+        VkCommandbufferManager::EndCommands(ResizeWindow);
     }
 
     void CleanUpVulkan(FunctionQueuer* p_additionalDeletion)
@@ -385,7 +376,7 @@ namespace VulkanContext
 
     void BindGraphicsPipeline(const std::string& shaderName)
     {
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.pipeline);
+        vkCmdBindPipeline(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.pipeline);
         
     }
     void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& isDynamic, const size_t& dataSize)
@@ -395,28 +386,28 @@ namespace VulkanContext
             size_t frameIndex = frameNumber % FRAME_OVERLAP;
             uint32_t descriptorOffset = PadUniformBufferSize(dataSize) * frameIndex;
             auto& currentFrame = VkCommandbufferManager::GetCurrentFrame();
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 1, &descriptorOffset);
+            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 1, &descriptorOffset);
         }
         else
         {
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
+            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
         }
     }
 
     void BindIndexBuffer(AllocatedBuffer& indexBuffer)
     {
         VkDeviceSize offset = 0;
-        vkCmdBindIndexBuffer(cmd, indexBuffer.buffer,offset, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(VkCommandbufferManager::GetCommandBuffer(), indexBuffer.buffer,offset, VK_INDEX_TYPE_UINT32);
     }
     void BindVertexBuffer(AllocatedBuffer& vertexBuffer)
     {
         VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.buffer, &offset);
+        vkCmdBindVertexBuffers(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &vertexBuffer.buffer, &offset);
     }
 
     void DrawIndexed(std::vector<std::uint32_t>& indices)
     {   
-        vkCmdDrawIndexed(cmd, indices.size(), 1,0,0,0);
+        vkCmdDrawIndexed(VkCommandbufferManager::GetCommandBuffer(), indices.size(), 1,0,0,0);
     }
 
     void BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)
@@ -433,11 +424,11 @@ namespace VulkanContext
         VkRenderPassBeginInfo rpInfo;
         if(renderPass != VK_NULL_HANDLE)
         {
-            rpInfo = vkinit::RenderpassBeginInfo(renderPass, VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[swapchainImageIndex]);
+            rpInfo = vkinit::RenderpassBeginInfo(renderPass, VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[VkCommandbufferManager::GetImageIndex()]);
         }
         else
         {
-            rpInfo = vkinit::RenderpassBeginInfo(mainPass, VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[swapchainImageIndex]);
+            rpInfo = vkinit::RenderpassBeginInfo(mainPass, VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[VkCommandbufferManager::GetImageIndex()]);
         }
         //connect clear values
         rpInfo.clearValueCount = 2;
@@ -446,12 +437,12 @@ namespace VulkanContext
 
         rpInfo.pClearValues = &clearValues[0];
         
-        vkCmdBeginRenderPass(cmd, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(VkCommandbufferManager::GetCommandBuffer(), &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
         
     }
     void EndRenderpass()
     {
         //finalize the render pass
-        vkCmdEndRenderPass(cmd);
+        vkCmdEndRenderPass(VkCommandbufferManager::GetCommandBuffer());
     }
 }

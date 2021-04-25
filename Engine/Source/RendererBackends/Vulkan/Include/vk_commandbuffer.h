@@ -33,14 +33,17 @@ public:
     static void CleanUpCommands();
 
     //these functions are used to start drawing loop
-    static void BeginCommands(VkCommandBuffer& cmd, uint32_t& imageIndex, FunctionQueuer recreateSwapchain);
-    static void EndCommands(FunctionQueuer recreateSwapchain);
+    static void BeginCommands(std::function<void()> recreateSwapchain);
+    static void EndCommands(std::function<void()> recreateSwapchain);
 
     inline static FrameData frames[FRAME_OVERLAP];
     static FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
+
+    static uint32_t& GetImageIndex(){return imageIndex;}
+    static VkCommandBuffer& GetCommandBuffer() {return cmd;}
     
 private:
     inline static UploadContext uploadContext;
-
-    
+    inline static VkCommandBuffer cmd;
+    inline static uint32_t imageIndex;
 };
