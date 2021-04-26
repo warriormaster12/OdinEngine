@@ -104,7 +104,7 @@ bool vkcomponent::LoadImageFromFile(const std::string& filename, AllocatedImage&
 		LoadEmpty(outImage);
 		return false;
 	}
-	VkDeviceSize imageSize = static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * sizeof(stbi_uc);
+	VkDeviceSize imageSize = static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * 4 * sizeof(stbi_uc);
 
     //allocate temporary buffer for holding texture data to upload
 	AllocatedBuffer stagingBuffer;

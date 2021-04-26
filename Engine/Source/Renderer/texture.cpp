@@ -19,3 +19,12 @@ void Texture::CreateTexture(const std::string& filepath)
         vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
     }
 }
+
+void Texture::DestroyTexture()
+{
+    if(Renderer::GetActiveAPI() == AvailableBackends::Vulkan)
+    {
+        vkDestroyImageView(VkDeviceManager::GetDevice(), imageView, nullptr);
+        vkDestroyImage(VkDeviceManager::GetDevice(), image.image, nullptr);
+    }
+}

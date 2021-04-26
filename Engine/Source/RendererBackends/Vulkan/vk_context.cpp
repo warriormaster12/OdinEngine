@@ -254,43 +254,44 @@ namespace VulkanContext
         imageInfo.imageView = view;
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
+        
+        if(binding == 0)
+        {
+            descriptorAllocator.Allocate(&descriptorSets[descriptorName] ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
+        }
 
-        if(FindUnorderdMap(descriptorName,descriptorSets) == nullptr)
-        {
-            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-            .BindImage(bindings[binding].binding, &imageInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
-            .Build(descriptorSets[descriptorName]);
-        }
-        else
-        {
-            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-            .BindImage(bindings[binding].binding, &imageInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
-            .Build(*FindUnorderdMap(descriptorName,descriptorSets));
-        }
+        VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, *FindUnorderdMap(descriptorName, descriptorSets), &imageInfo, bindings[binding].binding, 1);
+
+        vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
     }
     
     void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset)
     {
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
-        if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
-        {
-            VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, FRAME_OVERLAP * PadUniformBufferSize(dataSize), bufferUsage, byteOffset);
-            for(int j = 0; j < FRAME_OVERLAP; j++)
-            {
+        // if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+        // {
+        //     VkDescriptorBufferInfo bufferInfo = CreateDescriptorBuffer(allocatedBuffer, FRAME_OVERLAP * PadUniformBufferSize(dataSize), bufferUsage, byteOffset);
+        //     for(int j = 0; j < FRAME_OVERLAP; j++)
+        //     {
                
-                vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-                .BindBuffer(bindings[binding].binding, &BufferInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
-                .Build(VkCommandbufferManager::frames[j].descriptorSets[descriptorName]);
-            }
-        }
-        else
+        //         vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
+        //         .BindBuffer(bindings[binding].binding, &bufferInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
+        //         .Build(VkCommandbufferManager::frames[j].descriptorSets[descriptorName]);
+        //     }
+        // }
+        // else
+        // {
+            
+        // }
+        if(binding == 0)
         {
-            VkDescriptorBufferInfo BufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);
-            //Check if descriptorSet name already exists
-            vkcomponent::DescriptorBuilder::Begin(&descriptorLayoutCache, &descriptorAllocator)
-            .BindBuffer(bindings[binding].binding, &BufferInfo, bindings[binding].descriptorType, bindings[binding].stageFlags)
-            .Build(descriptorSets[descriptorName]);
+            descriptorAllocator.Allocate(&descriptorSets[descriptorName] ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
         }
+
+        VkDescriptorBufferInfo bufferInfo = CreateDescriptorBuffer(allocatedBuffer, dataSize, bufferUsage, byteOffset);
+        VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, *FindUnorderdMap(descriptorName, descriptorSets), &bufferInfo, bindings[binding].binding);
+
+        vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputBuffer, 0, nullptr);
     }
 
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer)

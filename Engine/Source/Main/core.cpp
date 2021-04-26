@@ -42,14 +42,14 @@ void Core::CoreInit()
     Renderer::CreateRenderPass(RENDERPASS_MAIN);
     Renderer::CreateFramebuffer(FRAMEBUFFER_MAIN);
 
-    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER_DYNAMIC, SHADER_STAGE_VERTEX_BIT, 0);
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayout("triangle camera layout");
     
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_STORAGE_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayout("triangle object layout");
     
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER,SHADER_STAGE_FRAGMENT_BIT, 0);
-    //Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 1);
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 1);
     Renderer::CreateShaderUniformLayout("triangle color layout");
     
     ShaderDescriptions descriptionInfo = {};
@@ -65,13 +65,15 @@ void Core::CoreInit()
     Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
 
     Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader2", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
+    Renderer::CreateSampler("default sampler", FILTER_NEAREST);
+    albedo.CreateTexture("EngineAssets/Textures/viking_room.png");
 
     Renderer::WriteShaderUniform("triangle color", "triangle color layout",0,BUFFER_USAGE_UNIFORM_BUFFER_BIT,triangleBuffer, sizeof(TriangleData));
+    Renderer::WriteShaderImage("triangle color", "triangle color layout", 1, "default sampler", albedo.imageView);
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,BUFFER_USAGE_UNIFORM_BUFFER_BIT,camera.cameraBuffer, sizeof(GPUCameraData));
     Renderer::WriteShaderUniform("object data", "triangle object layout",0,BUFFER_USAGE_STORAGE_BUFFER_BIT,mesh.meshBuffer, sizeof(GPUObjectData));
-    Renderer::CreateSampler("default sampler", FILTER_NEAREST);
-    //albedo.CreateTexture("EngineAssets/Textures/viking_room.png");
-    //Renderer::WriteShaderImage("triangle color", "triangle color layout", 1, "default sampler", albedo.imageView);
+    
+    
 
     Renderer::RemoveShaderUniformLayout("triangle color layout");
     Renderer::RemoveShaderUniformLayout("triangle camera layout");
@@ -134,7 +136,7 @@ void Core::CoreUpdate()
             Renderer::UploadUniformDataToShader(triangleData, triangleBuffer);
             
             
-            Renderer::BindUniforms("camera data", "triangle shader", 0, true, sizeof(GPUCameraData));
+            Renderer::BindUniforms("camera data", "triangle shader", 0);
             Renderer::BindUniforms("object data", "triangle shader", 1);
             Renderer::BindUniforms("triangle color", "triangle shader",2);
             Renderer::BindVertexBuffer(mesh.vertexBuffer);
@@ -150,6 +152,7 @@ void Core::CoreCleanup()
     {
         additionalDeletion.PushFunction([=](){
             Renderer::DestroySampler("default sampler");
+            albedo.DestroyTexture();
             Renderer::RemoveAllocatedBuffer(mesh.meshBuffer);
             Renderer::RemoveAllocatedBuffer(triangleBuffer);
             Renderer::RemoveAllocatedBuffer(camera.cameraBuffer);
