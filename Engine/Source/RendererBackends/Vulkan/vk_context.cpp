@@ -249,12 +249,14 @@ namespace VulkanContext
 
     void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views,const VkFormat& imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
     {
-        VkDescriptorImageInfo imageInfo[views.size()];
-        for(int i =0; i < views.size(); i++)
+        std::vector<VkDescriptorImageInfo> imageInfo;
+        for(int i = 0; i < views.size(); i++)
         {
-            imageInfo[i].sampler = *FindUnorderdMap(sampler, samplers);
-            imageInfo[i].imageView = views[i];
-            imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            VkDescriptorImageInfo info{};
+            info.sampler = *FindUnorderdMap(sampler, samplers);
+            info.imageView = views[i];
+            info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.push_back(info);
         }
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
         
@@ -263,7 +265,7 @@ namespace VulkanContext
             descriptorAllocator.Allocate(&descriptorSets[descriptorName] ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
         }
 
-        VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, *FindUnorderdMap(descriptorName, descriptorSets), imageInfo, bindings[binding].binding, bindings[binding].descriptorCount);
+        VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, *FindUnorderdMap(descriptorName, descriptorSets), imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
 
         vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
     }
