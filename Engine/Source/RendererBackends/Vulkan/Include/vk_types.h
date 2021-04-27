@@ -10,6 +10,8 @@ struct AllocatedBuffer {
     VkBuffer buffer;
     VmaAllocation allocation;
     VmaAllocationInfo allocationInfo;
+
+    VkBufferCreateFlags bufferUsage;
 };
 
 struct AllocatedImage {

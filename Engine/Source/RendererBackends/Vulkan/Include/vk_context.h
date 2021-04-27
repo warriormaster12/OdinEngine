@@ -38,7 +38,7 @@ struct DescripotrSetLayoutBindingInfo
     uint32_t descriptorCount;
 };
 
-struct DescriptorSetInfo
+struct DescriptorSetLayoutInfo
 {
     VkDescriptorSetLayout layout;
     std::vector<VkDescriptorSetLayoutBinding> bindings;
@@ -64,7 +64,7 @@ namespace VulkanContext
 
     void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE, const ShaderDescriptions* descriptions = nullptr);
     
-    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const VkBufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset);
+    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const bool& frameOverlap ,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset);
     
     void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter);
     
@@ -75,7 +75,7 @@ namespace VulkanContext
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
 
     void BindGraphicsPipeline(const std::string& shaderName);
-    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& isDynamic, const size_t& dataSize);
+    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize);
     void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     void DrawIndexed(std::vector<std::uint32_t>& indices);

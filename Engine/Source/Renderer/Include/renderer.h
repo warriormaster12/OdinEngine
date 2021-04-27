@@ -94,7 +94,7 @@ namespace Renderer
     //create the shader
     void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const ShaderDescriptions* descriptions = nullptr);
     //Equivalent to writing a descriptor set
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset =0);
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap, AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset =0);
     void WriteShaderImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,VkImageView& view);
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
     //Bind the shader before drawing
@@ -105,7 +105,7 @@ namespace Renderer
     
 
     //Equivalent to binding descriptor sets
-    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set = 0, const bool& isDynamic = false, const size_t& dataSize =0);
+    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set, const bool& frameOverlap, const bool& isDynamic = false, const size_t& dataSize =0);
 
     void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     

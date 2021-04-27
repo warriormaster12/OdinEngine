@@ -77,11 +77,11 @@ namespace Renderer
         }
     }
 
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const BufferCreateFlags& bufferUsage,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset /*=0*/)
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset /*=0*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::CreateDescriptorSet(name, layoutName, binding,bufferUsage,allocatedBuffer, dataSize, byteOffset);
+            VulkanContext::CreateDescriptorSet(name, layoutName, binding,frameOverlap,allocatedBuffer, dataSize, byteOffset);
         }
     }
 
@@ -134,11 +134,11 @@ namespace Renderer
             VulkanContext::BindGraphicsPipeline(shaderName);
         }   
     }
-    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set /*= 0*/, const bool& isDynamic /*= false*/, const size_t& dataSize /*=0*/)
+    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set, const bool& frameOverlap, const bool& isDynamic /*= false*/, const size_t& dataSize /*=0*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::BindDescriptorSet(name, shaderName, set, isDynamic, dataSize);
+            VulkanContext::BindDescriptorSet(name, shaderName, set, frameOverlap,isDynamic, dataSize);
         }
     }
 

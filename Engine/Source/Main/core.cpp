@@ -68,10 +68,14 @@ void Core::CoreInit()
     Renderer::CreateSampler("default sampler", FILTER_NEAREST);
     albedo.CreateTexture("EngineAssets/Textures/viking_room.png");
 
-    Renderer::WriteShaderUniform("triangle color", "triangle color layout",0,BUFFER_USAGE_UNIFORM_BUFFER_BIT,triangleBuffer, sizeof(TriangleData));
+    triangleBuffer.bufferUsage = BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    camera.cameraBuffer.bufferUsage = BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    mesh.meshBuffer.bufferUsage = BUFFER_USAGE_STORAGE_BUFFER_BIT;
+
+    Renderer::WriteShaderUniform("triangle color", "triangle color layout",0,false,triangleBuffer, sizeof(TriangleData));
     Renderer::WriteShaderImage("triangle color", "triangle color layout", 1, "default sampler", albedo.imageView);
-    Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,BUFFER_USAGE_UNIFORM_BUFFER_BIT,camera.cameraBuffer, sizeof(GPUCameraData));
-    Renderer::WriteShaderUniform("object data", "triangle object layout",0,BUFFER_USAGE_STORAGE_BUFFER_BIT,mesh.meshBuffer, sizeof(GPUObjectData));
+    Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,false,camera.cameraBuffer, sizeof(GPUCameraData));
+    Renderer::WriteShaderUniform("object data", "triangle object layout",0,false,mesh.meshBuffer, sizeof(GPUObjectData));
     
     
 
@@ -136,9 +140,9 @@ void Core::CoreUpdate()
             Renderer::UploadUniformDataToShader(triangleData, triangleBuffer);
             
             
-            Renderer::BindUniforms("camera data", "triangle shader", 0);
-            Renderer::BindUniforms("object data", "triangle shader", 1);
-            Renderer::BindUniforms("triangle color", "triangle shader",2);
+            Renderer::BindUniforms("camera data", "triangle shader", 0, false);
+            Renderer::BindUniforms("object data", "triangle shader", 1, false);
+            Renderer::BindUniforms("triangle color", "triangle shader",2, false);
             Renderer::BindVertexBuffer(mesh.vertexBuffer);
             Renderer::BindIndexBuffer(mesh.indexBuffer);
             Renderer::DrawIndexed(mesh.indices);
