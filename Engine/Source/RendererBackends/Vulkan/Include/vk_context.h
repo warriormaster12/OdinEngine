@@ -70,7 +70,7 @@ namespace VulkanContext
     
     void DestroySampler(const std::string& samplerName);
 
-    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,VkImageView& view,const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
+    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views,const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
 
     void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
 

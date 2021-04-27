@@ -85,11 +85,11 @@ namespace Renderer
         }
     }
 
-    void WriteShaderImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,VkImageView& view)
+    void WriteShaderImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::CreateDescriptorSetImage(name, layoutName, binding, sampler, view); 
+            VulkanContext::CreateDescriptorSetImage(name, layoutName, binding, sampler, views); 
         }
     }
 
@@ -134,7 +134,7 @@ namespace Renderer
             VulkanContext::BindGraphicsPipeline(shaderName);
         }   
     }
-    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set, const bool& frameOverlap, const bool& isDynamic /*= false*/, const size_t& dataSize /*=0*/)
+    void BindUniforms(const std::string& name, const std::string& shaderName, const uint32_t& set,  const bool& frameOverlap, const bool& isDynamic /*= false*/, const size_t& dataSize /*=0*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {

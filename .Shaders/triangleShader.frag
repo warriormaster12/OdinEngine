@@ -9,11 +9,14 @@ layout(set = 2, binding = 0) uniform TriangleData
     vec4 color;
 }triangleData;
 
-layout(set = 2, binding = 1) uniform sampler2D albedoMap;
+layout(set = 2, binding = 1) uniform sampler2D textureMaps[2];
 void main()
 {
     
-    vec4 albedo = texture(albedoMap, inUv);
+    vec4 albedo = texture(textureMaps[0], inUv);
+    vec4 emission = texture(textureMaps[1], inUv);
+    emission *= vec4(1.0, 0.7333, 0.0, 1.0);
     //return color
-	outFragColor = vec4(albedo.rgb,1.0f);   
+    vec4 color = albedo + emission;
+	outFragColor = vec4(color.rgb,1.0);   
 }

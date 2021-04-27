@@ -247,12 +247,15 @@ namespace VulkanContext
         vkDestroySampler(VkDeviceManager::GetDevice(), *FindUnorderdMap(samplerName, samplers), nullptr);
     }
 
-    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,VkImageView& view,const VkFormat& imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
+    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views,const VkFormat& imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
     {
-        VkDescriptorImageInfo imageInfo = {};
-        imageInfo.sampler = *FindUnorderdMap(sampler, samplers);
-        imageInfo.imageView = view;
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        VkDescriptorImageInfo imageInfo[views.size()];
+        for(int i =0; i < views.size(); i++)
+        {
+            imageInfo[i].sampler = *FindUnorderdMap(sampler, samplers);
+            imageInfo[i].imageView = views[i];
+            imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        }
         auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
         
         if(binding == 0)
@@ -260,7 +263,7 @@ namespace VulkanContext
             descriptorAllocator.Allocate(&descriptorSets[descriptorName] ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
         }
 
-        VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, *FindUnorderdMap(descriptorName, descriptorSets), &imageInfo, bindings[binding].binding, 1);
+        VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, *FindUnorderdMap(descriptorName, descriptorSets), imageInfo, bindings[binding].binding, bindings[binding].descriptorCount);
 
         vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
     }
