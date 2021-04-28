@@ -47,7 +47,7 @@ struct VkMesh
 		}
 
 		//copy data
-		UploadVectorData(VkDeviceManager::GetAllocator(), stagingBuffer.allocation, dataArray);
+		UploadVectorData(stagingBuffer.allocation, dataArray);
 
 		{
 			CreateBufferInfo info;

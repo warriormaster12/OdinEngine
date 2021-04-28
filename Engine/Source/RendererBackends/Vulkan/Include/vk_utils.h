@@ -47,9 +47,9 @@ void UploadArrayData(const VmaAllocator& allocator, const VmaAllocation& allocat
 }
 
 template<typename T>
-void UploadVectorData(const VmaAllocator& allocator, const VmaAllocation& allocation, const std::vector<T>& data, size_t byteOffset = 0)
+void UploadVectorData(const VmaAllocation& allocation, const std::vector<T>& data, size_t byteOffset = 0)
 {
-    UploadArrayData(allocator, allocation, data.data(), data.size(), byteOffset);
+    UploadArrayData(VkDeviceManager::GetAllocator(), allocation, data.data(), data.size(), byteOffset);
 }
 
 template<typename T>

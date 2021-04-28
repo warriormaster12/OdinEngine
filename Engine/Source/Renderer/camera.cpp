@@ -104,7 +104,8 @@ void Camera::UpdateCamera(float deltaTime)
     GPUCameraData camData{};
 	camData.viewMatrix = GetViewMatrix();
 	camData.projectionMatrix = GetProjectionMatrix();
-	Renderer::UploadUniformDataToShader("camera buffer", camData, true);
+	std::vector<GPUCameraData> camArrayData = {camData};
+	Renderer::UploadUniformDataToShader("camera buffer", camArrayData, true);
 	
 }
 

@@ -77,15 +77,29 @@ public:
 
     // template functions 
     template<typename T>
-    static void UploadBufferData(const std::string& bufferName, const T& data, const bool& frameOverlap)
+    static void UploadBufferData(const std::string& bufferName, const std::vector<T>& data,const bool& frameOverlap)
     {
         if(frameOverlap)
         {
-            UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data);
+            if(data.size() > 1)
+            {
+                UploadVectorData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data);
+            }
+            else
+            {
+                UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data[0]);
+            }
         }
         else
         {
-            UploadSingleData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data);
+            if(data.size() > 1)
+            {
+                UploadVectorData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data);
+            }
+            else
+            {
+                UploadSingleData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data[0]);
+            }
         }
         
     }

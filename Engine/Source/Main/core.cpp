@@ -14,6 +14,8 @@
 bool isInitialized{ false };
 
 Mesh mesh;
+Mesh mesh2;
+
 Texture albedo;
 Texture emission;
 Camera camera;
@@ -71,12 +73,13 @@ void Core::CoreInit()
 
     Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(TriangleData));
     Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
-    Renderer::CreateShaderUniformBuffer("mesh buffer", false, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPUObjectData));
+    const int MAX_OBJECTS = 10000;
+    Renderer::CreateShaderUniformBuffer("mesh buffer", true, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPUObjectData) * MAX_OBJECTS);
 
     Renderer::WriteShaderUniform("triangle color", "triangle color layout",0,false,"material buffer");
     Renderer::WriteShaderImage("triangle color", "triangle color layout", 1, "default sampler", {albedo.imageView, emission.imageView});
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,true,"camera buffer");
-    Renderer::WriteShaderUniform("object data", "triangle object layout",0,false,"mesh buffer");
+    Renderer::WriteShaderUniform("object data", "triangle object layout",0,true,"mesh buffer");
     
     
 
@@ -86,8 +89,10 @@ void Core::CoreInit()
 
 
     mesh.LoadFromObj("EngineAssets/Meshes/Barrel.obj");
+    mesh2.LoadFromObj("EngineAssets/Meshes/Floor.obj");
 
     mesh.CreateMesh();
+    mesh2.CreateMesh();
 
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
 
@@ -120,9 +125,13 @@ void Core::CoreUpdate()
             camera.UpdateCamera(deltaTime);
 
             
-            GPUObjectData objectData{};
-            objectData.modelMatrix = glm::rotate(glm::mat4(1.0f), timer * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            Renderer::UploadUniformDataToShader("mesh buffer",objectData, false);
+            std::vector<GPUObjectData> objectData;
+            objectData.resize(2);
+            for(int i = 0; i < objectData.size(); i++)
+            {
+                objectData[i].modelMatrix = glm::rotate(glm::mat4(1.0f), timer * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            }
+            Renderer::UploadUniformDataToShader("mesh buffer",objectData, true);
 
            
 	
@@ -137,16 +146,20 @@ void Core::CoreUpdate()
                 Renderer::BindShader("triangle shader2");
             }
             
-            
-            Renderer::UploadUniformDataToShader("material buffer",triangleData, false);
+            std::vector<TriangleData> triangleDataArray = {triangleData};
+            Renderer::UploadUniformDataToShader("material buffer",triangleDataArray, false);
             
             
             Renderer::BindUniforms("camera data", "triangle shader", 0, true);
-            Renderer::BindUniforms("object data", "triangle shader", 1,false);
+            Renderer::BindUniforms("object data", "triangle shader", 1,true);
             Renderer::BindUniforms("triangle color", "triangle shader",2,false);
             Renderer::BindVertexBuffer(mesh.vertexBuffer);
             Renderer::BindIndexBuffer(mesh.indexBuffer);
             Renderer::DrawIndexed(mesh.indices);
+
+            Renderer::BindVertexBuffer(mesh2.vertexBuffer);
+            Renderer::BindIndexBuffer(mesh2.indexBuffer);
+            Renderer::DrawIndexed(mesh2.indices);
         });
     }
 }
@@ -159,10 +172,11 @@ void Core::CoreCleanup()
             Renderer::DestroySampler("default sampler");
             albedo.DestroyTexture();
             emission.DestroyTexture();
-            Renderer::RemoveAllocatedBuffer("mesh buffer", false);
+            Renderer::RemoveAllocatedBuffer("mesh buffer", true);
             Renderer::RemoveAllocatedBuffer("material buffer", false);
             Renderer::RemoveAllocatedBuffer("camera buffer", true);
             mesh.DestroyMesh();
+            mesh2.DestroyMesh();
         });
         Renderer::CleanUpRenderer(&additionalDeletion);
 		windowHandler.DestroyWindow();
