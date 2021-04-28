@@ -27,7 +27,12 @@ Download and install python for compiling glslang https://www.python.org/downloa
 $ mkdir build
 $ cd build
 $ cmake ..
-$ cmake --build .
+
+(without multithreading)
+$ make
+
+(with multithreading)
+$ make -j 
 ```
 #### Windows 
 ```
