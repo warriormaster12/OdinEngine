@@ -12,6 +12,7 @@
 #include "vk_utils.h"
 #include "vk_meshhandler.h"
 #include "function_queuer.h"
+#include "unordered_finder.h"
 
 struct ShaderProgram 
 {
@@ -30,56 +31,64 @@ struct ShaderDescriptions
     VkCompareOp depthCompareType = VK_COMPARE_OP_EQUAL;
 };
 
-struct DescripotrSetLayoutBindingInfo
+
+
+
+class VulkanContext 
 {
-    VkDescriptorType descriptorType;
-    VkShaderStageFlags shaderStageFlags;
-    uint32_t binding;
-    uint32_t descriptorCount;
+public: 
+    static void InitVulkan();
+
+    static void ResizeWindow();
+
+    static void UpdateDraw(float clearColor[4],std::function<void()>&& drawCalls);
+
+    static void CleanUpVulkan(FunctionQueuer* p_additionalDeletion);
+
+    static void CreateDefaultRenderpass();
+    static void CreateMainFramebuffer();
+
+    static void CreateDescriptorSetLayoutBinding(DescripotrSetLayoutBindingInfo layoutBindingInfo);
+    static void CreateDescriptorSetLayout(const std::string& layoutName);
+    static void RemoveDescriptorSetLayout(const std::string& layoutName);
+
+    static void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE, const ShaderDescriptions* descriptions = nullptr);
+    
+    static void CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& byteOffset);
+
+    static void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const bool& frameOverlap ,const std::string& bufferName);
+    
+    static void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter);
+    
+    static void DestroySampler(const std::string& samplerName);
+
+    static void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views,const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
+
+    static void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap);
+
+    static void BindGraphicsPipeline(const std::string& shaderName);
+    static void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize);
+    static void BindIndexBuffer(AllocatedBuffer& indexBuffer);
+    static void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
+    static void DrawIndexed(std::vector<std::uint32_t>& indices);
+
+    static void BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass = VK_NULL_HANDLE);
+    static void EndRenderpass();
+
+    // template functions 
+    template<typename T>
+    static void UploadBufferData(const std::string& bufferName, const T& data, const bool& frameOverlap)
+    {
+        if(frameOverlap)
+        {
+            UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data);
+        }
+        else
+        {
+            UploadSingleData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data);
+        }
+        
+    }
+private: 
+    inline static std::unordered_map<std::string, AllocatedBuffer> allocatedBuffers;
 };
-
-struct DescriptorSetLayoutInfo
-{
-    VkDescriptorSetLayout layout;
-    std::vector<VkDescriptorSetLayoutBinding> bindings;
-};
-
-
-namespace VulkanContext 
-{
-    void InitVulkan();
-
-    void ResizeWindow();
-
-    void UpdateDraw(float clearColor[4],std::function<void()>&& drawCalls);
-
-    void CleanUpVulkan(FunctionQueuer* p_additionalDeletion);
-
-    void CreateDefaultRenderpass();
-    void CreateMainFramebuffer();
-
-    void CreateDescriptorSetLayoutBinding(DescripotrSetLayoutBindingInfo layoutBindingInfo);
-    void CreateDescriptorSetLayout(const std::string& layoutName);
-    void RemoveDescriptorSetLayout(const std::string& layoutName);
-
-    void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE, const ShaderDescriptions* descriptions = nullptr);
-    
-    void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const bool& frameOverlap ,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset);
-    
-    void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter);
-    
-    void DestroySampler(const std::string& samplerName);
-
-    void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views,const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
-
-    void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer);
-
-    void BindGraphicsPipeline(const std::string& shaderName);
-    void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize);
-    void BindIndexBuffer(AllocatedBuffer& indexBuffer);
-    void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
-    void DrawIndexed(std::vector<std::uint32_t>& indices);
-
-    void BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass = VK_NULL_HANDLE);
-    void EndRenderpass();
-}

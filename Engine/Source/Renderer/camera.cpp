@@ -10,60 +10,60 @@
 
 void Camera::ProcessInputEvent()
 {
-	inputAxis = glm::vec3(0.0f);
-	if(windowHandler.GetKInput(GLFW_KEY_W) == GLFW_PRESS)
-	{
-		inputAxis.x += 1.f;
-	}
-	if(windowHandler.GetKInput(GLFW_KEY_S) == GLFW_PRESS)
-	{
-		inputAxis.x -= 1.f;
-	}
-	
-	if(windowHandler.GetKInput(GLFW_KEY_D) == GLFW_PRESS)
-	{
-		inputAxis.y += 1.f;
-	}
-	if(windowHandler.GetKInput(GLFW_KEY_A) == GLFW_PRESS)
-	{
-		inputAxis.y -= 1.f;
-	}
-	
-	if(windowHandler.GetKInput(GLFW_KEY_Q) == GLFW_PRESS)
-	{
-		inputAxis.z -= 1.f;
-	}
-	if(windowHandler.GetKInput(GLFW_KEY_E) == GLFW_PRESS)
-	{
-		inputAxis.z += 1.f;
-	}
-	
-	if(windowHandler.GetKInput(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-	{
-		bSprint = true;
-	}
-	else
-	{
-		bSprint = false;
-	}
 	if (possessCamera)
 	{
-		if(windowHandler.mouseMoved == true)
+		inputAxis = glm::vec3(0.0f);
+		if(windowHandler.GetKInput(GLFW_KEY_W) == GLFW_PRESS)
 		{
-			pitch += windowHandler.yoffset * 0.003f;
-			yaw += windowHandler.xoffset * 0.003f;
-
-			// 1.56 radians is about equal to 89.x degrees
-			if(pitch > 1.56f)
-			{
-				pitch = 1.56f;
-			}
-			if(pitch < -1.56f)
-			{
-				pitch = -1.56f;
-			}
-			windowHandler.mouseMoved = false;
+			inputAxis.x += 1.f;
 		}
+		if(windowHandler.GetKInput(GLFW_KEY_S) == GLFW_PRESS)
+		{
+			inputAxis.x -= 1.f;
+		}
+		
+		if(windowHandler.GetKInput(GLFW_KEY_D) == GLFW_PRESS)
+		{
+			inputAxis.y += 1.f;
+		}
+		if(windowHandler.GetKInput(GLFW_KEY_A) == GLFW_PRESS)
+		{
+			inputAxis.y -= 1.f;
+		}
+		
+		if(windowHandler.GetKInput(GLFW_KEY_Q) == GLFW_PRESS)
+		{
+			inputAxis.z -= 1.f;
+		}
+		if(windowHandler.GetKInput(GLFW_KEY_E) == GLFW_PRESS)
+		{
+			inputAxis.z += 1.f;
+		}
+		
+		if(windowHandler.GetKInput(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		{
+			bSprint = true;
+		}
+		else
+		{
+			bSprint = false;
+		}
+			if(windowHandler.mouseMoved == true)
+			{
+				pitch += windowHandler.yoffset * 0.003f;
+				yaw += windowHandler.xoffset * 0.003f;
+
+				// 1.56 radians is about equal to 89.x degrees
+				if(pitch > 1.56f)
+				{
+					pitch = 1.56f;
+				}
+				if(pitch < -1.56f)
+				{
+					pitch = -1.56f;
+				}
+				windowHandler.mouseMoved = false;
+			}
 	}
 	if(windowHandler.GetMInput(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
@@ -104,7 +104,7 @@ void Camera::UpdateCamera(float deltaTime)
     GPUCameraData camData{};
 	camData.viewMatrix = GetViewMatrix();
 	camData.projectionMatrix = GetProjectionMatrix();
-	Renderer::UploadUniformDataToShader(camData,cameraBuffer);
+	Renderer::UploadUniformDataToShader("camera buffer", camData, true);
 	
 }
 

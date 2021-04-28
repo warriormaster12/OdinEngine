@@ -42,6 +42,4 @@ public:
 	glm::mat4 GetViewMatrix() const;
 	glm::mat4 GetProjectionMatrix(bool bReverse = false, bool flipY =true) const;
 	glm::mat4 GetRotationMatrix() const;
-
-	AllocatedBuffer cameraBuffer;
 };

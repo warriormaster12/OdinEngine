@@ -77,11 +77,19 @@ namespace Renderer
         }
     }
 
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap,AllocatedBuffer& allocatedBuffer, const size_t& dataSize, const size_t& byteOffset /*=0*/)
+    void CreateShaderUniformBuffer(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& byteOffset /*=0*/)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::CreateDescriptorSet(name, layoutName, binding,frameOverlap,allocatedBuffer, dataSize, byteOffset);
+            VulkanContext::CreateUniformBufferInfo(bufferName, frameOverlap, bufferUsage, dataSize, byteOffset);
+        }
+    }
+
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap,const std::string& bufferName)
+    {
+        if(currentBackend == AvailableBackends::Vulkan)
+        {
+            VulkanContext::CreateDescriptorSet(name, layoutName, binding,frameOverlap,bufferName);
         }
     }
 
@@ -94,11 +102,11 @@ namespace Renderer
     }
 
 
-    void RemoveAllocatedBuffer(AllocatedBuffer& allocatedBuffer)
+    void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap)
     {
         if(currentBackend == AvailableBackends::Vulkan)
         {
-            VulkanContext::RemoveAllocatedBuffer(allocatedBuffer);
+            VulkanContext::RemoveAllocatedBuffer(bufferName, frameOverlap);
         }
     }
 

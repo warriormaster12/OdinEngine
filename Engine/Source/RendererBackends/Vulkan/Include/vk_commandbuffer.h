@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "vk_types.h"
+#include "vk_utils.h"
 #include "function_queuer.h"
 #include <iostream>
 #include <memory>
@@ -18,6 +19,7 @@ struct FrameData {
 	VkCommandBuffer mainCommandBuffer;
 
     std::unordered_map<std::string, VkDescriptorSet> descriptorSets;
+    std::unordered_map<std::string, AllocatedBuffer> allocatedBuffer;
 };
 struct UploadContext {
 	VkFence uploadFence;
@@ -36,13 +38,14 @@ public:
     static void BeginCommands(std::function<void()> recreateSwapchain);
     static void EndCommands(std::function<void()> recreateSwapchain);
 
-    inline static FrameData frames[FRAME_OVERLAP];
     static FrameData& GetCurrentFrame() { return frames[frameNumber % FRAME_OVERLAP]; }
+    static FrameData& GetFrames(const int& index) {return frames[index];}
 
     static uint32_t& GetImageIndex(){return imageIndex;}
     static VkCommandBuffer& GetCommandBuffer() {return cmd;}
     
 private:
+    inline static FrameData frames[FRAME_OVERLAP];
     inline static UploadContext uploadContext;
     inline static VkCommandBuffer cmd;
     inline static uint32_t imageIndex;

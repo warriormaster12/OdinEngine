@@ -11,6 +11,26 @@ struct CreateBufferInfo {
     VmaMemoryUsage memoryUsage;
 };
 
+struct DescripotrSetLayoutBindingInfo
+{
+    VkDescriptorType descriptorType;
+    VkShaderStageFlags shaderStageFlags;
+    uint32_t binding;
+    uint32_t descriptorCount;
+};
+
+struct DescriptorSetLayoutInfo
+{
+    VkDescriptorSetLayout layout;
+    std::vector<VkDescriptorSetLayoutBinding> bindings;
+};
+
+struct DescriptorSetInfo
+{
+    VkDescriptorSet descriptorSet;
+    AllocatedBuffer allocatedBuffer;
+};
+
 void CreateBuffer(const VmaAllocator& allocator, AllocatedBuffer* outBuffer, CreateBufferInfo info);
 
 template<typename T>
@@ -38,11 +58,11 @@ void UploadSingleData(const VmaAllocation& allocation, const T& data, size_t byt
     UploadArrayData(VkDeviceManager::GetAllocator(), allocation, &data, 1, byteOffset);
 }
 
-static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inputBuffer, const size_t& dataSize, const VkBufferUsageFlags& bufferUsage,const size_t& dataOffset = 0)
+static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inputBuffer, const size_t& dataSize,const size_t& dataOffset = 0)
 {
     CreateBufferInfo info;
     info.allocSize = dataSize;
-    info.bufferUsage = bufferUsage;
+    info.bufferUsage = inputBuffer.bufferUsage;
     info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     CreateBuffer(VkDeviceManager::GetAllocator(), &inputBuffer, info);
 
