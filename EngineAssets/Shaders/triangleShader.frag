@@ -1,5 +1,9 @@
 #version 450
 
+#extension GL_GOOGLE_include_directive : enable
+
+#include "test.glsl"
+
 layout (location = 0) in vec3 inColor;
 layout (location = 1) in vec2 inUv;
 layout (location = 0) out vec4 outFragColor;
@@ -17,6 +21,6 @@ void main()
     vec4 emission = texture(textureMaps[1], inUv);
     emission *= vec4(1.0, 0.7333, 0.0, 1.0);
     //return color
-    vec4 color = albedo + emission;
+    vec4 color = outputColor(albedo + emission);
 	outFragColor = vec4(color.rgb,1.0);   
 }

@@ -66,9 +66,9 @@ void Core::CoreInit()
     descriptionInfo.depthTesting = true;
     descriptionInfo.depthCompareType = VK_COMPARE_OP_LESS_OR_EQUAL;
     
-    Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
+    Renderer::CreateShader({"EngineAssets/Shaders/triangleShader.frag", "EngineAssets/Shaders/triangleShader.vert"}, "triangle shader", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
 
-    Renderer::CreateShader({".Shaders/triangleShader.frag", ".Shaders/triangleShader.vert"}, "triangle shader2", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
+    Renderer::CreateShader({"EngineAssets/Shaders/triangleShader.frag", "EngineAssets/Shaders/triangleShader.vert"}, "triangle shader2", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
     Renderer::CreateSampler("default sampler", FILTER_NEAREST);
     albedo.CreateTexture("EngineAssets/Textures/ExplosionBarrel Diffuse.png");
     emission.CreateTexture("EngineAssets/Textures/ExplosionBarrel Emission.png");
