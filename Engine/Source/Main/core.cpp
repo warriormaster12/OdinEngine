@@ -74,6 +74,7 @@ void Core::CoreInit()
     emission.CreateTexture("EngineAssets/Textures/ExplosionBarrel Emission.png");
 
     Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(TriangleData));
+    Renderer::CreateShaderUniformBuffer("material buffer2", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(TriangleData));
     Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
     const int MAX_OBJECTS = 10000;
     Renderer::CreateShaderUniformBuffer("mesh buffer", true, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPUObjectData) * MAX_OBJECTS);
@@ -82,7 +83,7 @@ void Core::CoreInit()
     Renderer::WriteShaderImage("triangle color", "triangle color layout", 1, "default sampler", {albedo.imageView, emission.imageView});
     albedo2.CreateTexture("EngineAssets/Textures/viking_room.png");
     emission2.CreateTexture("");
-    Renderer::WriteShaderUniform("triangle color2", "triangle color layout",0,false,"material buffer");
+    Renderer::WriteShaderUniform("triangle color2", "triangle color layout",0,false,"material buffer2");
     Renderer::WriteShaderImage("triangle color2", "triangle color layout", 1, "default sampler", {albedo2.imageView, emission2.imageView});
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,true,"camera buffer");
     Renderer::WriteShaderUniform("object data", "triangle object layout",0,true,"mesh buffer");
@@ -145,6 +146,7 @@ void Core::CoreUpdate()
             std::vector<TriangleData> triangleDataArray = {triangleData};
             
             Renderer::UploadUniformDataToShader("material buffer",triangleDataArray, false);
+            Renderer::UploadUniformDataToShader("material buffer2",triangleDataArray, false);
             
             Renderer::BindShader("triangle shader");
             
@@ -173,11 +175,13 @@ void Core::CoreCleanup()
             emission.DestroyTexture();
             albedo2.DestroyTexture();
             emission2.DestroyTexture();
-            Renderer::RemoveAllocatedBuffer("mesh buffer", true);
-            Renderer::RemoveAllocatedBuffer("material buffer", false);
-            Renderer::RemoveAllocatedBuffer("camera buffer", true);
             mesh.DestroyMesh();
             mesh2.DestroyMesh();
+            Renderer::RemoveAllocatedBuffer("mesh buffer", true);
+            Renderer::RemoveAllocatedBuffer("material buffer", false);
+            Renderer::RemoveAllocatedBuffer("material buffer2", false);
+            Renderer::RemoveAllocatedBuffer("camera buffer", true);
+            
         });
         Renderer::CleanUpRenderer(&additionalDeletion);
 		windowHandler.DestroyWindow();
