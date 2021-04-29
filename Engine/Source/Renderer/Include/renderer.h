@@ -119,11 +119,19 @@ namespace Renderer
     //template functions 
 
     template<typename T>
-    void UploadUniformDataToShader(const std::string& bufferName, const std::vector<T>& data, const bool& frameOverlap)
+    void UploadSingleUniformDataToShader(const std::string& bufferName, const T& data, const bool& frameOverlap)
     {
         if(GetActiveAPI() == AvailableBackends::Vulkan)
         {
-            VulkanContext::UploadBufferData(bufferName, data,frameOverlap);
+            VulkanContext::UploadSingleBufferData(bufferName, data,frameOverlap);
+        }
+    }
+    template<typename T>
+    void UploadVectorUniformDataToShader(const std::string& bufferName, const std::vector<T>& data, const bool& frameOverlap)
+    {
+        if(GetActiveAPI() == AvailableBackends::Vulkan)
+        {
+            VulkanContext::UploadVectorBufferData(bufferName, data,frameOverlap);
         }
     }
 };

@@ -138,15 +138,14 @@ void Core::CoreUpdate()
             {
                 objectData[i].modelMatrix = glm::rotate(glm::mat4(1.0f), timer * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             }
-            Renderer::UploadUniformDataToShader("mesh buffer",objectData, true);
+            Renderer::UploadVectorUniformDataToShader("mesh buffer",objectData, true);
 
            
             triangleData.color = glm::vec4(1.0f);
             
-            std::vector<TriangleData> triangleDataArray = {triangleData};
             
-            Renderer::UploadUniformDataToShader("material buffer",triangleDataArray, false);
-            Renderer::UploadUniformDataToShader("material buffer2",triangleDataArray, false);
+            Renderer::UploadSingleUniformDataToShader("material buffer",triangleData, false);
+            Renderer::UploadSingleUniformDataToShader("material buffer2",triangleData, false);
             
             Renderer::BindShader("triangle shader");
             

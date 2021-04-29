@@ -7,6 +7,7 @@
 #include <memory>
 #include <unordered_map>
 
+
 #include "vk_pipelinebuilder.h"
 #include "vk_types.h"
 #include "vk_utils.h"
@@ -77,30 +78,31 @@ public:
 
     // template functions 
     template<typename T>
-    static void UploadBufferData(const std::string& bufferName, const std::vector<T>& data,const bool& frameOverlap)
+    static void UploadSingleBufferData(const std::string& bufferName, const T& data,const bool& frameOverlap)
     {
         if(frameOverlap)
         {
-            if(data.size() > 1)
-            {
-                UploadVectorData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data);
-            }
-            else
-            {
-                UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data[0]);
-            }
+            UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data);
         }
         else
         {
-            if(data.size() > 1)
-            {
-                UploadVectorData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data);
-            }
-            else
-            {
-                UploadSingleData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data[0]);
-            }
+            UploadSingleData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data);
         }
+        
+        
+    }
+    template<typename T>
+    static void UploadVectorBufferData(const std::string& bufferName, const std::vector<T>& data,const bool& frameOverlap)
+    {
+        if(frameOverlap)
+        {
+            UploadVectorData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data);
+        }
+        else
+        {
+            UploadVectorData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data);
+        }
+        
         
     }
 private: 
