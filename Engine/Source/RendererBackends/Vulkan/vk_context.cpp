@@ -305,7 +305,7 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
         for(int i = 0; i < FRAME_OVERLAP; i++)
         {
             auto& frame = VkCommandbufferManager::GetFrames(i);
-            auto& buffer =  *FindUnorderdMap(bufferName, frame.allocatedBuffer);
+            auto& buffer = *FindUnorderdMap(bufferName, frame.allocatedBuffer);
             if(binding == 0)
             {
                 descriptorAllocator.Allocate(&frame.descriptorSets[descriptorName] ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);

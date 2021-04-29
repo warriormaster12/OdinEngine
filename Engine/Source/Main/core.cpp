@@ -18,6 +18,8 @@ Mesh mesh2;
 
 Texture albedo;
 Texture emission;
+Texture albedo2;
+Texture emission2;
 Camera camera;
 
 FunctionQueuer additionalDeletion;
@@ -78,6 +80,10 @@ void Core::CoreInit()
 
     Renderer::WriteShaderUniform("triangle color", "triangle color layout",0,false,"material buffer");
     Renderer::WriteShaderImage("triangle color", "triangle color layout", 1, "default sampler", {albedo.imageView, emission.imageView});
+    albedo2.CreateTexture("EngineAssets/Textures/viking_room.png");
+    emission2.CreateTexture("");
+    Renderer::WriteShaderUniform("triangle color2", "triangle color layout",0,false,"material buffer");
+    Renderer::WriteShaderImage("triangle color2", "triangle color layout", 1, "default sampler", {albedo2.imageView, emission2.imageView});
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,true,"camera buffer");
     Renderer::WriteShaderUniform("object data", "triangle object layout",0,true,"mesh buffer");
     
@@ -134,21 +140,13 @@ void Core::CoreUpdate()
             Renderer::UploadUniformDataToShader("mesh buffer",objectData, true);
 
            
-	
-            if(windowHandler.GetKInput(GLFW_KEY_G) == GLFW_PRESS)
-            {
-                triangleData.color = glm::vec4(1.0f,0.0f,0.0f, 1.0f);
-                Renderer::BindShader("triangle shader");
-            }
-            else 
-            {
-                triangleData.color = glm::vec4(1.0f,1.0f,0.0f, 1.0f);
-                Renderer::BindShader("triangle shader2");
-            }
+            triangleData.color = glm::vec4(1.0f);
             
             std::vector<TriangleData> triangleDataArray = {triangleData};
+            
             Renderer::UploadUniformDataToShader("material buffer",triangleDataArray, false);
             
+            Renderer::BindShader("triangle shader");
             
             Renderer::BindUniforms("camera data", "triangle shader", 0, true);
             Renderer::BindUniforms("object data", "triangle shader", 1,true);
@@ -157,6 +155,7 @@ void Core::CoreUpdate()
             Renderer::BindIndexBuffer(mesh.indexBuffer);
             Renderer::DrawIndexed(mesh.indices);
 
+            Renderer::BindUniforms("triangle color2", "triangle shader",2,false);
             Renderer::BindVertexBuffer(mesh2.vertexBuffer);
             Renderer::BindIndexBuffer(mesh2.indexBuffer);
             Renderer::DrawIndexed(mesh2.indices);
@@ -172,6 +171,8 @@ void Core::CoreCleanup()
             Renderer::DestroySampler("default sampler");
             albedo.DestroyTexture();
             emission.DestroyTexture();
+            albedo2.DestroyTexture();
+            emission2.DestroyTexture();
             Renderer::RemoveAllocatedBuffer("mesh buffer", true);
             Renderer::RemoveAllocatedBuffer("material buffer", false);
             Renderer::RemoveAllocatedBuffer("camera buffer", true);
