@@ -48,22 +48,22 @@ void Camera::ProcessInputEvent()
 		{
 			bSprint = false;
 		}
-			if(windowHandler.mouseMoved == true)
-			{
-				pitch += windowHandler.yoffset * 0.003f;
-				yaw += windowHandler.xoffset * 0.003f;
+		if(windowHandler.mouseMoved == true)
+		{
+			pitch += windowHandler.yoffset * 0.003f;
+			yaw += windowHandler.xoffset * 0.003f;
 
-				// 1.56 radians is about equal to 89.x degrees
-				if(pitch > 1.56f)
-				{
-					pitch = 1.56f;
-				}
-				if(pitch < -1.56f)
-				{
-					pitch = -1.56f;
-				}
-				windowHandler.mouseMoved = false;
+			// 1.56 radians is about equal to 89.x degrees
+			if(pitch > 1.56f)
+			{
+				pitch = 1.56f;
 			}
+			if(pitch < -1.56f)
+			{
+				pitch = -1.56f;
+			}
+			windowHandler.mouseMoved = false;
+		}
 	}
 	if(windowHandler.GetMInput(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
@@ -99,7 +99,10 @@ void Camera::UpdateCamera(float deltaTime)
 
 	velocity *= 10 * deltaTime;
 
-	position += velocity;
+	if(possessCamera)
+	{
+		position += velocity;
+	}
 
     GPUCameraData camData{};
 	camData.viewMatrix = GetViewMatrix();

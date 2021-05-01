@@ -1,7 +1,7 @@
 #pragma once 
 
-#include "vk_context.h"
 #include "function_queuer.h"
+#include "vk_context.h"
 
 #include <array>
 #include <vector>
@@ -61,17 +61,68 @@ typedef enum ImageFilter {
     FILTER_CUBIC_IMG = 1000015000,
     FILTER_MAX_ENUM = 0x7FFFFFFF
 } ImageFilter;
-enum  class ColorFormat
+typedef enum SamplerAddressMode {
+    SAMPLER_ADDRESS_MODE_REPEAT = 0,
+    SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT = 1,
+    SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE = 2,
+    SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER = 3,
+    SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE = 4,
+    SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE_KHR = SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE,
+    SAMPLER_ADDRESS_MODE_MAX_ENUM = 0x7FFFFFFF
+} SamplerAddressMode;
+typedef enum ColorFormat
 {
-    SRGB32 = VK_FORMAT_R32G32B32_SFLOAT,
-    SRG32 = VK_FORMAT_R32G32_SFLOAT
-};
-#define SRGB32 (VkFormat)ColorFormat::SRGB32
-#define SRG32 (VkFormat)ColorFormat::SRG32
+    SRGB32 = 106,
+    SRG32 = 103
+}ColorFormat;
+typedef enum CompareOp {
+    COMPARE_OP_NEVER = 0,
+    COMPARE_OP_LESS = 1,
+    COMPARE_OP_EQUAL = 2,
+    COMPARE_OP_LESS_OR_EQUAL = 3,
+    COMPARE_OP_GREATER = 4,
+    COMPARE_OP_NOT_EQUAL = 5,
+    COMPARE_OP_GREATER_OR_EQUAL = 6,
+    COMPARE_OP_ALWAYS = 7
+} CompareOp;
+typedef enum CullModeFlagBits {
+    CULL_MODE_NONE = 0,
+    CULL_MODE_FRONT_BIT = 1,
+    CULL_MODE_BACK_BIT = 2,
+    CULL_MODE_FRONT_AND_BACK = 0x00000003
+} CullModeFlagBits;
+
+typedef enum PolygonMode {
+    POLYGON_MODE_FILL = 0,
+    POLYGON_MODE_LINE = 1,
+    POLYGON_MODE_POINT = 2,
+    POLYGON_MODE_FILL_RECTANGLE_NV = 1000153000,
+    POLYGON_MODE_MAX_ENUM = 0x7FFFFFFF
+} PolygonMode;
 
 typedef uint32_t Flags;
+typedef Flags CullModeFlags;
 typedef Flags ShaderStageFlags;
 typedef Flags BufferCreateFlags;
+
+
+struct VertexLocationInfo
+{
+	ColorFormat format;
+	uint32_t offset;
+};
+
+struct ShaderDescriptions
+{
+    std::vector <VertexLocationInfo> vertexLocations;
+
+    bool colorBlending = true;
+    PolygonMode polygonMode = POLYGON_MODE_FILL;
+    CullModeFlags cullMode = CULL_MODE_NONE;
+
+    bool depthTesting = false;
+    CompareOp depthCompareType = COMPARE_OP_EQUAL;
+};
 
 namespace Renderer
 {
@@ -87,7 +138,7 @@ namespace Renderer
     void CreateShaderUniformLayout(const std::string& layoutName);
     void RemoveShaderUniformLayout(const std::string& layoutName);
 
-    void CreateSampler(const std::string& samplerName, const ImageFilter& filter);
+    void CreateSampler(const std::string& samplerName, const ImageFilter& filter, const SamplerAddressMode& samplerAddressMode);
     
     void DestroySampler(const std::string& samplerName);
 

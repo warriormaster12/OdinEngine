@@ -19,7 +19,7 @@ struct VertexInputDescription {
 	VkPipelineVertexInputStateCreateFlags flags = 0;
 };
 
-struct LocationInfo
+struct VkLocationInfo
 {
 	VkFormat format;
 	uint32_t offset;
@@ -27,7 +27,7 @@ struct LocationInfo
 
 struct VkVertex
 {
-	static VertexInputDescription GetVertexDescription(const std::vector<LocationInfo>& locations);
+	static VertexInputDescription GetVertexDescription(const std::vector<VkLocationInfo>& locations);
 };
 
 struct VkMesh

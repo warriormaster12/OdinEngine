@@ -235,9 +235,9 @@ void VulkanContext::RemoveDescriptorSetLayout(const std::string& layoutName)
     vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
 }
 
-void VulkanContext::CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter)
+void VulkanContext::CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter, const VkSamplerAddressMode& samplerAddressMode)
 {
-    VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(samplerFilter);
+    VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(samplerFilter, samplerAddressMode);
 
     vkCreateSampler(VkDeviceManager::GetDevice(), &samplerInfo, nullptr, &samplers[samplerName]);
 }
@@ -366,7 +366,7 @@ void VulkanContext::RemoveAllocatedBuffer(const std::string& bufferName, const b
 }
 
 
-void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/, const ShaderDescriptions* descriptions /*= nullptr*/)
+void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkShaderDescriptions& descriptions,const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)
 {
     vkcomponent::PipelineBuilder pipelineBuilder;
 
@@ -391,19 +391,19 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
     shaderEffect.FlushLayout();
 
     //configure the rasterizer to draw filled triangles
-    pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(descriptions->polygonMode, descriptions->cullMode);
+    pipelineBuilder.rasterizer = vkinit::RasterizationStateCreateInfo(descriptions.polygonMode, descriptions.cullMode);
 
     //we dont use multisampling, so just run the default one
     pipelineBuilder.multisampling = vkinit::MultisamplingStateCreateInfo();
 
     //a single blend attachment with no blending and writing to RGBA
-    if(descriptions->colorBlending)
+    if(descriptions.colorBlending)
     {
         pipelineBuilder.colorBlendAttachment = vkinit::ColorBlendAttachmentState();
     }
 
     //default depthtesting
-    pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(descriptions->depthTesting, descriptions->depthTesting, descriptions->depthCompareType);
+    pipelineBuilder.depthStencil = vkinit::DepthStencilCreateInfo(descriptions.depthTesting, descriptions.depthTesting, descriptions.depthCompareType);
 
     //vertex input controls how to read vertices from vertex buffers. We arent using it yet
     pipelineBuilder.vertexInputInfo = vkinit::VertexInputStateCreateInfo();
@@ -412,7 +412,7 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
     //we are just going to draw triangle list
     pipelineBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
-    VertexInputDescription vertexDescription = VkVertex::GetVertexDescription(descriptions->vertexLocations);
+    VertexInputDescription vertexDescription = VkVertex::GetVertexDescription(descriptions.vertexLocations);
 
     //connect the pipeline builder vertex input info to the one we get from Vertex
     pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();

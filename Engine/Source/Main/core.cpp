@@ -4,7 +4,6 @@
 #include "logger.h"
 
 //Temporary
-#include "vk_utils.h"
 #include "mesh.h"
 #include "texture.h"
 #include "camera.h"
@@ -56,20 +55,20 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 1, 2);
     Renderer::CreateShaderUniformLayout("triangle color layout");
     
-    ShaderDescriptions descriptionInfo = {};
+    ShaderDescriptions descriptionInfo;
     descriptionInfo.vertexLocations = {
         {SRGB32,offsetof(Vertex, position)},
         {SRGB32,offsetof(Vertex, color)},
         {SRG32, offsetof(Vertex, uv)}
     };
-    descriptionInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+    descriptionInfo.cullMode = CULL_MODE_BACK_BIT;
     descriptionInfo.depthTesting = true;
-    descriptionInfo.depthCompareType = VK_COMPARE_OP_LESS_OR_EQUAL;
+    descriptionInfo.depthCompareType = COMPARE_OP_LESS_OR_EQUAL;
     
     Renderer::CreateShader({"EngineAssets/Shaders/triangleShader.frag", "EngineAssets/Shaders/triangleShader.vert"}, "triangle shader", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
 
     Renderer::CreateShader({"EngineAssets/Shaders/triangleShader.frag", "EngineAssets/Shaders/triangleShader.vert"}, "triangle shader2", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
-    Renderer::CreateSampler("default sampler", FILTER_NEAREST);
+    Renderer::CreateSampler("default sampler", FILTER_NEAREST, SAMPLER_ADDRESS_MODE_REPEAT);
     albedo.CreateTexture("EngineAssets/Textures/ExplosionBarrel Diffuse.png");
     emission.CreateTexture("EngineAssets/Textures/ExplosionBarrel Emission.png");
 

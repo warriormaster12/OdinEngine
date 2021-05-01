@@ -189,7 +189,7 @@ void vkcomponent::LoadEmpty(AllocatedImage& outImage, VkFormat imageFormat /*= V
 	const uint64_t texWidth = 1;
 	const uint64_t texHeight = 1;
 
-    char pixelData[] = {0,0,0,0};
+    float pixelData[] = {0,0,0,0};
 	VkDeviceSize imageSize = texWidth * texHeight * 4 * sizeof(char);
 	
 

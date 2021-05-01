@@ -20,9 +20,9 @@ struct ShaderProgram
     vkcomponent::ShaderPass pass;
 };
 
-struct ShaderDescriptions
+struct VkShaderDescriptions
 {
-    std::vector <LocationInfo> vertexLocations;
+    std::vector <VkLocationInfo> vertexLocations;
 
     bool colorBlending = true;
     VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL;
@@ -53,13 +53,13 @@ public:
     static void CreateDescriptorSetLayout(const std::string& layoutName);
     static void RemoveDescriptorSetLayout(const std::string& layoutName);
 
-    static void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkRenderPass& renderPass = VK_NULL_HANDLE, const ShaderDescriptions* descriptions = nullptr);
+    static void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkShaderDescriptions& descriptions, const VkRenderPass& renderPass = VK_NULL_HANDLE);
     
     static void CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& byteOffset);
 
     static void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const bool& frameOverlap ,const std::string& bufferName);
     
-    static void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter);
+    static void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter, const VkSamplerAddressMode& samplerAddressMode);
     
     static void DestroySampler(const std::string& samplerName);
 

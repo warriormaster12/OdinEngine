@@ -1,16 +1,18 @@
 #pragma once 
 
-#include "vk_meshhandler.h"
+#include <vector>
+#include <unordered_map>
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 #include <glm/gtx/hash.hpp>
+
+#include "vk_types.h"
 
 
 struct GPUObjectData
 {
     glm::mat4 modelMatrix;
 };
-
 
 struct Vertex {
 	glm::vec3 position;
@@ -21,6 +23,7 @@ struct Vertex {
 		return position == other.position && color == other.color && uv == other.uv;
 	}
 };
+
 
 
 namespace std {

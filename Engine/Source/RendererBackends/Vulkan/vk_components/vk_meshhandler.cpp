@@ -4,7 +4,7 @@
 
 
 
-VertexInputDescription VkVertex::GetVertexDescription(const std::vector<LocationInfo>& locations)
+VertexInputDescription VkVertex::GetVertexDescription(const std::vector<VkLocationInfo>& locations)
 {
 	VertexInputDescription description;
 	//we will have just 1 vertex buffer binding, with a per-vertex rate
