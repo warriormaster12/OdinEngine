@@ -3,7 +3,7 @@
 
 ### Install the project and its dependencies
 ```
-$ git clone https://github.com/warriormaster12/VulkanEngine
+$ git clone https://github.com/warriormaster12/OdinEngine
 $ cd OdinEngine
 $ git submodule init
 $ git submodule update
