@@ -31,6 +31,8 @@ std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
 
 std::unordered_map<std::string, VkSampler> samplers;
 
+std::string currentlyBoundShader;
+
 
 
 
@@ -291,6 +293,8 @@ void VulkanContext::CreateUniformBufferInfo(const std::string& bufferName, const
         allocatedBuffer.dataSize = dataSize;
         allocatedBuffer.byteOffset = byteOffset;
     }
+
+    ENGINE_CORE_INFO("buffer: {0} created", bufferName);
     
 }
 
@@ -443,33 +447,33 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
 
 void VulkanContext::BindGraphicsPipeline(const std::string& shaderName)
 {
-    vkCmdBindPipeline(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.pipeline);
-    
+    currentlyBoundShader = shaderName;
+    vkCmdBindPipeline(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.pipeline);
 }
-void VulkanContext::BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize)
+void VulkanContext::BindDescriptorSet(const std::string& descriptorName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize)
 {
     if(frameOverlap == false && isDynamic == false)
     {
-        vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
+        vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 0, 0);
     }
     else if(frameOverlap == true && isDynamic == false)
     {
         auto& currentFrame = VkCommandbufferManager::GetCurrentFrame();
-        vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 0, 0); 
+        vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 0, 0); 
     }
     else if(frameOverlap == false && isDynamic == true)
     {
         size_t frameIndex = frameNumber % FRAME_OVERLAP;
         uint32_t descriptorOffset = PadUniformBufferSize(dataSize) * frameIndex;
         auto& currentFrame = VkCommandbufferManager::GetCurrentFrame();
-        vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 1, &descriptorOffset);
+        vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, descriptorSets), 1, &descriptorOffset);
     }
     else
     {
         size_t frameIndex = frameNumber % FRAME_OVERLAP;
         uint32_t descriptorOffset = PadUniformBufferSize(dataSize) * frameIndex;
         auto& currentFrame = VkCommandbufferManager::GetCurrentFrame();
-        vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(shaderName, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 1, &descriptorOffset);
+        vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, FindUnorderdMap(descriptorName, currentFrame.descriptorSets), 1, &descriptorOffset);
     }
 }
 

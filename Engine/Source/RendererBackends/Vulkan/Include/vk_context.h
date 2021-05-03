@@ -68,7 +68,7 @@ public:
     static void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap);
 
     static void BindGraphicsPipeline(const std::string& shaderName);
-    static void BindDescriptorSet(const std::string& descriptorName, const std::string& shaderName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize);
+    static void BindDescriptorSet(const std::string& descriptorName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize);
     static void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     static void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     static void DrawIndexed(std::vector<std::uint32_t>& indices);

@@ -7,6 +7,7 @@
 #include "mesh.h"
 #include "texture.h"
 #include "camera.h"
+#include "materialManager.h"
 
 #include "function_queuer.h"
 
@@ -15,10 +16,6 @@ bool isInitialized{ false };
 Mesh mesh;
 Mesh mesh2;
 
-Texture albedo;
-Texture emission;
-Texture albedo2;
-Texture emission2;
 Camera camera;
 
 FunctionQueuer additionalDeletion;
@@ -69,21 +66,18 @@ void Core::CoreInit()
 
     Renderer::CreateShader({"EngineAssets/Shaders/triangleShader.frag", "EngineAssets/Shaders/triangleShader.vert"}, "triangle shader2", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
     Renderer::CreateSampler("default sampler", FILTER_NEAREST, SAMPLER_ADDRESS_MODE_REPEAT);
-    albedo.CreateTexture("EngineAssets/Textures/ExplosionBarrel Diffuse.png");
-    emission.CreateTexture("EngineAssets/Textures/ExplosionBarrel Emission.png");
 
-    Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(TriangleData));
-    Renderer::CreateShaderUniformBuffer("material buffer2", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(TriangleData));
+    MaterialManager::CreateMaterial("main mat");
+    MaterialManager::CreateMaterial("floor");
+    MaterialManager::GetMaterial("main mat").textures = {"EngineAssets/Textures/ExplosionBarrel Diffuse.png", "EngineAssets/Textures/ExplosionBarrel Emission.png"};
+    MaterialManager::GetMaterial("floor").textures[0] = "EngineAssets/Textures/viking_room.png";
+    MaterialManager::UpdateTextures("main mat");
+    MaterialManager::UpdateTextures("floor");
+
     Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
     const int MAX_OBJECTS = 10000;
     Renderer::CreateShaderUniformBuffer("mesh buffer", true, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPUObjectData) * MAX_OBJECTS);
 
-    Renderer::WriteShaderUniform("triangle color", "triangle color layout",0,false,"material buffer");
-    Renderer::WriteShaderImage("triangle color", "triangle color layout", 1, "default sampler", {albedo.imageView, emission.imageView});
-    albedo2.CreateTexture("EngineAssets/Textures/viking_room.png");
-    emission2.CreateTexture("");
-    Renderer::WriteShaderUniform("triangle color2", "triangle color layout",0,false,"material buffer2");
-    Renderer::WriteShaderImage("triangle color2", "triangle color layout", 1, "default sampler", {albedo2.imageView, emission2.imageView});
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,true,"camera buffer");
     Renderer::WriteShaderUniform("object data", "triangle object layout",0,true,"mesh buffer");
     
@@ -143,19 +137,18 @@ void Core::CoreUpdate()
             triangleData.color = glm::vec4(1.0f);
             
             
-            Renderer::UploadSingleUniformDataToShader("material buffer",triangleData, false);
-            Renderer::UploadSingleUniformDataToShader("material buffer2",triangleData, false);
+            
             
             Renderer::BindShader("triangle shader");
             
-            Renderer::BindUniforms("camera data", "triangle shader", 0, true);
-            Renderer::BindUniforms("object data", "triangle shader", 1,true);
-            Renderer::BindUniforms("triangle color", "triangle shader",2,false);
+            Renderer::BindUniforms("camera data", 0, true);
+            Renderer::BindUniforms("object data", 1,true);
+            MaterialManager::BindMaterial("main mat");
             Renderer::BindVertexBuffer(mesh.vertexBuffer);
             Renderer::BindIndexBuffer(mesh.indexBuffer);
             Renderer::DrawIndexed(mesh.indices);
 
-            Renderer::BindUniforms("triangle color2", "triangle shader",2,false);
+            MaterialManager::BindMaterial("floor");
             Renderer::BindVertexBuffer(mesh2.vertexBuffer);
             Renderer::BindIndexBuffer(mesh2.indexBuffer);
             Renderer::DrawIndexed(mesh2.indices);
@@ -168,16 +161,12 @@ void Core::CoreCleanup()
     if (isInitialized)
     {
         additionalDeletion.PushFunction([=](){
+            MaterialManager::DeleteMaterial("main mat");
+            MaterialManager::DeleteMaterial("floor");
             Renderer::DestroySampler("default sampler");
-            albedo.DestroyTexture();
-            emission.DestroyTexture();
-            albedo2.DestroyTexture();
-            emission2.DestroyTexture();
             mesh.DestroyMesh();
             mesh2.DestroyMesh();
             Renderer::RemoveAllocatedBuffer("mesh buffer", true);
-            Renderer::RemoveAllocatedBuffer("material buffer", false);
-            Renderer::RemoveAllocatedBuffer("material buffer2", false);
             Renderer::RemoveAllocatedBuffer("camera buffer", true);
             
         });
