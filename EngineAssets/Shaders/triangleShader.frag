@@ -17,7 +17,7 @@ layout(set = 2, binding = 1) uniform sampler2D textureMaps[2];
 void main()
 {
     
-    vec4 albedo = texture(textureMaps[0], inUv);
+    vec4 albedo = texture(textureMaps[0], inUv) * triangleData.color;
     vec4 emission = texture(textureMaps[1], inUv);
     emission *= vec4(1.0, 0.7333, 0.0, 1.0);
     //return color

@@ -4,10 +4,9 @@
 #include "logger.h"
 
 //Temporary
-#include "mesh.h"
-#include "texture.h"
-#include "camera.h"
+#include "renderobject.h"
 #include "materialManager.h"
+#include "camera.h"
 
 #include "function_queuer.h"
 
@@ -15,6 +14,9 @@ bool isInitialized{ false };
 
 Mesh mesh;
 Mesh mesh2;
+
+RenderObject barrelObj;
+RenderObject floorObj;
 
 Camera camera;
 
@@ -94,6 +96,15 @@ void Core::CoreInit()
     mesh.CreateMesh();
     mesh2.CreateMesh();
 
+    barrelObj.mesh = &mesh;
+    barrelObj.material = "main mat";
+
+    floorObj.mesh = &mesh2;
+    floorObj.material = "floor";
+
+    ObjectManager::PushObjectToQueue(barrelObj);
+    ObjectManager::PushObjectToQueue(floorObj);
+
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
 
     //everything went fine
@@ -143,15 +154,8 @@ void Core::CoreUpdate()
             
             Renderer::BindUniforms("camera data", 0, true);
             Renderer::BindUniforms("object data", 1,true);
-            MaterialManager::BindMaterial("main mat");
-            Renderer::BindVertexBuffer(mesh.vertexBuffer);
-            Renderer::BindIndexBuffer(mesh.indexBuffer);
-            Renderer::DrawIndexed(mesh.indices);
 
-            MaterialManager::BindMaterial("floor");
-            Renderer::BindVertexBuffer(mesh2.vertexBuffer);
-            Renderer::BindIndexBuffer(mesh2.indexBuffer);
-            Renderer::DrawIndexed(mesh2.indices);
+            ObjectManager::RenderObjects();
         });
     }
 }
