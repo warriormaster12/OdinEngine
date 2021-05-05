@@ -16,16 +16,13 @@ Mesh mesh;
 Mesh mesh2;
 
 RenderObject barrelObj;
+RenderObject barrelObj2;
 RenderObject floorObj;
 
 Camera camera;
 
 FunctionQueuer additionalDeletion;
 
-struct TriangleData
-{
-    glm::vec4 color;
-}triangleData;
 
 
 
@@ -71,24 +68,24 @@ void Core::CoreInit()
 
     MaterialManager::CreateMaterial("main mat");
     MaterialManager::CreateMaterial("floor");
+    MaterialManager::GetMaterial("floor").repeateCount = 2;
     MaterialManager::GetMaterial("main mat").textures = {"EngineAssets/Textures/ExplosionBarrel Diffuse.png", "EngineAssets/Textures/ExplosionBarrel Emission.png"};
-    MaterialManager::GetMaterial("floor").textures[0] = "EngineAssets/Textures/viking_room.png";
+    MaterialManager::GetMaterial("floor").textures[0] = "EngineAssets/Textures/wall.jpg";
     MaterialManager::UpdateTextures("main mat");
     MaterialManager::UpdateTextures("floor");
 
     Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
-    const int MAX_OBJECTS = 10000;
-    Renderer::CreateShaderUniformBuffer("mesh buffer", true, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPUObjectData) * MAX_OBJECTS);
+    
 
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,true,"camera buffer");
-    Renderer::WriteShaderUniform("object data", "triangle object layout",0,true,"mesh buffer");
+    
     
     
 
-    Renderer::RemoveShaderUniformLayout("triangle color layout");
-    Renderer::RemoveShaderUniformLayout("triangle camera layout");
-    Renderer::RemoveShaderUniformLayout("triangle object layout");
+    
 
+
+    ObjectManager::Init();
 
     mesh.LoadFromObj("EngineAssets/Meshes/Barrel.obj");
     mesh2.LoadFromObj("EngineAssets/Meshes/Floor.obj");
@@ -96,13 +93,21 @@ void Core::CoreInit()
     mesh.CreateMesh();
     mesh2.CreateMesh();
 
-    barrelObj.mesh = &mesh;
+    barrelObj.p_mesh = &mesh;
     barrelObj.material = "main mat";
+    barrelObj.transformMatrix = glm::translate(glm::vec3( 0,5,0 ));
 
-    floorObj.mesh = &mesh2;
+    barrelObj2.p_mesh = &mesh;
+    barrelObj2.material = "main mat";
+    barrelObj2.transformMatrix = glm::translate(glm::vec3( 1,5,3 ));
+
+
+    floorObj.p_mesh = &mesh2;
     floorObj.material = "floor";
+    floorObj.transformMatrix = glm::translate(glm::vec3( 6,-5,2 ));
 
     ObjectManager::PushObjectToQueue(barrelObj);
+    ObjectManager::PushObjectToQueue(barrelObj2);
     ObjectManager::PushObjectToQueue(floorObj);
 
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
@@ -135,25 +140,13 @@ void Core::CoreUpdate()
             
             camera.UpdateCamera(deltaTime);
 
-            
-            std::vector<GPUObjectData> objectData;
-            objectData.resize(2);
-            for(int i = 0; i < objectData.size(); i++)
-            {
-                objectData[i].modelMatrix = glm::rotate(glm::mat4(1.0f), timer * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            }
-            Renderer::UploadVectorUniformDataToShader("mesh buffer",objectData, true);
-
-           
-            triangleData.color = glm::vec4(1.0f);
-            
-            
+          
             
             
             Renderer::BindShader("triangle shader");
             
             Renderer::BindUniforms("camera data", 0, true);
-            Renderer::BindUniforms("object data", 1,true);
+            
 
             ObjectManager::RenderObjects();
         });
@@ -165,6 +158,10 @@ void Core::CoreCleanup()
     if (isInitialized)
     {
         additionalDeletion.PushFunction([=](){
+            Renderer::RemoveShaderUniformLayout("triangle color layout");
+            Renderer::RemoveShaderUniformLayout("triangle camera layout");
+            Renderer::RemoveShaderUniformLayout("triangle object layout");
+
             MaterialManager::DeleteMaterial("main mat");
             MaterialManager::DeleteMaterial("floor");
             Renderer::DestroySampler("default sampler");

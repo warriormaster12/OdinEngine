@@ -194,12 +194,36 @@ void Renderer::BindIndexBuffer(AllocatedBuffer& indexBuffer)
 }
 
 
-void Renderer::DrawIndexed(std::vector<std::uint32_t>& indices)
+void Renderer::DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance)
 {
     if(currentBackend == AvailableBackends::Vulkan)
     {
-        VulkanContext::DrawIndexed(indices);
+        VulkanContext::DrawIndexed(indices, currentInstance);
     } 
+}
+
+void Renderer::PrepareIndirectDraw(const uint32_t& MAX_COMMANDS)
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        VulkanContext::PrepareIndirectDraw(MAX_COMMANDS);
+    }
+}
+
+void Renderer::UploadIndirectDraw(const uint32_t& objectCount, const std::vector<uint32_t>& indexSize, const uint32_t& currentInstance)
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        VulkanContext::UploadIndirectDraw(objectCount, indexSize, currentInstance);
+    }
+}
+
+void Renderer::DrawIndexedIndirect(const uint32_t& drawCount, const uint32_t& drawIndex)
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        VulkanContext::DrawIndexedIndirect(drawCount, drawIndex);
+    }
 }
 
 void Renderer::CleanUpRenderer(FunctionQueuer* p_additionalDeletion /*= nullptr*/)

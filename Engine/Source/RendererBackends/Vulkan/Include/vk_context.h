@@ -71,7 +71,11 @@ public:
     static void BindDescriptorSet(const std::string& descriptorName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize);
     static void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     static void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
-    static void DrawIndexed(std::vector<std::uint32_t>& indices);
+    static void DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance);
+
+    static void PrepareIndirectDraw(const uint32_t& MAX_COMMANDS);
+    static void UploadIndirectDraw(const uint32_t& objectCount, const std::vector<uint32_t>& indexSize, const uint32_t& currentInstance);
+    static void DrawIndexedIndirect(const uint32_t& drawCount, const uint32_t& drawIndex);
 
     static void BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass = VK_NULL_HANDLE);
     static void EndRenderpass();

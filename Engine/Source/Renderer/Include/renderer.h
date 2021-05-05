@@ -164,7 +164,13 @@ namespace Renderer
     
     void BindIndexBuffer(AllocatedBuffer& indexBuffer);
 
-    void DrawIndexed(std::vector<std::uint32_t>& indices);
+    void DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance);
+
+    void PrepareIndirectDraw(const uint32_t& MAX_COMMANDS);
+    
+    void UploadIndirectDraw(const uint32_t& objectCount, const std::vector<uint32_t>& indexSize, const uint32_t& currentInstance);
+    
+    void DrawIndexedIndirect(const uint32_t& drawCount, const uint32_t& drawIndex);
 
     AvailableBackends GetActiveAPI();
 

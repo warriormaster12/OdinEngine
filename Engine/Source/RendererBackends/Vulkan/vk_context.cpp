@@ -488,9 +488,46 @@ void VulkanContext::BindVertexBuffer(AllocatedBuffer& vertexBuffer)
     vkCmdBindVertexBuffers(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &vertexBuffer.buffer, &offset);
 }
 
-void VulkanContext::DrawIndexed(std::vector<std::uint32_t>& indices)
+void VulkanContext::PrepareIndirectDraw(const uint32_t& MAX_COMMANDS)
+{
+    for(int i = 0; i < FRAME_OVERLAP; i++)
+    {
+        CreateBufferInfo info;
+        info.allocSize = MAX_COMMANDS * sizeof(VkDrawIndexedIndirectCommand);
+        info.bufferUsage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+        CreateBuffer(VkDeviceManager::GetAllocator(), &VkCommandbufferManager::GetFrames(i).allocatedBuffer["indirect draw"], info);
+    }
+}
+void VulkanContext::UploadIndirectDraw(const uint32_t& objectCount, const std::vector<uint32_t>& indexSize, const uint32_t& currentInstance)
+{
+    std::vector<VkDrawIndexedIndirectCommand> commands;
+    commands.reserve(objectCount);
+    for(size_t i = 0; i < objectCount; i++)
+    {
+    
+        VkDrawIndexedIndirectCommand cmd;
+        cmd.indexCount = indexSize[i];
+        cmd.instanceCount = 1;
+        cmd.firstIndex = 0;
+        cmd.firstInstance = i;
+        commands.push_back(cmd);
+
+    }
+
+	UploadVectorData(FindUnorderdMap("indirect draw", VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, commands);
+}
+
+void VulkanContext::DrawIndexedIndirect(const uint32_t& drawCount, const uint32_t& drawIndex)
+{
+    uint32_t stride = sizeof(VkDrawIndexedIndirectCommand);
+	uint32_t offset = drawIndex * stride;
+    vkCmdDrawIndexedIndirect(VkCommandbufferManager::GetCommandBuffer(), FindUnorderdMap("indirect draw", VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->buffer, offset, drawCount, stride);
+}
+
+void VulkanContext::DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance)
 {   
-    vkCmdDrawIndexed(VkCommandbufferManager::GetCommandBuffer(), indices.size(), 1,0,0,0);
+    vkCmdDrawIndexed(VkCommandbufferManager::GetCommandBuffer(), indices.size(), 1,0,0,currentInstance);
 }
 
 void VulkanContext::BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)
