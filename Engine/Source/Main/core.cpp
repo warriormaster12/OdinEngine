@@ -49,7 +49,7 @@ void Core::CoreInit()
     
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER,SHADER_STAGE_FRAGMENT_BIT, 0);
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 1, 2);
-    Renderer::CreateShaderUniformLayout("triangle color layout");
+    Renderer::CreateShaderUniformLayout("material data layout");
     
     ShaderDescriptions descriptionInfo;
     descriptionInfo.vertexLocations = {
@@ -61,9 +61,13 @@ void Core::CoreInit()
     descriptionInfo.depthTesting = true;
     descriptionInfo.depthCompareType = COMPARE_OP_LESS_OR_EQUAL;
     
-    Renderer::CreateShader({"EngineAssets/Shaders/triangleShader.frag", "EngineAssets/Shaders/triangleShader.vert"}, "triangle shader", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
+    Renderer::CreateShader({"EngineAssets/Shaders/defaultTexturedWorld.frag", "EngineAssets/Shaders/defaultTexturedWorld.vert"}, "default textured world", {"triangle camera layout", "triangle object layout","material data layout"},&descriptionInfo);
 
-    Renderer::CreateShader({"EngineAssets/Shaders/triangleShader.frag", "EngineAssets/Shaders/triangleShader.vert"}, "triangle shader2", {"triangle camera layout", "triangle object layout","triangle color layout"},&descriptionInfo);
+    descriptionInfo.vertexLocations = {
+        {SRGB32,offsetof(Vertex, position)},
+    };
+
+    Renderer::CreateShader({"EngineAssets/Shaders/defaultWorld.frag", "EngineAssets/Shaders/defaultWorld.vert"}, "default world", {"triangle camera layout", "triangle object layout","material data layout"},&descriptionInfo);
     Renderer::CreateSampler("default sampler", FILTER_NEAREST, SAMPLER_ADDRESS_MODE_REPEAT);
 
     MaterialManager::CreateMaterial("main mat");
@@ -143,7 +147,7 @@ void Core::CoreUpdate()
           
             
             
-            Renderer::BindShader("triangle shader");
+            Renderer::BindShader("default textured world");
             
             Renderer::BindUniforms("camera data", 0, true);
             
@@ -158,7 +162,7 @@ void Core::CoreCleanup()
     if (isInitialized)
     {
         additionalDeletion.PushFunction([=](){
-            Renderer::RemoveShaderUniformLayout("triangle color layout");
+            Renderer::RemoveShaderUniformLayout("material data layout");
             Renderer::RemoveShaderUniformLayout("triangle camera layout");
             Renderer::RemoveShaderUniformLayout("triangle object layout");
 

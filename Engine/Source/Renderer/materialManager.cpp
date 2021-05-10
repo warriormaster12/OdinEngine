@@ -18,7 +18,7 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
     materials[materialName];
     Renderer::CreateShaderUniformBuffer(materialName + " material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUMaterialData));
 
-    Renderer::WriteShaderUniform(materialName, "triangle color layout",0,false, materialName + " material buffer");
+    Renderer::WriteShaderUniform(materialName, "material data layout",0,false, materialName + " material buffer");
 
     FindUnorderdMap(materialName, materials)->textureObjects.resize(FindUnorderdMap(materialName, materials)->textures.size());
     std::vector<VkImageView> views;
@@ -28,7 +28,7 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
         views.push_back(FindUnorderdMap(materialName, materials)->textureObjects[i].imageView);
     }
 
-    Renderer::WriteShaderImage(materialName, "triangle color layout", 1, samplerName, views);
+    Renderer::WriteShaderImage(materialName, "material data layout", 1, samplerName, views);
 }
 
 void  MaterialManager::UpdateTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
@@ -46,7 +46,7 @@ void  MaterialManager::UpdateTextures(const std::string& materialName, const std
         FindUnorderdMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderdMap(materialName, materials)->textures[i]);
         views.push_back(FindUnorderdMap(materialName, materials)->textureObjects[i].imageView);
     }
-    Renderer::WriteShaderImage(materialName, "triangle color layout", 1, samplerName, views);
+    Renderer::WriteShaderImage(materialName, "material data layout", 1, samplerName, views);
 };
 
 Material& MaterialManager::GetMaterial(const std::string& materialName)
