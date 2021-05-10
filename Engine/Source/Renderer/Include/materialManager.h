@@ -13,7 +13,7 @@ class Material
 public:
     glm::vec4 color;
     
-    std::vector<std::string> textures = {"", ""};
+    std::vector<std::string> textures;
     int repeateCount = 1;
     
     std::vector<Texture> textureObjects;

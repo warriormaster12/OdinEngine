@@ -19,27 +19,11 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
     Renderer::CreateShaderUniformBuffer(materialName + " material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUMaterialData));
 
     Renderer::WriteShaderUniform(materialName, "material data layout",0,false, materialName + " material buffer");
-
-    FindUnorderdMap(materialName, materials)->textureObjects.resize(FindUnorderdMap(materialName, materials)->textures.size());
-    std::vector<VkImageView> views;
-    for(int i = 0; i < FindUnorderdMap(materialName, materials)->textures.size(); i++)
-    {
-        FindUnorderdMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderdMap(materialName, materials)->textures[i]);
-        views.push_back(FindUnorderdMap(materialName, materials)->textureObjects[i].imageView);
-    }
-
-    Renderer::WriteShaderImage(materialName, "material data layout", 1, samplerName, views);
 }
 
 void  MaterialManager::UpdateTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
-    // destroy empty textures first
-    for(int i = 0; i < FindUnorderdMap(materialName, materials)->textures.size(); i++)
-    {
-        auto& currentTexture = FindUnorderdMap(materialName, materials)->textures[i];
-    
-        FindUnorderdMap(materialName, materials)->textureObjects[i].DestroyTexture();
-    }
+    FindUnorderdMap(materialName, materials)->textureObjects.resize(FindUnorderdMap(materialName, materials)->textures.size());
     std::vector<VkImageView> views;
     for(int i = 0; i < FindUnorderdMap(materialName, materials)->textures.size(); i++)
     {
@@ -56,6 +40,14 @@ Material& MaterialManager::GetMaterial(const std::string& materialName)
 
 void MaterialManager::BindMaterial(const std::string& materialName)
 {
+    if(FindUnorderdMap(materialName, materials)->textures.size() != 0)
+    {
+        Renderer::BindShader("default textured world");
+    }
+    else {
+        Renderer::BindShader("default world");
+    }
+    
     materialData.color = FindUnorderdMap(materialName, materials)->color;
     materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->repeateCount);
     

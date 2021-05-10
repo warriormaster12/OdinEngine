@@ -74,7 +74,7 @@ void Core::CoreInit()
     MaterialManager::CreateMaterial("floor");
     MaterialManager::GetMaterial("floor").repeateCount = 2;
     MaterialManager::GetMaterial("main mat").textures = {"EngineAssets/Textures/ExplosionBarrel Diffuse.png", "EngineAssets/Textures/ExplosionBarrel Emission.png"};
-    MaterialManager::GetMaterial("floor").textures[0] = "EngineAssets/Textures/wall.jpg";
+    MaterialManager::GetMaterial("floor").textures = {"EngineAssets/Textures/wall.jpg", ""};
     MaterialManager::UpdateTextures("main mat");
     MaterialManager::UpdateTextures("floor");
 
@@ -143,15 +143,7 @@ void Core::CoreUpdate()
         {
             
             camera.UpdateCamera(deltaTime);
-
-          
             
-            
-            Renderer::BindShader("default textured world");
-            
-            Renderer::BindUniforms("camera data", 0, true);
-            
-
             ObjectManager::RenderObjects();
         });
     }
