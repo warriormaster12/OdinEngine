@@ -19,3 +19,6 @@ CMakeCache.txt
 
 # Custom build directory for windows
 VisualStudio
+
+#compile_commands.json for clang 
+compile_commands.json
