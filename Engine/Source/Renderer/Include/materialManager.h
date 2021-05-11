@@ -12,12 +12,39 @@
 class Material 
 {
 public:
+    
+    void SetColor(const glm::vec4& input)
+    {
+        color = input;
+        updated = true;
+    };
+    glm::vec4 GetColor() {return color;}
+    int GetRepeateCount() {return repeateCount;}
+    std::vector<std::string> GetTextures() {return textures;}
+
+    void SetTextures(const std::vector<std::string>& inputs)
+    {
+        textures = inputs;
+        updated = true;
+    };
+
+    void SetRepeateCount(const int& input)
+    {
+        repeateCount = input;
+        updated = true;
+    }
+
+    void ResetUpdate() {updated = false;}
+    bool isUpdated() { return updated;}
+    
+    std::vector<Texture> textureObjects;
+private:
     glm::vec4 color = glm::vec4(1.0f);
     
     std::vector<std::string> textures;
     int repeateCount = 1;
-    
-    std::vector<Texture> textureObjects;
+
+    bool updated = false;
 };
 
 struct MaterialManager

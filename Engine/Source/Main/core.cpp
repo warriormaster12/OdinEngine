@@ -72,10 +72,10 @@ void Core::CoreInit()
 
     MaterialManager::CreateMaterial("main mat");
     MaterialManager::CreateMaterial("floor");
-    MaterialManager::GetMaterial("floor").repeateCount = 2;
-    MaterialManager::GetMaterial("main mat").textures = {"EngineAssets/Textures/ExplosionBarrel Diffuse.png", "EngineAssets/Textures/ExplosionBarrel Emission.png"};
+    MaterialManager::GetMaterial("floor").SetRepeateCount(2);
+    MaterialManager::GetMaterial("main mat").SetTextures({"EngineAssets/Textures/ExplosionBarrel Diffuse.png", "EngineAssets/Textures/ExplosionBarrel Emission.png"});
     //MaterialManager::GetMaterial("floor").textures = {"EngineAssets/Textures/wall.jpg", ""};
-    MaterialManager::GetMaterial("floor").color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+    MaterialManager::GetMaterial("floor").SetColor(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
     MaterialManager::AddTextures("main mat");
     //MaterialManager::AddTextures("floor");
 
@@ -142,9 +142,7 @@ void Core::CoreUpdate()
         }
 		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
         {
-            
             camera.UpdateCamera(deltaTime);
-            
             ObjectManager::RenderObjects();
         });
     }

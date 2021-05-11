@@ -23,11 +23,11 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
 
 void  MaterialManager::AddTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
-    FindUnorderdMap(materialName, materials)->textureObjects.resize(FindUnorderdMap(materialName, materials)->textures.size());
+    FindUnorderdMap(materialName, materials)->textureObjects.resize(FindUnorderdMap(materialName, materials)->GetTextures().size());
     std::vector<VkImageView> views;
-    for(int i = 0; i < FindUnorderdMap(materialName, materials)->textures.size(); i++)
+    for(int i = 0; i < FindUnorderdMap(materialName, materials)->GetTextures().size(); i++)
     {
-        FindUnorderdMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderdMap(materialName, materials)->textures[i]);
+        FindUnorderdMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderdMap(materialName, materials)->GetTextures()[i]);
         views.push_back(FindUnorderdMap(materialName, materials)->textureObjects[i].imageView);
     }
     Renderer::WriteShaderImage(materialName, "material data layout", 1, samplerName, views);
@@ -40,7 +40,7 @@ Material& MaterialManager::GetMaterial(const std::string& materialName)
 
 void MaterialManager::BindMaterial(const std::string& materialName)
 {
-    if(FindUnorderdMap(materialName, materials)->textures.size() != 0)
+    if(FindUnorderdMap(materialName, materials)->GetTextures().size() != 0)
     {
         Renderer::BindShader("default textured world");
     }
@@ -48,10 +48,14 @@ void MaterialManager::BindMaterial(const std::string& materialName)
         Renderer::BindShader("default world");
     }
     
-    materialData.color = FindUnorderdMap(materialName, materials)->color;
-    materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->repeateCount);
+    materialData.color = FindUnorderdMap(materialName, materials)->GetColor();
+    materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->GetRepeateCount());
     
-    Renderer::UploadSingleUniformDataToShader(materialName + " material buffer",materialData, false);
+    if(FindUnorderdMap(materialName, materials)->isUpdated())
+    {
+        Renderer::UploadSingleUniformDataToShader(materialName + " material buffer",materialData, false);
+        FindUnorderdMap(materialName, materials)->ResetUpdate();   
+    }
 
     Renderer::BindUniforms(materialName,2,false);
 }
