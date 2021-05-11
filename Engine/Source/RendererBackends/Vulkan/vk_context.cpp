@@ -40,6 +40,7 @@ std::string currentlyBoundShader;
 
 
 
+
 void VulkanContext::InitVulkan()
 {
     VkDeviceManager::InitDevice();

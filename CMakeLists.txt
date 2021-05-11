@@ -42,9 +42,16 @@ target_include_directories(OdinEngine PUBLIC
 
 if (UNIX AND NOT APPLE)
     set (LINUX TRUE)
-    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
-	target_include_directories(OdinEngine PRIVATE ${X11+INCLUDE_DIR})
-	target_link_libraries(OdinEngine PRIVATE ${X11_LIBRARIES} -lm)
+    if(DGLFW_USE_WAYLAND=ON)
+        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WAYLAND_KHR)
+        target_include_directories(OdinEngine PRIVATE ${WAYLAND+INCLUDE_DIR})
+        target_link_libraries(OdinEngine PRIVATE ${WAYLAND_LIBRARIES} -lm)
+    
+    else()
+        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
+        target_include_directories(OdinEngine PRIVATE ${X11+INCLUDE_DIR})
+        target_link_libraries(OdinEngine PRIVATE ${X11_LIBRARIES} -lm)
+    endif ()
 endif ()
 
 if (WIN32)

@@ -74,9 +74,10 @@ void Core::CoreInit()
     MaterialManager::CreateMaterial("floor");
     MaterialManager::GetMaterial("floor").repeateCount = 2;
     MaterialManager::GetMaterial("main mat").textures = {"EngineAssets/Textures/ExplosionBarrel Diffuse.png", "EngineAssets/Textures/ExplosionBarrel Emission.png"};
-    MaterialManager::GetMaterial("floor").textures = {"EngineAssets/Textures/wall.jpg", ""};
-    MaterialManager::UpdateTextures("main mat");
-    MaterialManager::UpdateTextures("floor");
+    //MaterialManager::GetMaterial("floor").textures = {"EngineAssets/Textures/wall.jpg", ""};
+    MaterialManager::GetMaterial("floor").color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+    MaterialManager::AddTextures("main mat");
+    //MaterialManager::AddTextures("floor");
 
     Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
     

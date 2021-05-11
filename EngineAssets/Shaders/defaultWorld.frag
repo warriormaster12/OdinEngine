@@ -14,8 +14,8 @@ layout(set = 2, binding = 0) uniform MaterialData
 
 void main()
 {
-    vec4 albedo = vec4(1.0);
-    //albedo += materialData.color;
+    vec4 albedo;
+    albedo += materialData.color;
     vec4 emission;
     emission += vec4(1.0, 0.7333, 0.0, 1.0);
     //return color

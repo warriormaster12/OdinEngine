@@ -21,7 +21,7 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
     Renderer::WriteShaderUniform(materialName, "material data layout",0,false, materialName + " material buffer");
 }
 
-void  MaterialManager::UpdateTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
+void  MaterialManager::AddTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
     FindUnorderdMap(materialName, materials)->textureObjects.resize(FindUnorderdMap(materialName, materials)->textures.size());
     std::vector<VkImageView> views;

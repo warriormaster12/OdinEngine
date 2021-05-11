@@ -73,7 +73,6 @@ void ObjectManager::RenderObjects()
     }
     for(auto& currentDc : batch)
     {
-        MaterialManager::GetMaterial(*currentDc.p_material).color = glm::vec4(1.0f);
         MaterialManager::BindMaterial(*currentDc.p_material);
         Renderer::BindUniforms("camera data", 0, true);
         Renderer::BindUniforms("object data", 1,true);
