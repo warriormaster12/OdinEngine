@@ -2,11 +2,17 @@
 
 
 
+#include "logger.h"
 #include "vk_swapchain.h"
 #include "window_handler.h"
 
 
+bool cameraUpdated = false;
 
+Camera::Camera()
+{
+	cameraUpdated = true;
+}
 
 void Camera::ProcessInputEvent()
 {
@@ -63,12 +69,14 @@ void Camera::ProcessInputEvent()
 				pitch = -1.56f;
 			}
 			windowHandler.mouseMoved = false;
+			cameraUpdated = true;
 		}
 	}
 	if(windowHandler.GetMInput(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
 		possessCamera = true;
 		glfwSetInputMode(windowHandler.p_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		cameraUpdated = true;
 	}
 	else
 	{
@@ -78,6 +86,10 @@ void Camera::ProcessInputEvent()
 	
 
 	inputAxis = glm::clamp(inputAxis, { -1.0,-1.0,-1.0 }, { 1.0,1.0,1.0 });
+	if(inputAxis != glm::vec3(0))
+	{
+		cameraUpdated = true;
+	}
 }
 
 void Camera::UpdateCamera(float deltaTime)
@@ -104,11 +116,15 @@ void Camera::UpdateCamera(float deltaTime)
 		position += velocity;
 	}
 
-    GPUCameraData camData{};
-	camData.viewMatrix = GetViewMatrix();
-	camData.projectionMatrix = GetProjectionMatrix();
+	if(cameraUpdated == true)
+	{
+		GPUCameraData camData{};
+		camData.viewMatrix = GetViewMatrix();
+		camData.projectionMatrix = GetProjectionMatrix();
 
-	Renderer::UploadSingleUniformDataToShader("camera buffer", camData, true);
+		Renderer::UploadSingleUniformDataToShader("camera buffer", camData, true);
+		cameraUpdated = false;
+	}
 	
 }
 

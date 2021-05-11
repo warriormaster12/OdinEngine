@@ -14,6 +14,8 @@ struct GPUCameraData
 
 class Camera {
 public:
+	Camera();
+
 	glm::vec3 position;
 	glm::vec3 rotation;
 	glm::vec3 velocity;
