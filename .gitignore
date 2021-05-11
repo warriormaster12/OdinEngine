@@ -22,4 +22,4 @@ VisualStudio
 
 #clangd
 compile_commands.json
-.clangd/
+.clangd/*
