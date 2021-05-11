@@ -48,11 +48,12 @@ void MaterialManager::BindMaterial(const std::string& materialName)
         Renderer::BindShader("default world");
     }
     
-    materialData.color = FindUnorderdMap(materialName, materials)->GetColor();
-    materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->GetRepeateCount());
+    
     
     if(FindUnorderdMap(materialName, materials)->isUpdated())
     {
+        materialData.color = FindUnorderdMap(materialName, materials)->GetColor();
+        materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->GetRepeateCount());
         Renderer::UploadSingleUniformDataToShader(materialName + " material buffer",materialData, false);
         FindUnorderdMap(materialName, materials)->ResetUpdate();   
     }

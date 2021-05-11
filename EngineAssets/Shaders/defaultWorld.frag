@@ -12,12 +12,13 @@ layout(set = 2, binding = 0) uniform MaterialData
     vec4 repeateCount;
 }materialData;
 
+vec4 albedo;
+vec4 emission;
 void main()
 {
-    vec4 albedo;
-    albedo += materialData.color;
-    vec4 emission;
-    emission += vec4(1.0, 0.7333, 0.0, 1.0);
+    
+    albedo = materialData.color;
+    emission = vec4(1.0, 0.7333, 0.0, 1.0);
     //return color
     vec4 color = outputColor(albedo);
 	outFragColor = vec4(color.rgb,1.0);   
