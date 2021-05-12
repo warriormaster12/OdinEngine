@@ -152,9 +152,9 @@ void Core::CoreCleanup()
             MaterialManager::DeleteMaterial("main mat");
             MaterialManager::DeleteMaterial("floor");
             PipelineManager::DestroyRendererPipelines();
+            ObjectManager::Destroy();
             mesh.DestroyMesh();
             mesh2.DestroyMesh();
-            Renderer::RemoveAllocatedBuffer("mesh buffer", true);
             Renderer::RemoveAllocatedBuffer("camera buffer", true);
             
         });

@@ -63,9 +63,12 @@ void MaterialManager::BindMaterial(const std::string& materialName)
 
 void MaterialManager::DeleteMaterial(const std::string& materialName)
 {
-    for(auto& currentTexture : FindUnorderdMap(materialName, materials)->textureObjects)
+    if(FindUnorderdMap(materialName, materials) != nullptr)
     {
-        currentTexture.DestroyTexture();
+        for(auto& currentTexture : FindUnorderdMap(materialName, materials)->textureObjects)
+        {
+            currentTexture.DestroyTexture();
+        }
+        Renderer::RemoveAllocatedBuffer(materialName + " material buffer", false);
     }
-    Renderer::RemoveAllocatedBuffer(materialName + " material buffer", false);
 }

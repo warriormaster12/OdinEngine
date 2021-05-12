@@ -84,3 +84,8 @@ void ObjectManager::RenderObjects()
     }
 }
 
+void ObjectManager::Destroy()
+{
+    Renderer::RemoveAllocatedBuffer("mesh buffer", true);
+}
+

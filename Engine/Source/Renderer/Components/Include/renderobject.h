@@ -34,4 +34,6 @@ struct ObjectManager
     static void PushObjectToQueue(RenderObject& object);
 
     static void RenderObjects();
+
+    static void Destroy();
 };
