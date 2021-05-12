@@ -25,7 +25,8 @@ target_include_directories(OdinEngine PUBLIC
     Engine/Source/RendererBackends/Vulkan/vk_components/Include
     Engine/Source/Main/Include/
     Engine/Source/Window/Include/
-    Engine/Source/Renderer/Include/
+    Engine/Source/Renderer/Components/Include/
+    Engine/Source/Renderer/Pipelines/Include/
     
     Engine/Source/Third-Party/catch2/
     Engine/Source/Third-Party/imgui/Include/

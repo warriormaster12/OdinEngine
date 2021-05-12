@@ -10,6 +10,11 @@
 
 #include "function_queuer.h"
 
+#include "pipelineManager.h"
+#include "geometryPipeline.h"
+#include <memory>
+
+
 bool isInitialized{ false };
 
 Mesh mesh;
@@ -26,6 +31,7 @@ FunctionQueuer additionalDeletion;
 
 
 
+
 auto start = std::chrono::system_clock::now();
 auto end = std::chrono::system_clock::now();
 float deltaTime;
@@ -35,6 +41,8 @@ float timer;
 void Core::CoreInit()
 {
     Logger::Init();
+
+    
 	
 	windowHandler.CreateWindow(1920,1080);
     Renderer::InitRenderer(BACKEND_VULKAN);
@@ -51,24 +59,7 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 1, 2);
     Renderer::CreateShaderUniformLayout("material data layout");
     
-    ShaderDescriptions descriptionInfo;
-    descriptionInfo.vertexLocations = {
-        {SRGB32,offsetof(Vertex, position)},
-        {SRGB32,offsetof(Vertex, color)},
-        {SRG32, offsetof(Vertex, uv)}
-    };
-    descriptionInfo.cullMode = CULL_MODE_BACK_BIT;
-    descriptionInfo.depthTesting = true;
-    descriptionInfo.depthCompareType = COMPARE_OP_LESS_OR_EQUAL;
-    
-    Renderer::CreateShader({"EngineAssets/Shaders/defaultTexturedWorld.frag", "EngineAssets/Shaders/defaultTexturedWorld.vert"}, "default textured world", {"triangle camera layout", "triangle object layout","material data layout"},&descriptionInfo);
-
-    descriptionInfo.vertexLocations = {
-        {SRGB32,offsetof(Vertex, position)},
-    };
-
-    Renderer::CreateShader({"EngineAssets/Shaders/defaultWorld.frag", "EngineAssets/Shaders/defaultWorld.vert"}, "default world", {"triangle camera layout", "triangle object layout","material data layout"},&descriptionInfo);
-    Renderer::CreateSampler("default sampler", FILTER_NEAREST, SAMPLER_ADDRESS_MODE_REPEAT);
+    PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
 
     MaterialManager::CreateMaterial("main mat");
     MaterialManager::CreateMaterial("floor");
@@ -142,6 +133,7 @@ void Core::CoreUpdate()
         }
 		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
         {
+            PipelineManager::UpdateRendererPipelines();
             camera.UpdateCamera(deltaTime);
             ObjectManager::RenderObjects();
         });
@@ -159,7 +151,7 @@ void Core::CoreCleanup()
 
             MaterialManager::DeleteMaterial("main mat");
             MaterialManager::DeleteMaterial("floor");
-            Renderer::DestroySampler("default sampler");
+            PipelineManager::DestroyRendererPipelines();
             mesh.DestroyMesh();
             mesh2.DestroyMesh();
             Renderer::RemoveAllocatedBuffer("mesh buffer", true);
