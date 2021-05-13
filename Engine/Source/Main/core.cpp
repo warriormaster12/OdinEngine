@@ -133,9 +133,9 @@ void Core::CoreUpdate()
         }
 		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
         {
-            PipelineManager::UpdateRendererPipelines();
             camera.UpdateCamera(deltaTime);
-            ObjectManager::RenderObjects();
+            PipelineManager::UpdateRendererPipelines();
+            
         });
     }
 }
@@ -149,12 +149,9 @@ void Core::CoreCleanup()
             Renderer::RemoveShaderUniformLayout("triangle camera layout");
             Renderer::RemoveShaderUniformLayout("triangle object layout");
 
-            MaterialManager::DeleteMaterial("main mat");
-            MaterialManager::DeleteMaterial("floor");
+            
             PipelineManager::DestroyRendererPipelines();
             ObjectManager::Destroy();
-            mesh.DestroyMesh();
-            mesh2.DestroyMesh();
             Renderer::RemoveAllocatedBuffer("camera buffer", true);
             
         });

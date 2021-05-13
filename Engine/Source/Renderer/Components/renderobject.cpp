@@ -1,6 +1,7 @@
 #include "Include/renderobject.h"
 #include "Include/renderer.h"
 #include "Include/materialManager.h"
+#include "logger.h"
 
 
 std::vector<RenderObject> objects;
@@ -87,5 +88,19 @@ void ObjectManager::RenderObjects()
 void ObjectManager::Destroy()
 {
     Renderer::RemoveAllocatedBuffer("mesh buffer", true);
+    for(int i = 0; i < objects.size(); i++)
+    {
+        MaterialManager::DeleteMaterial(objects[i].material);
+    }
+
+    Mesh* p_lastMesh;
+    for(int i = 0; i < objects.size(); i++)
+    {
+        if(p_lastMesh != objects[i].p_mesh)
+        {
+            objects[i].p_mesh->DestroyMesh();
+            p_lastMesh = objects[i].p_mesh;
+        }
+    }
 }
 

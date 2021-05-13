@@ -31,7 +31,7 @@ void GeometryPipeline::Init()
 
 void GeometryPipeline::Update()
 {
-    
+    ObjectManager::RenderObjects();
 }
 
 void GeometryPipeline::Destroy()

@@ -70,5 +70,6 @@ void MaterialManager::DeleteMaterial(const std::string& materialName)
             currentTexture.DestroyTexture();
         }
         Renderer::RemoveAllocatedBuffer(materialName + " material buffer", false);
+        materials.erase(materialName);
     }
 }
