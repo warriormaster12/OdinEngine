@@ -45,8 +45,8 @@ public:
     static VkCommandBuffer& GetCommandBuffer() {return cmd;}
     
 private:
-    inline static FrameData frames[FRAME_OVERLAP];
-    inline static UploadContext uploadContext;
-    inline static VkCommandBuffer cmd;
-    inline static uint32_t imageIndex;
+    static inline FrameData frames[FRAME_OVERLAP];
+    static inline UploadContext uploadContext;
+    static inline VkCommandBuffer cmd;
+    static inline uint32_t imageIndex;
 };

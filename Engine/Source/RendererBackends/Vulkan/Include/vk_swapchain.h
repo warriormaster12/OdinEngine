@@ -18,22 +18,22 @@ public:
     static VkFormat& GetSwapchainDepthFormat() { return depthFormat; }
     static VkSwapchainKHR& GetSwapchain() { return swapchain; }
 private: 
-    inline static VkSwapchainKHR swapchain; // from other articles
+    static inline VkSwapchainKHR swapchain; // from other articles
 
     // image format expected by the windowing system
-    inline static VkFormat swapchainImageFormat; 	
+    static inline VkFormat swapchainImageFormat; 	
     
     //array of images from the swapchain
-    inline static std::vector<VkImage> swapchainImages;
+    static inline std::vector<VkImage> swapchainImages;
 
     //array of image-views from the swapchain
-    inline static std::vector<VkImageView> swapchainImageViews;
+    static inline std::vector<VkImageView> swapchainImageViews;
 
-    inline static VkExtent2D swapExtent{};
+    static inline VkExtent2D swapExtent{};
 
-    inline static VkImageView depthImageView;
-    inline static AllocatedImage depthImage;
+    static inline VkImageView depthImageView;
+    static inline AllocatedImage depthImage;
 
     //the format for the depth image
-    inline static VkFormat depthFormat;
+    static inline VkFormat depthFormat;
 };

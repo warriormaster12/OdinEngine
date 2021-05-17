@@ -77,6 +77,9 @@ public:
     static void UploadIndirectDraw(const uint32_t& objectCount, const std::vector<uint32_t>& indexSize, const uint32_t& currentInstance);
     static void DrawIndexedIndirect(const uint32_t& drawCount, const uint32_t& drawIndex);
 
+
+    static VkRenderPass& GetRenderpass();
+
     static void BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass = VK_NULL_HANDLE);
     static void EndRenderpass();
 
@@ -110,5 +113,5 @@ public:
         
     }
 private: 
-    inline static std::unordered_map<std::string, AllocatedBuffer> allocatedBuffers;
+    static inline std::unordered_map<std::string, AllocatedBuffer> allocatedBuffers;
 };

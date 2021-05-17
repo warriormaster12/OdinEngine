@@ -3,7 +3,6 @@
 #include "window_handler.h"
 //bootstrap library
 #include "VkBootstrap.h"
-#include <vulkan/vulkan_core.h>
 
 
 
@@ -97,6 +96,8 @@ void VkDeviceManager::InitDevice()
 	
 	ENGINE_CORE_INFO(physicalDevice.properties.deviceName);
 	ENGINE_CORE_INFO("The gpu has a minimum buffer alignement of {0}", gpuProperties.limits.minUniformBufferOffsetAlignment);
+
+	
 }
 
 void VkDeviceManager::DestroyDevice()

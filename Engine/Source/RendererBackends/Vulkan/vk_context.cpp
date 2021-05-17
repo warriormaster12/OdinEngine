@@ -37,7 +37,10 @@ std::string currentlyBoundShader;
 
 
 
-
+VkRenderPass& VulkanContext::GetRenderpass()
+{
+    return mainPass;
+}
 
 
 

@@ -25,17 +25,17 @@ public:
     static VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() {return gpuProperties; }
 
 private:
-    inline static VkInstance instance;
-    inline static VkDebugUtilsMessengerEXT debugMessenger;
-    inline static VkPhysicalDevice chosenGPU;
-    inline static VkDevice device;
-    inline static VkSurfaceKHR surface;
-    inline static VkPhysicalDeviceProperties gpuProperties;
+    static inline VkInstance instance;
+    static inline VkDebugUtilsMessengerEXT debugMessenger;
+    static inline VkPhysicalDevice chosenGPU;
+    static inline VkDevice device;
+    static inline VkSurfaceKHR surface;
+    static inline VkPhysicalDeviceProperties gpuProperties;
 
-    inline static VkQueue graphicsQueue;
-    inline static uint32_t graphicsQueueFamily;
+    static inline VkQueue graphicsQueue;
+    static inline uint32_t graphicsQueueFamily;
 
-    inline static VmaAllocator allocator; //vma lib allocator
+    static inline VmaAllocator allocator; //vma lib allocator
 
 };
 

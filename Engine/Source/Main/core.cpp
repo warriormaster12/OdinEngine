@@ -12,6 +12,7 @@
 
 #include "pipelineManager.h"
 #include "geometryPipeline.h"
+#include "editorPipeline.h"
 #include <memory>
 
 
@@ -60,6 +61,8 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayout("material data layout");
     
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
+    PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
+
 
     MaterialManager::CreateMaterial("main mat");
     MaterialManager::CreateMaterial("floor");
