@@ -10,11 +10,16 @@
 #include "window_handler.h"
 
 
+#include "Include/meshAdder.h"
+
+
 void MenuBar::ShowMenuBar()
 {
     if (ImGui::BeginMainMenuBar())
     {
         static bool showAbout = false; 
+        static bool showDemo = false; 
+        static bool showMeshAdder = false;
         //checking what is the size of the menu bar
         //ENGINE_CORE_INFO("bar size, x = {0} y = {1}", ImGui::GetWindowSize().x,  ImGui::GetWindowSize().y);
         if (ImGui::BeginMenu("File"))
@@ -31,10 +36,21 @@ void MenuBar::ShowMenuBar()
         }
         if (ImGui::BeginMenu("Edit"))
         {
+            if(ImGui::BeginMenu("Add Window"))
+            {
+                
+                ImGui::MenuItem("Inspector");
+                ImGui::MenuItem("Scene Graph", NULL, &showMeshAdder);
+                ImGui::MenuItem("Content Browser");
+
+                ImGui::EndMenu();
+            }
             ImGui::EndMenu(); 
         }
         if (ImGui::BeginMenu("Help"))
         {
+            ImGui::MenuItem("Show Demo Window",NULL, &showDemo);
+
             ImGui::MenuItem("About Engine",NULL, &showAbout);
             
             ImGui::EndMenu(); 
@@ -44,6 +60,14 @@ void MenuBar::ShowMenuBar()
         if(showAbout)
         {
             ImGui::ShowAboutWindow();
+        }
+        if(showDemo)
+        {
+            ImGui::ShowDemoWindow();
+        }
+        if(showMeshAdder)
+        {
+            MeshAdder::ShowMeshAdderWindow();
         }
     }
     
