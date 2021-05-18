@@ -130,10 +130,6 @@ void Core::CoreUpdate()
         timer += deltaTime * 0.001;
 
 		//RendererCore::RendererEvents();
-		if(windowHandler.GetKInput(GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        {
-            windowHandler.WindowClose();
-        }
 		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
         {
             camera.UpdateCamera(deltaTime);

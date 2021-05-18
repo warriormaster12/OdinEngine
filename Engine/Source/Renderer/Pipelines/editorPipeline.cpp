@@ -10,11 +10,12 @@
 
 #include "window_handler.h"
 
-#include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h" 
 
 #include "function_queuer.h"
+
+#include "editorLayer.h"
 
 FunctionQueuer imguiQueue;
 
@@ -128,6 +129,7 @@ void EditorPipeline::Init()
 		ImGui_ImplVulkan_Shutdown();
 		vkDestroyDescriptorPool(init_info.Device, imguiPool, nullptr);
 	});
+	ENGINE_CORE_INFO("editor pipeline created");
 }
 
 void EditorPipeline::Update()
@@ -137,10 +139,7 @@ void EditorPipeline::Update()
     
 
     ImGui::NewFrame();        
-
-
-    //imgui commands
-    ImGui::ShowDemoWindow();
+    EditorLayer::ShowEditor();
 	ImGui::Render();
 
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), VkCommandbufferManager::GetCommandBuffer());
@@ -149,4 +148,5 @@ void EditorPipeline::Update()
 void EditorPipeline::Destroy()
 {
 	imguiQueue.Flush();	
+	ENGINE_CORE_INFO("editor pipeline destroyed");
 }
