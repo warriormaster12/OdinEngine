@@ -18,16 +18,22 @@ struct GPUMaterialData
 
 void MaterialManager::CreateMaterial(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
-    materials[materialName];
-    Renderer::CreateShaderUniformBuffer(materialName + " material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUMaterialData));
+    if(FindUnorderdMap(materialName, materials) == nullptr)
+    {
+        materials[materialName];
+        Renderer::CreateShaderUniformBuffer(materialName + " material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUMaterialData));
 
-    Renderer::WriteShaderUniform(materialName, "material data layout",0,false, materialName + " material buffer");
+        Renderer::WriteShaderUniform(materialName, "material data layout",0,false, materialName + " material buffer");
 
-    
-    FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0));
-    FindUnorderdMap(materialName, materials)->SetRepeateCount(1);
+        
+        FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0));
+        FindUnorderdMap(materialName, materials)->SetRepeateCount(1);
 
-    materialNameList.push_back(materialName);
+        materialNameList.push_back(materialName);
+    }
+    else {
+        ENGINE_CORE_WARN("{0} material already exists", materialName);
+    }
 }
 
 void  MaterialManager::AddTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)

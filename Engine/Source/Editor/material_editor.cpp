@@ -21,10 +21,5 @@ void MaterialEditor::ShowMaterialWindow()
        MaterialManager::CreateMaterial(materialNameBuffer);
        materialCreated = true;
     }
-    if(materialCreated == true)
-    {
-        ImGui::ColorEdit4("Albedo", (float*)&color);
-        MaterialManager::GetMaterial(materialNameBuffer).SetColor(glm::vec4(color.x, color.y, color.z, color.w));
-    }
     ImGui::End();
 }
