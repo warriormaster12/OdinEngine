@@ -1,4 +1,4 @@
-#include "Include/menuBar.h"
+#include "Include/menu_bar.h"
 
 #include "imgui.h"
 
@@ -10,7 +10,8 @@
 #include "window_handler.h"
 
 
-#include "Include/meshAdder.h"
+#include "Include/mesh_adder.h"
+#include "Include/material_editor.h"
 
 
 void MenuBar::ShowMenuBar()
@@ -68,6 +69,7 @@ void MenuBar::ShowMenuBar()
         if(showMeshAdder)
         {
             MeshAdder::ShowMeshAdderWindow();
+            MaterialEditor::ShowMaterialWindow();
         }
     }
     

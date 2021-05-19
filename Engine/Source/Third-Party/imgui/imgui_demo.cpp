@@ -1,4 +1,4 @@
-// dear imgui, v1.82 WIP
+// dear imgui, v1.83 WIP
 // (demo code)
 
 // Help:
@@ -6,9 +6,9 @@
 // - Newcomers, read 'Programmer guide' in imgui.cpp for notes on how to setup Dear ImGui in your codebase.
 // - Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp. All applications in examples/ are doing that.
 // Read imgui.cpp for more details, documentation and comments.
-// Get latest version at https://github.com/ocornut/imgui
+// Get the latest version at https://github.com/ocornut/imgui
 
-// Message to the person tempted to delete this file when integrating Dear ImGui into their code base:
+// Message to the person tempted to delete this file when integrating Dear ImGui into their codebase:
 // Do NOT remove this file from your project! Think again! It is the most useful reference code that you and other
 // coders will want to refer to and call. Have the ImGui::ShowDemoWindow() function wired in an always-available
 // debug menu of your game/app! Removing this file from your project is hindering access to documentation for everyone
@@ -16,19 +16,19 @@
 // Everything in this file will be stripped out by the linker if you don't call ImGui::ShowDemoWindow().
 // If you want to link core Dear ImGui in your shipped builds but want a thorough guarantee that the demo will not be
 // linked, you can setup your imconfig.h with #define IMGUI_DISABLE_DEMO_WINDOWS and those functions will be empty.
-// In other situation, whenever you have Dear ImGui available you probably want this to be available for reference.
+// In another situation, whenever you have Dear ImGui available you probably want this to be available for reference.
 // Thank you,
 // -Your beloved friend, imgui_demo.cpp (which you won't delete)
 
 // Message to beginner C/C++ programmers about the meaning of the 'static' keyword:
-// In this demo code, we frequently we use 'static' variables inside functions. A static variable persist across calls,
+// In this demo code, we frequently use 'static' variables inside functions. A static variable persists across calls,
 // so it is essentially like a global variable but declared inside the scope of the function. We do this as a way to
 // gather code and data in the same place, to make the demo source code faster to read, faster to write, and smaller
 // in size. It also happens to be a convenient way of storing simple UI related information as long as your function
 // doesn't need to be reentrant or used in multiple threads. This might be a pattern you will want to use in your code,
 // but most of the real data you would be editing is likely going to be stored outside your functions.
 
-// The Demo code in this file is designed to be easy to copy-and-paste in into your application!
+// The Demo code in this file is designed to be easy to copy-and-paste into your application!
 // Because of this:
 // - We never omit the ImGui:: prefix when calling functions, even though most code here is in the same namespace.
 // - We try to declare static variables in the local scope, as close as possible to the code using them.
@@ -93,7 +93,8 @@ Index of this file:
 
 // Visual Studio warnings
 #ifdef _MSC_VER
-#pragma warning (disable: 4996) // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
+#pragma warning (disable: 4996)     // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
+#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overflow : Using operator 'xxx' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overflow(io.2).
 #endif
 
 // Clang/GCC warnings with -Weverything
@@ -456,14 +457,12 @@ void ImGui::ShowDemoWindow(bool* p_open)
             ImGui::SameLine(); HelpMarker("Instruct backend to not alter mouse cursor shape and visibility.");
 
             ImGui::CheckboxFlags("io.ConfigFlags: DockingEnable", &io.ConfigFlags, ImGuiConfigFlags_DockingEnable);
-            ImGui::SameLine(); HelpMarker(io.ConfigDockingWithShift ? "[beta] Use SHIFT to dock window into each others." : "[beta] Drag from title bar to dock windows into each others.");
+            ImGui::SameLine(); HelpMarker("Drag from window title bar or their tab to dock/undock. Hold SHIFT to disable docking.\n\nDrag from window menu button (upper-left button) to undock an entire node (all windows).");
             if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
             {
                 ImGui::Indent();
                 ImGui::Checkbox("io.ConfigDockingNoSplit", &io.ConfigDockingNoSplit);
                 ImGui::SameLine(); HelpMarker("Simplified docking mode: disable window splitting, so docking is limited to merging multiple windows together into tab-bars.");
-                ImGui::Checkbox("io.ConfigDockingWithShift", &io.ConfigDockingWithShift);
-                ImGui::SameLine(); HelpMarker("Enable docking when holding Shift only (allows to drop in wider space, reduce visual noise)");
                 ImGui::Checkbox("io.ConfigDockingAlwaysTabBar", &io.ConfigDockingAlwaysTabBar);
                 ImGui::SameLine(); HelpMarker("Create a docking node and tab-bar on single floating windows.");
                 ImGui::Checkbox("io.ConfigDockingTransparentPayload", &io.ConfigDockingTransparentPayload);
@@ -2895,6 +2894,8 @@ static void ShowDemoWindowLayout()
             {
                 for (int item = 0; item < 100; item++)
                 {
+                    if (item > 0)
+                        ImGui::SameLine();
                     if (enable_track && item == track_item)
                     {
                         ImGui::TextColored(ImVec4(1, 1, 0, 1), "Item %d", item);
@@ -2904,7 +2905,6 @@ static void ShowDemoWindowLayout()
                     {
                         ImGui::Text("Item %d", item);
                     }
-                    ImGui::SameLine();
                 }
             }
             float scroll_x = ImGui::GetScrollX();
@@ -3248,46 +3248,84 @@ static void ShowDemoWindowPopups()
 
     if (ImGui::TreeNode("Context menus"))
     {
+        HelpMarker("\"Context\" functions are simple helpers to associate a Popup to a given Item or Window identifier.");
+
         // BeginPopupContextItem() is a helper to provide common/simple popup behavior of essentially doing:
-        //    if (IsItemHovered() && IsMouseReleased(ImGuiMouseButton_Right))
-        //       OpenPopup(id);
-        //    return BeginPopup(id);
-        // For more advanced uses you may want to replicate and customize this code.
-        // See details in BeginPopupContextItem().
-        static float value = 0.5f;
-        ImGui::Text("Value = %.3f (<-- right-click here)", value);
-        if (ImGui::BeginPopupContextItem("item context menu"))
+        //     if (id == 0)
+        //         id = GetItemID(); // Use last item id
+        //     if (IsItemHovered() && IsMouseReleased(ImGuiMouseButton_Right))
+        //         OpenPopup(id);
+        //     return BeginPopup(id);
+        // For advanced advanced uses you may want to replicate and customize this code.
+        // See more details in BeginPopupContextItem().
+
+        // Example 1
+        // When used after an item that has an ID (e.g. Button), we can skip providing an ID to BeginPopupContextItem(),
+        // and BeginPopupContextItem() will use the last item ID as the popup ID.
         {
-            if (ImGui::Selectable("Set to zero")) value = 0.0f;
-            if (ImGui::Selectable("Set to PI")) value = 3.1415f;
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::DragFloat("##Value", &value, 0.1f, 0.0f, 0.0f);
-            ImGui::EndPopup();
+            const char* names[5] = { "Label1", "Label2", "Label3", "Label4", "Label5" };
+            for (int n = 0; n < 5; n++)
+            {
+                ImGui::Selectable(names[n]);
+                if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
+                {
+                    ImGui::Text("This a popup for \"%s\"!", names[n]);
+                    if (ImGui::Button("Close"))
+                        ImGui::CloseCurrentPopup();
+                    ImGui::EndPopup();
+                }
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("Right-click to open popup");
+            }
         }
 
-        // We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the
-        // Begin() call. So here we will make it that clicking on the text field with the right mouse button (1)
-        // will toggle the visibility of the popup above.
-        ImGui::Text("(You can also right-click me to open the same popup as above.)");
-        ImGui::OpenPopupOnItemClick("item context menu", 1);
-
-        // When used after an item that has an ID (e.g.Button), we can skip providing an ID to BeginPopupContextItem().
-        // BeginPopupContextItem() will use the last item ID as the popup ID.
-        // In addition here, we want to include your editable label inside the button label.
-        // We use the ### operator to override the ID (read FAQ about ID for details)
-        static char name[32] = "Label1";
-        char buf[64];
-        sprintf(buf, "Button: %s###Button", name); // ### operator override ID ignoring the preceding label
-        ImGui::Button(buf);
-        if (ImGui::BeginPopupContextItem())
+        // Example 2
+        // Popup on a Text() element which doesn't have an identifier: we need to provide an identifier to BeginPopupContextItem().
+        // Using an explicit identifier is also convenient if you want to activate the popups from different locations.
         {
-            ImGui::Text("Edit name:");
-            ImGui::InputText("##edit", name, IM_ARRAYSIZE(name));
-            if (ImGui::Button("Close"))
-                ImGui::CloseCurrentPopup();
-            ImGui::EndPopup();
+            HelpMarker("Text() elements don't have stable identifiers so we need to provide one.");
+            static float value = 0.5f;
+            ImGui::Text("Value = %.3f <-- (1) right-click this value", value);
+            if (ImGui::BeginPopupContextItem("my popup"))
+            {
+                if (ImGui::Selectable("Set to zero")) value = 0.0f;
+                if (ImGui::Selectable("Set to PI")) value = 3.1415f;
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                ImGui::DragFloat("##Value", &value, 0.1f, 0.0f, 0.0f);
+                ImGui::EndPopup();
+            }
+
+            // We can also use OpenPopupOnItemClick() to toggle the visibility of a given popup.
+            // Here we make it that right-clicking this other text element opens the same popup as above.
+            // The popup itself will be submitted by the code above.
+            ImGui::Text("(2) Or right-click this text");
+            ImGui::OpenPopupOnItemClick("my popup", ImGuiPopupFlags_MouseButtonRight);
+
+            // Back to square one: manually open the same popup.
+            if (ImGui::Button("(3) Or click this button"))
+                ImGui::OpenPopup("my popup");
         }
-        ImGui::SameLine(); ImGui::Text("(<-- right-click here)");
+
+        // Example 3
+        // When using BeginPopupContextItem() with an implicit identifier (NULL == use last item ID),
+        // we need to make sure your item identifier is stable.
+        // In this example we showcase altering the item label while preserving its identifier, using the ### operator (see FAQ).
+        {
+            HelpMarker("Showcase using a popup ID linked to item ID, with the item having a changing label + stable ID using the ### operator.");
+            static char name[32] = "Label1";
+            char buf[64];
+            sprintf(buf, "Button: %s###Button", name); // ### operator override ID ignoring the preceding label
+            ImGui::Button(buf);
+            if (ImGui::BeginPopupContextItem())
+            {
+                ImGui::Text("Edit name:");
+                ImGui::InputText("##edit", name, IM_ARRAYSIZE(name));
+                if (ImGui::Button("Close"))
+                    ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+            }
+            ImGui::SameLine(); ImGui::Text("(<-- right-click here)");
+        }
 
         ImGui::TreePop();
     }
@@ -5518,7 +5556,7 @@ static void ShowDemoWindowMisc()
             ImGui::InputText("3", buf, IM_ARRAYSIZE(buf));
             ImGui::PushAllowKeyboardFocus(false);
             ImGui::InputText("4 (tab skip)", buf, IM_ARRAYSIZE(buf));
-            //ImGui::SameLine(); HelpMarker("Use ImGui::PushAllowKeyboardFocus(bool) to disable tabbing through certain widgets.");
+            ImGui::SameLine(); HelpMarker("Item won't be cycled through when using TAB or Shift+Tab.");
             ImGui::PopAllowKeyboardFocus();
             ImGui::InputText("5", buf, IM_ARRAYSIZE(buf));
             ImGui::TreePop();
@@ -5544,6 +5582,7 @@ static void ShowDemoWindowMisc()
             if (focus_3) ImGui::SetKeyboardFocusHere();
             ImGui::InputText("3 (tab skip)", buf, IM_ARRAYSIZE(buf));
             if (ImGui::IsItemActive()) has_focus = 3;
+            ImGui::SameLine(); HelpMarker("Item won't be cycled through when using TAB or Shift+Tab.");
             ImGui::PopAllowKeyboardFocus();
 
             if (has_focus)
@@ -5740,7 +5779,6 @@ void ImGui::ShowAboutWindow(bool* p_open)
         if (io.ConfigViewportsNoDecoration)                             ImGui::Text("io.ConfigViewportsNoDecoration");
         if (io.ConfigViewportsNoDefaultParent)                          ImGui::Text("io.ConfigViewportsNoDefaultParent");
         if (io.ConfigDockingNoSplit)                                    ImGui::Text("io.ConfigDockingNoSplit");
-        if (io.ConfigDockingWithShift)                                  ImGui::Text("io.ConfigDockingWithShift");
         if (io.ConfigDockingAlwaysTabBar)                               ImGui::Text("io.ConfigDockingAlwaysTabBar");
         if (io.ConfigDockingTransparentPayload)                         ImGui::Text("io.ConfigDockingTransparentPayload");
         if (io.ConfigMacOSXBehaviors)                                   ImGui::Text("io.ConfigMacOSXBehaviors");
@@ -7286,9 +7324,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
             const ImVec2 p = ImGui::GetCursorScreenPos();
             const ImU32 col = ImColor(colf);
             const float spacing = 10.0f;
-            const ImDrawCornerFlags corners_none = 0;
-            const ImDrawCornerFlags corners_all = ImDrawCornerFlags_All;
-            const ImDrawCornerFlags corners_tl_br = ImDrawCornerFlags_TopLeft | ImDrawCornerFlags_BotRight;
+            const ImDrawFlags corners_tl_br = ImDrawFlags_RoundCornersTopLeft | ImDrawFlags_RoundCornersBottomRight;
             const float rounding = sz / 5.0f;
             const int circle_segments = circle_segments_override ? circle_segments_override_v : 0;
             const int curve_segments = curve_segments_override ? curve_segments_override_v : 0;
@@ -7300,8 +7336,8 @@ static void ShowExampleAppCustomRendering(bool* p_open)
                 float th = (n == 0) ? 1.0f : thickness;
                 draw_list->AddNgon(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col, ngon_sides, th);                 x += sz + spacing;  // N-gon
                 draw_list->AddCircle(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col, circle_segments, th);          x += sz + spacing;  // Circle
-                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col, 0.0f,  corners_none, th);             x += sz + spacing;  // Square
-                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col, rounding, corners_all, th);           x += sz + spacing;  // Square with all rounded corners
+                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col, 0.0f, ImDrawFlags_None, th);          x += sz + spacing;  // Square
+                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col, rounding, ImDrawFlags_None, th);      x += sz + spacing;  // Square with all rounded corners
                 draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col, rounding, corners_tl_br, th);         x += sz + spacing;  // Square with two rounded corners
                 draw_list->AddTriangle(ImVec2(x+sz*0.5f,y), ImVec2(x+sz, y+sz-0.5f), ImVec2(x, y+sz-0.5f), col, th);x += sz + spacing;  // Triangle
                 //draw_list->AddTriangle(ImVec2(x+sz*0.2f,y), ImVec2(x, y+sz-0.5f), ImVec2(x+sz*0.4f, y+sz-0.5f), col, th);x+= sz*0.4f + spacing; // Thin triangle
@@ -7464,7 +7500,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
 
 // Demonstrate using DockSpace() to create an explicit docking node within an existing window.
 // Note that you dock windows into each others _without_ a dockspace, by just clicking on
-// a window title bar and moving it (+ hold SHIFT if io.ConfigDockingWithShift is set).
+// a window title bar or tab and moving it.
 // DockSpace() and DockSpaceOverViewport() are only useful to construct a central docking
 // location for your application.
 void ShowExampleAppDockSpace(bool* p_open)
@@ -7557,11 +7593,10 @@ void ShowExampleAppDockSpace(bool* p_open)
             ImGui::EndMenu();
         }
         HelpMarker(
-            "When docking is enabled, you can ALWAYS dock MOST window into another! Try it now!" "\n\n"
-            " > if io.ConfigDockingWithShift==false (default):" "\n"
-            "   drag windows from title bar to dock" "\n"
-            " > if io.ConfigDockingWithShift==true:" "\n"
-            "   drag windows from anywhere and hold Shift to dock" "\n\n"
+            "When docking is enabled, you can ALWAYS dock MOST window into another! Try it now!" "\n"
+            "- Drag from window title bar or their tab to dock/undock." "\n"
+            "- Drag from window menu button (upper-left button) to undock an entire node (all windows)." "\n"
+            "- Hold SHIFT to disable docking." "\n"
             "This demo app has nothing to do with it!" "\n\n"
             "This demo app only demonstrate the use of ImGui::DockSpace() which allows you to manually create a docking node _within_ another window. This is useful so you can decorate your main application window (e.g. with a menu bar)." "\n\n"
             "ImGui::DockSpace() comes with one hard constraint: it needs to be submitted _before_ any window which may be docked into it. Therefore, if you use a dock spot as the central point of your application, you'll probably want it to be part of the very first window you are submitting to imgui every frame." "\n\n"

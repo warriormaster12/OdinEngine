@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pipelineManager.h"
+#include "pipeline_manager.h"
 
 
 class EditorPipeline : public RendererPipeline

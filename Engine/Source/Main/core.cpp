@@ -10,27 +10,16 @@
 
 #include "function_queuer.h"
 
-#include "pipelineManager.h"
-#include "geometryPipeline.h"
-#include "editorPipeline.h"
-#include <memory>
+#include "pipeline_manager.h"
+#include "geometry_pipeline.h"
+#include "editor_pipeline.h"
 
 
 bool isInitialized{ false };
 
-Mesh mesh;
-Mesh mesh2;
-
-RenderObject barrelObj;
-RenderObject barrelObj2;
-RenderObject floorObj;
-
 Camera camera;
 
 FunctionQueuer additionalDeletion;
-
-
-
 
 
 auto start = std::chrono::system_clock::now();
@@ -63,51 +52,14 @@ void Core::CoreInit()
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
 
-
-    MaterialManager::CreateMaterial("main mat");
-    MaterialManager::CreateMaterial("floor");
-    //MaterialManager::GetMaterial("floor").SetRepeateCount(2);
-    MaterialManager::GetMaterial("main mat").SetTextures({"EngineAssets/Textures/ExplosionBarrel Diffuse.png", "EngineAssets/Textures/ExplosionBarrel Emission.png"});
-    //MaterialManager::GetMaterial("floor").textures = {"EngineAssets/Textures/wall.jpg", ""};
-    MaterialManager::GetMaterial("floor").SetColor(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-    MaterialManager::AddTextures("main mat");
-    //MaterialManager::AddTextures("floor");
-
     Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
     
 
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,true,"camera buffer");
     
-    
-    
-
-    
-
 
     ObjectManager::Init();
 
-    mesh.LoadFromObj("EngineAssets/Meshes/Barrel.obj");
-    mesh2.LoadFromObj("EngineAssets/Meshes/Floor.obj");
-
-    mesh.CreateMesh();
-    mesh2.CreateMesh();
-
-    barrelObj.p_mesh = &mesh;
-    barrelObj.material = "main mat";
-    barrelObj.transformMatrix = glm::translate(glm::vec3( 0,5,0 ));
-
-    barrelObj2.p_mesh = &mesh;
-    barrelObj2.material = "main mat";
-    barrelObj2.transformMatrix = glm::translate(glm::vec3( 1,5,3 ));
-
-
-    floorObj.p_mesh = &mesh2;
-    floorObj.material = "floor";
-    floorObj.transformMatrix = glm::translate(glm::vec3( 6,-5,2 ));
-
-    ObjectManager::PushObjectToQueue(barrelObj);
-    ObjectManager::PushObjectToQueue(barrelObj2);
-    ObjectManager::PushObjectToQueue(floorObj);
 
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
 

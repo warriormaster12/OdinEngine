@@ -1,4 +1,4 @@
-#include "Include/editorPipeline.h"
+#include "Include/editor_pipeline.h"
 
 #include "logger.h"
 
@@ -15,7 +15,7 @@
 
 #include "function_queuer.h"
 
-#include "editorLayer.h"
+#include "editor_layer.h"
 
 FunctionQueuer imguiQueue;
 

@@ -1,11 +1,14 @@
 #include "Include/materialManager.h"
 #include "Include/renderer.h"
+#include "glm/fwd.hpp"
 #include "logger.h"
 #include "unordered_finder.h"
 
 #include <unordered_map>
 
 std::unordered_map<std::string, Material> materials;
+
+std::vector<std::string> materialNameList;
 
 struct GPUMaterialData
 {
@@ -19,6 +22,12 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
     Renderer::CreateShaderUniformBuffer(materialName + " material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUMaterialData));
 
     Renderer::WriteShaderUniform(materialName, "material data layout",0,false, materialName + " material buffer");
+
+    
+    FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0));
+    FindUnorderdMap(materialName, materials)->SetRepeateCount(1);
+
+    materialNameList.push_back(materialName);
 }
 
 void  MaterialManager::AddTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
@@ -71,5 +80,21 @@ void MaterialManager::DeleteMaterial(const std::string& materialName)
         }
         Renderer::RemoveAllocatedBuffer(materialName + " material buffer", false);
         materials.erase(materialName);
+    }
+}
+
+void MaterialManager::DeleteAllMaterials()
+{
+    for(auto& currentMaterialName : materialNameList)
+    {
+        if(FindUnorderdMap(currentMaterialName, materials) != nullptr)
+        {
+            for(auto& currentTexture : FindUnorderdMap(currentMaterialName, materials)->textureObjects)
+            {
+                currentTexture.DestroyTexture();
+            }
+            Renderer::RemoveAllocatedBuffer(currentMaterialName + " material buffer", false);
+            materials.erase(currentMaterialName);
+        }
     }
 }

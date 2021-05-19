@@ -1,6 +1,6 @@
-#include "Include/editorLayer.h"
+#include "Include/editor_layer.h"
 
-#include "Include/menuBar.h"
+#include "Include/menu_bar.h"
 
 void EditorLayer::ShowEditor()
 {

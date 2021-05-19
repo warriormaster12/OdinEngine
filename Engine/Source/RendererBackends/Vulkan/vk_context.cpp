@@ -364,12 +364,20 @@ void VulkanContext::RemoveAllocatedBuffer(const std::string& bufferName, const b
         for(int i = 0; i < FRAME_OVERLAP; i++)
         {
             auto& allocatedBuffer= VkCommandbufferManager::GetFrames(i).allocatedBuffer;
-            vmaDestroyBuffer(VkDeviceManager::GetAllocator(), FindUnorderdMap(bufferName, allocatedBuffer)->buffer, FindUnorderdMap(bufferName, allocatedBuffer)->allocation);
+            if( FindUnorderdMap(bufferName, allocatedBuffer) != nullptr)
+            {
+                vmaDestroyBuffer(VkDeviceManager::GetAllocator(), FindUnorderdMap(bufferName, allocatedBuffer)->buffer, FindUnorderdMap(bufferName, allocatedBuffer)->allocation);
+                allocatedBuffer.erase(bufferName);
+            }
         }
     }
     else
     {
-        vmaDestroyBuffer(VkDeviceManager::GetAllocator(), FindUnorderdMap(bufferName, allocatedBuffers)->buffer, FindUnorderdMap(bufferName, allocatedBuffers)->allocation);
+        if(FindUnorderdMap(bufferName, allocatedBuffers) != nullptr)
+        {
+            vmaDestroyBuffer(VkDeviceManager::GetAllocator(), FindUnorderdMap(bufferName, allocatedBuffers)->buffer, FindUnorderdMap(bufferName, allocatedBuffers)->allocation);
+            allocatedBuffers.erase(bufferName);
+        }
     }
 }
 

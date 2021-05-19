@@ -6,9 +6,10 @@
 #include <string>
 
 
+
 struct RenderObject
 {
-    Mesh* p_mesh = nullptr;
+    Mesh* p_mesh = new Mesh;
     std::string material;
 
     glm::mat4 transformMatrix;
