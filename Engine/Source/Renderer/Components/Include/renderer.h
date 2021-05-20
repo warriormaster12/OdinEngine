@@ -146,8 +146,8 @@ namespace Renderer
     //create the shader
     void CreateShader(std::vector<std::string> shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const ShaderDescriptions* descriptions = nullptr);
     //Equivalent to writing a descriptor set
-    void CreateShaderUniformBuffer(const std::string& bufferName, const bool& frameOverlap,const BufferCreateFlags& bufferUsage, const size_t& dataSize, const size_t& byteOffset=0);
-    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap, const std::string& bufferName);
+    void CreateShaderUniformBuffer(const std::string& bufferName, const bool& frameOverlap,const BufferCreateFlags& bufferUsage, const size_t& dataSize);
+    void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap, const std::string& bufferName, const size_t& byteOffset =0);
     void WriteShaderImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views);
     void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap);
     //Bind the shader before drawing
@@ -177,11 +177,11 @@ namespace Renderer
     //template functions 
 
     template<typename T>
-    void UploadSingleUniformDataToShader(const std::string& bufferName, const T& data, const bool& frameOverlap)
+    void UploadSingleUniformDataToShader(const std::string& bufferName, const T& data, const bool& frameOverlap, const size_t& byteOffset = 0)
     {
         if(GetActiveAPI() == AvailableBackends::Vulkan)
         {
-            VulkanContext::UploadSingleBufferData(bufferName, data,frameOverlap);
+            VulkanContext::UploadSingleBufferData(bufferName, data,frameOverlap, byteOffset);
         }
     }
     template<typename T>

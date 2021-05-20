@@ -13,7 +13,6 @@ struct AllocatedBuffer {
 
     VkBufferCreateFlags bufferUsage;
     size_t dataSize;
-    size_t byteOffset;
 };
 
 struct AllocatedImage {

@@ -276,7 +276,7 @@ void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, 
     vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
 }
 
-void VulkanContext::CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& byteOffset)
+void VulkanContext::CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize)
 {
     if(frameOverlap)
     {
@@ -286,7 +286,6 @@ void VulkanContext::CreateUniformBufferInfo(const std::string& bufferName, const
             auto& allocatedBuffer = *FindUnorderdMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer);
             allocatedBuffer.bufferUsage = bufferUsage;
             allocatedBuffer.dataSize = dataSize;
-            allocatedBuffer.byteOffset = byteOffset;
         }
     }
     else
@@ -295,14 +294,13 @@ void VulkanContext::CreateUniformBufferInfo(const std::string& bufferName, const
         auto& allocatedBuffer = *FindUnorderdMap(bufferName, allocatedBuffers);
         allocatedBuffer.bufferUsage = bufferUsage;
         allocatedBuffer.dataSize = dataSize;
-        allocatedBuffer.byteOffset = byteOffset;
     }
 
     ENGINE_CORE_INFO("buffer: {0} created", bufferName);
     
 }
 
-void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding, const bool& frameOverlap ,const std::string& bufferName)
+void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding, const bool& frameOverlap ,const std::string& bufferName, const size_t& byteOffset)
 {
     auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
 
@@ -320,11 +318,11 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
             }
             if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
             {
-                bufferInfo = CreateDescriptorBuffer(buffer, FRAME_OVERLAP * PadUniformBufferSize(buffer.dataSize), buffer.byteOffset);
+                bufferInfo = CreateDescriptorBuffer(buffer, FRAME_OVERLAP * PadUniformBufferSize(buffer.dataSize), byteOffset);
             }
             else
             {
-                bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, buffer.byteOffset);
+                bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset);
             }
             
             VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, *FindUnorderdMap(descriptorName, frame.descriptorSets), &bufferInfo, bindings[binding].binding);
@@ -343,11 +341,11 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
         }
         if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
         {
-            bufferInfo = CreateDescriptorBuffer(buffer, FRAME_OVERLAP * PadUniformBufferSize(buffer.dataSize), buffer.byteOffset);
+            bufferInfo = CreateDescriptorBuffer(buffer, FRAME_OVERLAP * PadUniformBufferSize(buffer.dataSize), byteOffset);
         }
         else
         {
-            bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, buffer.byteOffset);
+            bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset);
         }
 
         VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, *FindUnorderdMap(descriptorName, descriptorSets), &bufferInfo, bindings[binding].binding);

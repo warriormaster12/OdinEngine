@@ -57,7 +57,7 @@ void Core::CoreInit()
 
     Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,true,"camera buffer");
     
-
+    MaterialManager::Init();
     ObjectManager::Init();
 
 

@@ -4,11 +4,14 @@
 #include "logger.h"
 #include "unordered_finder.h"
 
+#include <cstddef>
 #include <unordered_map>
 
 std::unordered_map<std::string, Material> materials;
 
 std::vector<std::string> materialNameList;
+
+size_t currentByteOffset = 0;
 
 struct GPUMaterialData
 {
@@ -16,18 +19,40 @@ struct GPUMaterialData
     glm::vec4 repeateCount;
 }materialData;
 
+void MaterialManager::Init()
+{
+    const int maxMaterial = 30;
+    Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUMaterialData) * maxMaterial);
+    
+}
+
 void MaterialManager::CreateMaterial(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
     if(FindUnorderdMap(materialName, materials) == nullptr)
     {
         materials[materialName];
-        Renderer::CreateShaderUniformBuffer(materialName + " material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUMaterialData));
-
-        Renderer::WriteShaderUniform(materialName, "material data layout",0,false, materialName + " material buffer");
-
+        Renderer::WriteShaderUniform(materialName, "material data layout",0,false,"material buffer",currentByteOffset);
         
-        FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0));
-        FindUnorderdMap(materialName, materials)->SetRepeateCount(1);
+        FindUnorderdMap(materialName, materials)->materialByteOffset = currentByteOffset;
+
+        //add next offset
+        currentByteOffset += sizeof(GPUMaterialData);
+
+        if(materialNameList.size() == 1)
+        {
+            FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0, 0.0f, 0.0f,1.0f));
+            FindUnorderdMap(materialName, materials)->SetRepeateCount(2);
+        }
+        else if(materialNameList.size() == 2)
+        {
+            FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0, 1.0f, 0.0f,1.0f));
+            FindUnorderdMap(materialName, materials)->SetRepeateCount(3);
+        }
+        else {
+            FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0));
+            FindUnorderdMap(materialName, materials)->SetRepeateCount(1);
+        }
+        
 
         materialNameList.push_back(materialName);
     }
@@ -59,7 +84,7 @@ void MaterialManager::BindMaterial(const std::string& materialName)
     {
         materialData.color = FindUnorderdMap(materialName, materials)->GetColor();
         materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->GetRepeateCount());
-        Renderer::UploadSingleUniformDataToShader(materialName + " material buffer",materialData, false);
+        Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, FindUnorderdMap(materialName, materials)->materialByteOffset);
         FindUnorderdMap(materialName, materials)->ResetUpdate();   
     }
     Renderer::BindUniforms(materialName,2,false);
@@ -73,7 +98,7 @@ void MaterialManager::DeleteMaterial(const std::string& materialName)
         {
             currentTexture.DestroyTexture();
         }
-        Renderer::RemoveAllocatedBuffer(materialName + " material buffer", false);
+        Renderer::RemoveAllocatedBuffer("material buffer", false);
         materials.erase(materialName);
     }
 }
@@ -88,8 +113,8 @@ void MaterialManager::DeleteAllMaterials()
             {
                 currentTexture.DestroyTexture();
             }
-            Renderer::RemoveAllocatedBuffer(currentMaterialName + " material buffer", false);
             materials.erase(currentMaterialName);
         }
     }
+    Renderer::RemoveAllocatedBuffer("material buffer", false);
 }

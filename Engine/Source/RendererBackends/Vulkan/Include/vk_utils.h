@@ -1,9 +1,11 @@
 #pragma once
 
+#include "logger.h"
 #include "vk_types.h"
 #include "vk_device.h"
 
 #include <cstring>
+#include <vulkan/vulkan_core.h>
 
 struct CreateBufferInfo {
     size_t allocSize;
@@ -60,16 +62,22 @@ void UploadSingleData(const VmaAllocation& allocation, const T& data, size_t byt
 
 static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inputBuffer, const size_t& dataSize,const size_t& dataOffset = 0)
 {
-    CreateBufferInfo info;
-    info.allocSize = dataSize;
-    info.bufferUsage = inputBuffer.bufferUsage;
-    info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-    CreateBuffer(VkDeviceManager::GetAllocator(), &inputBuffer, info);
+    if(inputBuffer.allocation == VK_NULL_HANDLE)
+    {
+        CreateBufferInfo info;
+        info.allocSize = dataSize;
+        info.bufferUsage = inputBuffer.bufferUsage;
+        info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+        CreateBuffer(VkDeviceManager::GetAllocator(), &inputBuffer, info);
+    }
+    else {
+        ENGINE_CORE_TRACE("this buffer will be reused");
+    }
 
     VkDescriptorBufferInfo* descriptorBufferInfo = new VkDescriptorBufferInfo;
     descriptorBufferInfo->buffer = inputBuffer.buffer;
     descriptorBufferInfo->offset = dataOffset;
-    descriptorBufferInfo->range = dataSize;
+    descriptorBufferInfo->range = dataSize - dataOffset;
 
     return *descriptorBufferInfo;
 

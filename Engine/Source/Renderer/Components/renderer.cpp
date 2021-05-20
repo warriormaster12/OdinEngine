@@ -76,19 +76,19 @@ void Renderer::RemoveShaderUniformLayout(const std::string& layoutName)
     }
 }
 
-void Renderer::CreateShaderUniformBuffer(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& byteOffset /*=0*/)
+void Renderer::CreateShaderUniformBuffer(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize)
 {
     if(currentBackend == AvailableBackends::Vulkan)
     {
-        VulkanContext::CreateUniformBufferInfo(bufferName, frameOverlap, bufferUsage, dataSize, byteOffset);
+        VulkanContext::CreateUniformBufferInfo(bufferName, frameOverlap, bufferUsage, dataSize);
     }
 }
 
-void Renderer::WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap,const std::string& bufferName)
+void Renderer::WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap,const std::string& bufferName, const size_t& byteOffset /*=0*/)
 {
     if(currentBackend == AvailableBackends::Vulkan)
     {
-        VulkanContext::CreateDescriptorSet(name, layoutName, binding,frameOverlap,bufferName);
+        VulkanContext::CreateDescriptorSet(name, layoutName, binding,frameOverlap,bufferName, byteOffset);
     }
 }
 

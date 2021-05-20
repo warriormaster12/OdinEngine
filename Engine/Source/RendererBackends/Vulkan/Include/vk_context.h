@@ -55,9 +55,9 @@ public:
 
     static void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkShaderDescriptions& descriptions, const VkRenderPass& renderPass = VK_NULL_HANDLE);
     
-    static void CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& byteOffset);
+    static void CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize);
 
-    static void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const bool& frameOverlap ,const std::string& bufferName);
+    static void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const bool& frameOverlap ,const std::string& bufferName, const size_t& byteOffset);
     
     static void CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter, const VkSamplerAddressMode& samplerAddressMode);
     
@@ -85,15 +85,15 @@ public:
 
     // template functions 
     template<typename T>
-    static void UploadSingleBufferData(const std::string& bufferName, const T& data,const bool& frameOverlap)
+    static void UploadSingleBufferData(const std::string& bufferName, const T& data,const bool& frameOverlap, const size_t& byteOffset)
     {
         if(frameOverlap)
         {
-            UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data);
+            UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data, byteOffset);
         }
         else
         {
-            UploadSingleData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data);
+            UploadSingleData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data, byteOffset);
         }
         
         

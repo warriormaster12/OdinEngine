@@ -38,6 +38,7 @@ public:
     bool isUpdated() { return updated;}
     
     std::vector<Texture> textureObjects;
+    size_t materialByteOffset = 0;
 private:
     glm::vec4 color = glm::vec4(1.0f);
     
@@ -49,6 +50,7 @@ private:
 
 struct MaterialManager
 {
+    static void Init();
     static void CreateMaterial(const std::string& materialName, const std::string& samplerName = "default sampler");
     static Material& GetMaterial(const std::string& materialName);
     static void AddTextures(const std::string& materialName, const std::string& samplerName = "default sampler");
