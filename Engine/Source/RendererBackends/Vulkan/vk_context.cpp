@@ -460,9 +460,15 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
 void VulkanContext::BindGraphicsPipeline(const std::string& shaderName)
 {
     currentlyBoundShader = shaderName;
-    vkCmdBindPipeline(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.pipeline);
+    if(FindUnorderdMap(currentlyBoundShader, shaderProgram) == nullptr)
+    {
+        ENGINE_CORE_ERROR("Currently bound shader {0} does not exist");
+    }
+    else {
+        vkCmdBindPipeline(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.pipeline);
+    }
 }
-void VulkanContext::BindDescriptorSet(const std::string& descriptorName, const uint32_t& set, const bool& frameOverlap,const bool& isDynamic, const size_t& dataSize)
+void VulkanContext::BindDescriptorSet(const std::string& descriptorName, const uint32_t& set, const bool& frameOverlap, const bool& isDynamic, const size_t& dataSize)
 {
     if(frameOverlap == false && isDynamic == false)
     {

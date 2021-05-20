@@ -158,7 +158,7 @@ namespace Renderer
     
 
     //Equivalent to binding descriptor sets
-    void BindUniforms(const std::string& name, const uint32_t& set,const bool& frameOverlap, const bool& isDynamic = false, const size_t& dataSize =0);
+    void BindUniforms(const std::string& name, const uint32_t& set,const bool& frameOverlap,const bool& isDynamic = false, const size_t& dataSize =0);
 
     void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     

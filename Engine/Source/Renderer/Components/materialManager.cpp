@@ -55,16 +55,6 @@ Material& MaterialManager::GetMaterial(const std::string& materialName)
 
 void MaterialManager::BindMaterial(const std::string& materialName)
 {
-    if(FindUnorderdMap(materialName, materials)->GetTextures().size() != 0)
-    {
-        Renderer::BindShader("default textured world");
-    }
-    else {
-        Renderer::BindShader("default world");
-    }
-    
-    
-    
     if(FindUnorderdMap(materialName, materials)->isUpdated())
     {
         materialData.color = FindUnorderdMap(materialName, materials)->GetColor();
@@ -72,7 +62,6 @@ void MaterialManager::BindMaterial(const std::string& materialName)
         Renderer::UploadSingleUniformDataToShader(materialName + " material buffer",materialData, false);
         FindUnorderdMap(materialName, materials)->ResetUpdate();   
     }
-
     Renderer::BindUniforms(materialName,2,false);
 }
 
