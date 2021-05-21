@@ -27,33 +27,19 @@ void MaterialManager::Init()
 
 void MaterialManager::CreateMaterial(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
+    //TODO: figure out a way how to add offset without overwriting existing material
     if(FindUnorderdMap(materialName, materials) == nullptr)
     {
         materials[materialName];
         Renderer::WriteShaderUniform(materialName, "material data layout",0,false,"material buffer",currentByteOffset);
-        
+        ENGINE_CORE_TRACE("current offset: {0}", currentByteOffset);
         FindUnorderdMap(materialName, materials)->materialByteOffset = currentByteOffset;
-
+        FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0));
+        FindUnorderdMap(materialName, materials)->SetRepeateCount(1);
         //add next offset
         currentByteOffset += PadUniformBufferSize(sizeof(GPUMaterialData));
-
-        if(materialNameList.size() == 1)
-        {
-            FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0, 0.0f, 0.0f,1.0f));
-            FindUnorderdMap(materialName, materials)->SetRepeateCount(2);
-        }
-        else if(materialNameList.size() == 2)
-        {
-            FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0, 1.0f, 0.0f,1.0f));
-            FindUnorderdMap(materialName, materials)->SetRepeateCount(3);
-        }
-        else {
-            FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0));
-            FindUnorderdMap(materialName, materials)->SetRepeateCount(1);
-        }
-        
-
         materialNameList.push_back(materialName);
+        ENGINE_CORE_INFO("material by name {0} created", materialName);
     }
     else {
         ENGINE_CORE_WARN("{0} material already exists", materialName);
@@ -97,7 +83,16 @@ void MaterialManager::DeleteMaterial(const std::string& materialName)
         {
             currentTexture.DestroyTexture();
         }
-        Renderer::RemoveAllocatedBuffer("material buffer", false);
+
+        
+        if(currentByteOffset != 0)
+        {
+            if(currentByteOffset > FindUnorderdMap(materialName, materials)->materialByteOffset)
+            {
+                currentByteOffset = FindUnorderdMap(materialName, materials)->materialByteOffset;
+            }
+            ENGINE_CORE_TRACE("offset after deletion: {0}", currentByteOffset);
+        }
         materials.erase(materialName);
     }
 }
