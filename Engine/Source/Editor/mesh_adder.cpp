@@ -27,7 +27,8 @@ void MeshAdder::ShowMeshAdderWindow()
     ImGui::InputFloat("x", &translation.x);
     ImGui::InputFloat("y", &translation.y);
     ImGui::InputFloat("z", &translation.z);
-    filePath = filePathBuffer;
+    filePath = "EngineAssets/Meshes/";
+    filePath += filePathBuffer;
     if(ImGui::Button("Apply"))
     {
         RenderObject currentRenderObj;

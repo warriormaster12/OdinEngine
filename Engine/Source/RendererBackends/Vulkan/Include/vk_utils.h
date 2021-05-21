@@ -80,9 +80,6 @@ static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inp
         info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
         CreateBuffer(VkDeviceManager::GetAllocator(), &inputBuffer, info);
     }
-    else {
-        ENGINE_CORE_TRACE("this buffer will be reused");
-    }
 
     VkDescriptorBufferInfo* descriptorBufferInfo = new VkDescriptorBufferInfo;
     descriptorBufferInfo->buffer = inputBuffer.buffer;
