@@ -5,7 +5,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "glm/fwd.hpp"
 #include "texture.h"
 
 

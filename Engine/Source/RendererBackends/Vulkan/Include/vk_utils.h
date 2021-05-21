@@ -34,6 +34,16 @@ struct DescriptorSetInfo
 };
 
 void CreateBuffer(const VmaAllocator& allocator, AllocatedBuffer* outBuffer, CreateBufferInfo info);
+static size_t PadUniformBufferSize(size_t originalSize)
+{
+	// Calculate required alignment based on minimum device offset alignment
+	size_t minUboAlignment = VkDeviceManager::GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
+	size_t alignedSize = originalSize;
+	if (minUboAlignment > 0) {
+		alignedSize = (alignedSize + minUboAlignment - 1) & ~(minUboAlignment - 1);
+	}
+	return alignedSize;
+}
 
 template<typename T>
 void UploadArrayData(const VmaAllocator& allocator, const VmaAllocation& allocation, T* data, size_t len, size_t byteOffset = 0)
@@ -77,21 +87,14 @@ static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inp
     VkDescriptorBufferInfo* descriptorBufferInfo = new VkDescriptorBufferInfo;
     descriptorBufferInfo->buffer = inputBuffer.buffer;
     descriptorBufferInfo->offset = dataOffset;
-    descriptorBufferInfo->range = dataSize - dataOffset;
+    descriptorBufferInfo->range =  dataSize - dataOffset;
 
     return *descriptorBufferInfo;
 
     delete descriptorBufferInfo;
 }
 
-static size_t PadUniformBufferSize(size_t originalSize)
-{
-	// Calculate required alignment based on minimum device offset alignment
-	size_t minUboAlignment = VkDeviceManager::GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
-	size_t alignedSize = originalSize;
-	if (minUboAlignment > 0) {
-		alignedSize = (alignedSize + minUboAlignment - 1) & ~(minUboAlignment - 1);
-	}
-	return alignedSize;
-}
+
+
+
 

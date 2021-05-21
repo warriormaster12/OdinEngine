@@ -1,10 +1,9 @@
 #include "Include/materialManager.h"
 #include "Include/renderer.h"
-#include "glm/fwd.hpp"
 #include "logger.h"
+#include "vk_utils.h"
 #include "unordered_finder.h"
 
-#include <cstddef>
 #include <unordered_map>
 
 std::unordered_map<std::string, Material> materials;
@@ -22,7 +21,7 @@ struct GPUMaterialData
 void MaterialManager::Init()
 {
     const int maxMaterial = 30;
-    Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUMaterialData) * maxMaterial);
+    Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, PadUniformBufferSize(sizeof(GPUMaterialData))* maxMaterial);
     
 }
 
@@ -36,7 +35,7 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
         FindUnorderdMap(materialName, materials)->materialByteOffset = currentByteOffset;
 
         //add next offset
-        currentByteOffset += sizeof(GPUMaterialData);
+        currentByteOffset += PadUniformBufferSize(sizeof(GPUMaterialData));
 
         if(materialNameList.size() == 1)
         {
