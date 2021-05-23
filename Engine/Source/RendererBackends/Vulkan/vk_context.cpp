@@ -9,6 +9,7 @@
 #include "window_handler.h"
 
 #include "logger.h"
+#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 
@@ -222,19 +223,11 @@ void VulkanContext::CreateDescriptorSetLayoutBinding(DescripotrSetLayoutBindingI
 
 void VulkanContext::CreateDescriptorSetLayout(const std::string& layoutName)
 {
+    descriptorSetLayout[layoutName];
     VkDescriptorSetLayoutCreateInfo set = vkinit::DescriptorLayoutInfo(descriptorSetLayoutBindings);
-    if(FindUnorderdMap(layoutName, descriptorSetLayout) == nullptr)
-    {
-        //create a new list of known descriptorSetLayouts
-        descriptorSetLayout[layoutName].layout = descriptorLayoutCache.CreateDescriptorLayout(&set);
-        FindUnorderdMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
-    }
-    else
-    {
-        //add to existing list
-        FindUnorderdMap(layoutName, descriptorSetLayout)->layout = descriptorLayoutCache.CreateDescriptorLayout(&set);
-        FindUnorderdMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
-    }
+    
+    FindUnorderdMap(layoutName, descriptorSetLayout)->layout = descriptorLayoutCache.CreateDescriptorLayout(&set);
+    FindUnorderdMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
     descriptorSetLayoutBindings.clear();
 }
 
@@ -273,9 +266,8 @@ void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, 
         descriptorSets[descriptorName];
         descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
     }
-
     VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
-
+    vkWaitForFences(VkDeviceManager::GetDevice(), 1, &VkCommandbufferManager::GetCurrentFrame().renderFence, true, 1000000000);
     vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
 }
 

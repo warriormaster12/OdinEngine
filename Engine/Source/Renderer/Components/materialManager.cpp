@@ -63,7 +63,7 @@ void  MaterialManager::AddTextures(const std::string& materialName, const std::s
         FindUnorderdMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderdMap(materialName, materials)->GetTextures()[i]);
         views.push_back(FindUnorderdMap(materialName, materials)->textureObjects[i].imageView);
     }
-    Renderer::WriteShaderImage(materialName, "material data layout", 1, samplerName, views);
+    Renderer::WriteShaderImage("material set", "material data layout", 1, samplerName, views);
 };
 
 Material& MaterialManager::GetMaterial(const std::string& materialName)

@@ -200,5 +200,5 @@ void VkCommandbufferManager::EndCommands(std::function<void()> recreateSwapchain
 
 
 	//increase the number of frames drawn
-	frameNumber++;
+	frameNumber ++;
 }
