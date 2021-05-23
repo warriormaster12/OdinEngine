@@ -30,7 +30,7 @@ struct DescriptorSetLayoutInfo
 struct DescriptorSetInfo
 {
     VkDescriptorSet descriptorSet;
-    AllocatedBuffer allocatedBuffer;
+    VkDescriptorType type;
 };
 
 void CreateBuffer(const VmaAllocator& allocator, AllocatedBuffer* outBuffer, CreateBufferInfo info);
@@ -70,7 +70,7 @@ void UploadSingleData(const VmaAllocation& allocation, const T& data, size_t byt
     UploadArrayData(VkDeviceManager::GetAllocator(), allocation, &data, 1, byteOffset);
 }
 
-static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inputBuffer, const size_t& dataSize,const size_t& dataOffset = 0)
+static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inputBuffer, const size_t& dataSize,const size_t& dataOffset = 0, const size_t& dataRange = 0)
 {
     if(inputBuffer.allocation == VK_NULL_HANDLE)
     {
@@ -80,11 +80,20 @@ static const VkDescriptorBufferInfo& CreateDescriptorBuffer(AllocatedBuffer& inp
         info.memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
         CreateBuffer(VkDeviceManager::GetAllocator(), &inputBuffer, info);
     }
-
+    
     VkDescriptorBufferInfo* descriptorBufferInfo = new VkDescriptorBufferInfo;
     descriptorBufferInfo->buffer = inputBuffer.buffer;
     descriptorBufferInfo->offset = dataOffset;
-    descriptorBufferInfo->range =  dataSize - dataOffset;
+    if(dataRange == 0)
+    {
+        //this is for static descriptorSets
+        descriptorBufferInfo->range =  dataSize - dataOffset;
+    }
+    else {
+        //this is for dynamic descriptorSets
+        descriptorBufferInfo->range =  dataRange;
+    }
+        
 
     return *descriptorBufferInfo;
 

@@ -11,8 +11,8 @@ std::vector<RenderObject> objects;
 void ObjectManager::Init()
 {
     const int MAX_OBJECTS = 10000;
-    Renderer::CreateShaderUniformBuffer("mesh buffer", true, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPUObjectData) * MAX_OBJECTS);
-    Renderer::WriteShaderUniform("object data", "triangle object layout",0,true,"mesh buffer");
+    Renderer::CreateShaderUniformBuffer("mesh buffer", false, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPUObjectData) * MAX_OBJECTS);
+    Renderer::WriteShaderUniform("object data", "triangle object layout",0,false,"mesh buffer");
 
     //Renderer::PrepareIndirectDraw(1000);
 }
@@ -34,7 +34,7 @@ void ObjectManager::RenderObjects()
             objData.modelMatrix = obj.transformMatrix;
             objectData.push_back(objData);
         }
-        Renderer::UploadVectorUniformDataToShader("mesh buffer",objectData, true);  
+        Renderer::UploadVectorUniformDataToShader("mesh buffer",objectData, false);  
         
 
         //batch draw calls
@@ -86,8 +86,8 @@ void ObjectManager::RenderObjects()
                 Renderer::BindShader("default world");
             }
             MaterialManager::BindMaterial(*currentDc.p_material);
-            Renderer::BindUniforms("camera data", 0, true);
-            Renderer::BindUniforms("object data", 1,true);
+            Renderer::BindUniforms("camera data", 0);
+            Renderer::BindUniforms("object data", 1);
             Renderer::BindVertexBuffer(currentDc.p_mesh->vertexBuffer);
             Renderer::BindIndexBuffer(currentDc.p_mesh->indexBuffer);
             
@@ -99,7 +99,7 @@ void ObjectManager::RenderObjects()
 
 void ObjectManager::Destroy()
 {
-    Renderer::RemoveAllocatedBuffer("mesh buffer", true);
+    Renderer::RemoveAllocatedBuffer("mesh buffer", false);
 
     MaterialManager::DeleteAllMaterials();
 

@@ -37,7 +37,7 @@ public:
     bool isUpdated() { return updated;}
     
     std::vector<Texture> textureObjects;
-    size_t materialByteOffset = 0;
+    uint32_t offset = 0;
 private:
     glm::vec4 color = glm::vec4(1.0f);
     

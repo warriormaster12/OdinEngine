@@ -122,7 +122,7 @@ void Camera::UpdateCamera(float deltaTime)
 		camData.viewMatrix = GetViewMatrix();
 		camData.projectionMatrix = GetProjectionMatrix();
 
-		Renderer::UploadSingleUniformDataToShader("camera buffer", camData, true);
+		Renderer::UploadSingleUniformDataToShader("camera buffer", camData, false);
 		cameraUpdated = false;
 	}
 	

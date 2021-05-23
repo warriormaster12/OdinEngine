@@ -45,17 +45,17 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_STORAGE_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayout("triangle object layout");
     
-    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER,SHADER_STAGE_FRAGMENT_BIT, 0);
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER_DYNAMIC,SHADER_STAGE_FRAGMENT_BIT, 0);
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 1, 2);
     Renderer::CreateShaderUniformLayout("material data layout");
     
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
 
-    Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
+    Renderer::CreateShaderUniformBuffer("camera buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
     
 
-    Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,true,"camera buffer");
+    Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,false,"camera buffer");
     
     MaterialManager::Init();
     ObjectManager::Init();
@@ -103,7 +103,7 @@ void Core::CoreCleanup()
             
             PipelineManager::DestroyRendererPipelines();
             ObjectManager::Destroy();
-            Renderer::RemoveAllocatedBuffer("camera buffer", true);
+            Renderer::RemoveAllocatedBuffer("camera buffer", false);
             
         });
         Renderer::CleanUpRenderer(&additionalDeletion);

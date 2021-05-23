@@ -4,13 +4,15 @@
 #include "vk_utils.h"
 #include "unordered_finder.h"
 
+#include <bits/stdint-uintn.h>
 #include <unordered_map>
+#include <vector>
 
 std::unordered_map<std::string, Material> materials;
 
 std::vector<std::string> materialNameList;
+std::vector<uint32_t> deletedOffsets;
 
-size_t currentByteOffset = 0;
 
 struct GPUMaterialData
 {
@@ -18,10 +20,11 @@ struct GPUMaterialData
     glm::vec4 repeateCount;
 }materialData;
 
+const int maxMaterial = 30;
 void MaterialManager::Init()
 {
-    const int maxMaterial = 30;
-    Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, PadUniformBufferSize(sizeof(GPUMaterialData))* maxMaterial);
+    Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, PadUniformBufferSize(sizeof(GPUMaterialData))* maxMaterial, sizeof(GPUMaterialData));
+    Renderer::WriteShaderUniform("material set", "material data layout",0,false,"material buffer");
     
 }
 
@@ -31,13 +34,18 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
     if(FindUnorderdMap(materialName, materials) == nullptr)
     {
         materials[materialName];
-        Renderer::WriteShaderUniform(materialName, "material data layout",0,false,"material buffer",currentByteOffset);
-        ENGINE_CORE_TRACE("current offset: {0}", currentByteOffset);
-        FindUnorderdMap(materialName, materials)->materialByteOffset = currentByteOffset;
+        if(deletedOffsets.size() !=0)
+        {
+            FindUnorderdMap(materialName, materials)->offset = deletedOffsets[deletedOffsets.size()-1];
+            deletedOffsets.pop_back();
+        }
+        else {
+            int currentIndex = materialNameList.size() % maxMaterial;
+            FindUnorderdMap(materialName, materials)->offset = currentIndex * PadUniformBufferSize(sizeof(GPUMaterialData));
+        }
+        
         FindUnorderdMap(materialName, materials)->SetColor(glm::vec4(1.0));
         FindUnorderdMap(materialName, materials)->SetRepeateCount(1);
-        //add next offset
-        currentByteOffset += PadUniformBufferSize(sizeof(GPUMaterialData));
         materialNameList.push_back(materialName);
         ENGINE_CORE_INFO("material by name {0} created", materialName);
     }
@@ -65,14 +73,17 @@ Material& MaterialManager::GetMaterial(const std::string& materialName)
 
 void MaterialManager::BindMaterial(const std::string& materialName)
 {
+
+    uint32_t offset = FindUnorderdMap(materialName, materials)->offset;
     if(FindUnorderdMap(materialName, materials)->isUpdated())
     {
         materialData.color = FindUnorderdMap(materialName, materials)->GetColor();
         materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->GetRepeateCount());
-        Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, FindUnorderdMap(materialName, materials)->materialByteOffset);
-        FindUnorderdMap(materialName, materials)->ResetUpdate();   
+        FindUnorderdMap(materialName, materials)->ResetUpdate();
+        Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, offset);   
     }
-    Renderer::BindUniforms(materialName,2,false);
+    
+    Renderer::BindUniforms("material set",2,offset);
 }
 
 void MaterialManager::DeleteMaterial(const std::string& materialName)
@@ -83,16 +94,15 @@ void MaterialManager::DeleteMaterial(const std::string& materialName)
         {
             currentTexture.DestroyTexture();
         }
-
-        
-        if(currentByteOffset != 0)
+        for(int i = 0; i < materialNameList.size(); i++)
         {
-            if(currentByteOffset > FindUnorderdMap(materialName, materials)->materialByteOffset)
+            if(materialNameList[i] == materialName)
             {
-                currentByteOffset = FindUnorderdMap(materialName, materials)->materialByteOffset;
+                materialNameList.erase(materialNameList.begin() + i);
+                materialNameList.shrink_to_fit();
             }
-            ENGINE_CORE_TRACE("offset after deletion: {0}", currentByteOffset);
         }
+        deletedOffsets.push_back(FindUnorderdMap(materialName, materials)->offset); 
         materials.erase(materialName);
     }
 }

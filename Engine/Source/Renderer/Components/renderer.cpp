@@ -76,11 +76,11 @@ void Renderer::RemoveShaderUniformLayout(const std::string& layoutName)
     }
 }
 
-void Renderer::CreateShaderUniformBuffer(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize)
+void Renderer::CreateShaderUniformBuffer(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& dataRange /*= 0*/)
 {
     if(currentBackend == AvailableBackends::Vulkan)
     {
-        VulkanContext::CreateUniformBufferInfo(bufferName, frameOverlap, bufferUsage, dataSize);
+        VulkanContext::CreateUniformBufferInfo(bufferName, frameOverlap, bufferUsage, dataSize, dataRange);
     }
 }
 
@@ -161,11 +161,11 @@ void Renderer::BindShader(const std::string& shaderName)
         VulkanContext::BindGraphicsPipeline(shaderName);
     }   
 }
-void Renderer::BindUniforms(const std::string& name, const uint32_t& set,  const bool& frameOverlap, const bool& isDynamic /*= false*/, const size_t& dataSize /*=0*/)
+void Renderer::BindUniforms(const std::string& name, const uint32_t& set, const uint32_t& dynamicOffset /*= 0*/ )
 {
     if(currentBackend == AvailableBackends::Vulkan)
     {
-        VulkanContext::BindDescriptorSet(name, set, frameOverlap,isDynamic, dataSize);
+        VulkanContext::BindDescriptorSet(name, set,dynamicOffset);
     }
 }
 

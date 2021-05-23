@@ -55,7 +55,7 @@ public:
 
     static void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkShaderDescriptions& descriptions, const VkRenderPass& renderPass = VK_NULL_HANDLE);
     
-    static void CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize);
+    static void CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& dataRange);
 
     static void CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding ,const bool& frameOverlap ,const std::string& bufferName, const size_t& byteOffset);
     
@@ -68,7 +68,7 @@ public:
     static void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap);
 
     static void BindGraphicsPipeline(const std::string& shaderName);
-    static void BindDescriptorSet(const std::string& descriptorName, const uint32_t& set, const bool& frameOverlap, const bool& isDynamic, const size_t& dataSize);
+    static void BindDescriptorSet(const std::string& descriptorName, const uint32_t& set,const uint32_t& dynamicOffset);
     static void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     static void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     static void DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance);
