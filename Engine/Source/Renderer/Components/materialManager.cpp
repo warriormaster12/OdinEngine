@@ -63,7 +63,7 @@ void  MaterialManager::AddTextures(const std::string& materialName, const std::s
         FindUnorderdMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderdMap(materialName, materials)->GetTextures()[i]);
         views.push_back(FindUnorderdMap(materialName, materials)->textureObjects[i].imageView);
     }
-    Renderer::WriteShaderImage("material set", "material data layout", 1, samplerName, views);
+    Renderer::WriteShaderImage(materialName, "texture data layout", 0, samplerName, views);
 };
 
 Material& MaterialManager::GetMaterial(const std::string& materialName)
@@ -80,9 +80,13 @@ void MaterialManager::BindMaterial(const std::string& materialName)
         materialData.color = FindUnorderdMap(materialName, materials)->GetColor();
         materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->GetRepeateCount());
         FindUnorderdMap(materialName, materials)->ResetUpdate();
-        Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, offset);   
+        Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, offset);
     }
-    
+
+    if(FindUnorderdMap(materialName, materials)->textureObjects.size() != 0)
+    {
+        Renderer::BindUniforms(materialName,3,offset);
+    } 
     Renderer::BindUniforms("material set",2,offset);
 }
 

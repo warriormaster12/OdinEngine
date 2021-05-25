@@ -267,7 +267,6 @@ void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, 
         descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
     }
     VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
-    vkWaitForFences(VkDeviceManager::GetDevice(), 1, &VkCommandbufferManager::GetCurrentFrame().renderFence, true, 1000000000);
     vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
 }
 

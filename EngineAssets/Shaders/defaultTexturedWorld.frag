@@ -14,7 +14,7 @@ layout(set = 2, binding = 0) uniform MaterialData
     vec4 repeateCount;
 }materialData;
 
-layout(set = 2, binding = 1) uniform sampler2D textureMaps[2];
+layout(set = 3, binding = 0) uniform sampler2D textureMaps[2];
 void main()
 {
     vec4 albedo = texture(textureMaps[0], inUv * int(materialData.repeateCount)) * materialData.color;

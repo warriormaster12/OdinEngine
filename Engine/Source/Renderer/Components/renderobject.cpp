@@ -12,7 +12,7 @@ void ObjectManager::Init()
 {
     const int MAX_OBJECTS = 10000;
     Renderer::CreateShaderUniformBuffer("mesh buffer", false, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPUObjectData) * MAX_OBJECTS);
-    Renderer::WriteShaderUniform("object data", "triangle object layout",0,false,"mesh buffer");
+    Renderer::WriteShaderUniform("object data", "per object layout",0,false,"mesh buffer");
 
     //Renderer::PrepareIndirectDraw(1000);
 }
