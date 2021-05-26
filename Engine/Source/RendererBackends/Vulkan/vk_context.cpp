@@ -333,11 +333,9 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
         auto& buffer =  *FindUnorderdMap(bufferName, allocatedBuffers);
         if(FindUnorderdMap(descriptorName, descriptorSets) == nullptr)
         {
-            if(binding == 0)
-            {
-                descriptorSets[descriptorName];
-                descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
-            }
+            descriptorSets[descriptorName];
+            descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
+
             if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
             {
                 bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset, buffer.dataRange);
@@ -349,6 +347,26 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
 
             VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
             FindUnorderdMap(descriptorName,descriptorSets)->type = bindings[binding].descriptorType;
+            vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputBuffer, 0, nullptr);
+        }
+        else {
+            if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+            {
+                bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset, buffer.dataRange);
+            }
+            else
+            {
+                bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset, buffer.dataRange);
+            }
+
+            VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
+            for(int i = 0; i < bindings.size(); i++)
+            {
+                if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+                {
+                    FindUnorderdMap(descriptorName,descriptorSets)->type = bindings[binding].descriptorType;
+                }
+            }
             vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputBuffer, 0, nullptr);
         }
     }

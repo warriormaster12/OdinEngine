@@ -6,7 +6,7 @@
 
 layout (location = 0) out vec4 outFragColor;
 
-layout(set = 2, binding = 0) uniform MaterialData
+layout(set = 1, binding = 1) uniform MaterialData
 {
     vec4 color;
     vec4 repeateCount;

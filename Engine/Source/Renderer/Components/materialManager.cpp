@@ -24,7 +24,7 @@ const int maxMaterial = 30;
 void MaterialManager::Init()
 {
     Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, PadUniformBufferSize(sizeof(GPUMaterialData))* maxMaterial, sizeof(GPUMaterialData));
-    Renderer::WriteShaderUniform("material set", "material data layout",0,false,"material buffer");
+    Renderer::WriteShaderUniform("object data", "per object layout",1,false,"material buffer");
     
 }
 
@@ -87,7 +87,7 @@ void MaterialManager::BindMaterial(const std::string& materialName)
     {
         Renderer::BindUniforms(materialName,3,offset);
     } 
-    Renderer::BindUniforms("material set",2,offset);
+    // Renderer::BindUniforms("material set",2,offset);
 }
 
 void MaterialManager::DeleteMaterial(const std::string& materialName)
