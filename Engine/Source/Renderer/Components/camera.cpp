@@ -6,6 +6,8 @@
 #include "vk_swapchain.h"
 #include "window_handler.h"
 
+#include "light.h"
+
 
 bool cameraUpdated = false;
 
@@ -125,6 +127,8 @@ void Camera::UpdateCamera(float deltaTime)
 		Renderer::UploadSingleUniformDataToShader("camera buffer", camData, false);
 		cameraUpdated = false;
 	}
+	LightManager::SetCamPos(position);
+	LightManager::Update();
 	
 }
 

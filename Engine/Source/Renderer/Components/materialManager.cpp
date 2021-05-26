@@ -1,5 +1,6 @@
 #include "Include/materialManager.h"
 #include "Include/renderer.h"
+#include "glm/fwd.hpp"
 #include "logger.h"
 #include "vk_utils.h"
 #include "unordered_finder.h"
@@ -16,7 +17,11 @@ std::vector<uint32_t> deletedOffsets;
 
 struct GPUMaterialData
 {
-    glm::vec4 color;
+    glm::vec4 albedo; //vec3
+    glm::vec4 metallic = glm::vec4(0.5f); //float
+    glm::vec4 roughness = glm::vec4(0.5f); //float
+    glm::vec4 ao = glm::vec4(1.0f); //float
+
     glm::vec4 repeateCount;
 }materialData;
 
@@ -77,7 +82,7 @@ void MaterialManager::BindMaterial(const std::string& materialName)
     uint32_t offset = FindUnorderdMap(materialName, materials)->offset;
     if(FindUnorderdMap(materialName, materials)->isUpdated())
     {
-        materialData.color = FindUnorderdMap(materialName, materials)->GetColor();
+        materialData.albedo = FindUnorderdMap(materialName, materials)->GetColor();
         materialData.repeateCount = glm::vec4(FindUnorderdMap(materialName, materials)->GetRepeateCount());
         FindUnorderdMap(materialName, materials)->ResetUpdate();
         Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, offset);

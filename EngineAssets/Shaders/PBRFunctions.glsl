@@ -1,6 +1,6 @@
  
-#ifndef INCLUDE_TEST_GLSL
-#define INCLUDE_TEST_GLSL
+#ifndef INCLUDE_PBRfunctions_GLSL
+#define INCLUDE_PBRfunctions_GLSL
 
 
 const float PI = 3.14159265359;

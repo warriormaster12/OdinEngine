@@ -40,7 +40,8 @@ void Core::CoreInit()
     Renderer::CreateFramebuffer(FRAMEBUFFER_MAIN);
 
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
-    Renderer::CreateShaderUniformLayout("triangle camera layout");
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_FRAGMENT_BIT, 1);
+    Renderer::CreateShaderUniformLayout("per frame layout");
     
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_STORAGE_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER_DYNAMIC,SHADER_STAGE_FRAGMENT_BIT, 1);
@@ -55,7 +56,7 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformBuffer("camera buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
     
 
-    Renderer::WriteShaderUniform("camera data", "triangle camera layout",0,false,"camera buffer");
+    Renderer::WriteShaderUniform("camera data", "per frame layout",0,false,"camera buffer");
     
     MaterialManager::Init();
     ObjectManager::Init();
@@ -98,7 +99,7 @@ void Core::CoreCleanup()
         additionalDeletion.PushFunction([=](){
             Renderer::RemoveShaderUniformLayout("texture data layout");
             //Renderer::RemoveShaderUniformLayout("material data layout");
-            Renderer::RemoveShaderUniformLayout("triangle camera layout");
+            Renderer::RemoveShaderUniformLayout("per frame layout");
             Renderer::RemoveShaderUniformLayout("per object layout");
 
             
