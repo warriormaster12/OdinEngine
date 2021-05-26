@@ -8,13 +8,13 @@ layout (location = 0) in vec3 inColor;
 layout (location = 1) in vec2 inUv;
 layout (location = 0) out vec4 outFragColor;
 
-layout(set = 2, binding = 0) uniform MaterialData
+layout(set = 1, binding = 1) uniform MaterialData
 {
     vec4 color;
     vec4 repeateCount;
 }materialData;
 
-layout(set = 3, binding = 0) uniform sampler2D textureMaps[2];
+layout(set = 2, binding = 0) uniform sampler2D textureMaps[2];
 void main()
 {
     vec4 albedo = texture(textureMaps[0], inUv * int(materialData.repeateCount)) * materialData.color;

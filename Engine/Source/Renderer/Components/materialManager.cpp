@@ -85,9 +85,8 @@ void MaterialManager::BindMaterial(const std::string& materialName)
 
     if(FindUnorderdMap(materialName, materials)->textureObjects.size() != 0)
     {
-        Renderer::BindUniforms(materialName,3,offset);
+        Renderer::BindUniforms(materialName,2,offset);
     } 
-    // Renderer::BindUniforms("material set",2,offset);
 }
 
 void MaterialManager::DeleteMaterial(const std::string& materialName)
