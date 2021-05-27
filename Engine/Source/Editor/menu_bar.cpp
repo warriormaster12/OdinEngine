@@ -12,6 +12,7 @@
 
 #include "Include/mesh_adder.h"
 #include "Include/material_editor.h"
+#include "Include/light_adder.h"
 
 
 void MenuBar::ShowMenuBar()
@@ -70,6 +71,7 @@ void MenuBar::ShowMenuBar()
         {
             MeshAdder::ShowMeshAdderWindow();
             MaterialEditor::ShowMaterialWindow();
+            LightAdder::ShowLightAdderWindow();
         }
     }
     
