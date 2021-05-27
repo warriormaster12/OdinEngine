@@ -18,8 +18,8 @@ std::vector<uint32_t> deletedOffsets;
 struct GPUMaterialData
 {
     glm::vec4 albedo; //vec3
-    glm::vec4 metallic = glm::vec4(0.5f); //float
-    glm::vec4 roughness = glm::vec4(0.5f); //float
+    glm::vec4 metallic = glm::vec4(1.0f); //float
+    glm::vec4 roughness = glm::vec4(0.3f); //float
     glm::vec4 ao = glm::vec4(1.0f); //float
 
     glm::vec4 repeateCount;

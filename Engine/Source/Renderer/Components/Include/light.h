@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <glm/glm.hpp>
+#include <vector>
 
 
 class LightManager
@@ -25,6 +26,7 @@ struct PointLight
 
 struct GPULightData
 {
-    PointLight pLights[4];
+    glm::vec4 lightCount; //int
     glm::vec4 camPos; //vec3
+    PointLight pLights[4];
 };

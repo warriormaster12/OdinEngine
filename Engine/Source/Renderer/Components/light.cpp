@@ -1,11 +1,15 @@
 #include "Include/light.h"
 
 #include "Include/renderer.h"
-#include "glm/fwd.hpp"
+
+
+
+std::vector<PointLight> pLights;
 
 void LightManager::Init()
 {
-    Renderer::CreateShaderUniformBuffer("light buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPULightData));
+    pLights.resize(4);
+    Renderer::CreateShaderUniformBuffer("light buffer", false, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPULightData));
     
 
     Renderer::WriteShaderUniform("camera data", "per frame layout",1,false,"light buffer");
@@ -14,12 +18,16 @@ void LightManager::Init()
 void LightManager::Update()
 {
     GPULightData lightData{};
-    lightData.pLights[0].position = glm::vec4(glm::vec3(-10.0f,  10.0f, 10.0f),0.0f);
-    lightData.pLights[1].position = glm::vec4(glm::vec3(10.0f,  10.0f, 10.0f),0.0f);
-    lightData.pLights[2].position = glm::vec4(glm::vec3(-10.0f, -10.0f, 10.0f), 0.0f);
-    lightData.pLights[3].position = glm::vec4(glm::vec3(10.0f, -10.0f, 10.0f),0.0f);
-
+    lightData.lightCount = glm::vec4(4);
     lightData.camPos = glm::vec4(GetCamPos(), 0.0f);
+    pLights[0].position = glm::vec4(glm::vec3(-10.0f,  10.0f, 10.0f),0.0f);
+    pLights[1].position = glm::vec4(glm::vec3(10.0f,  10.0f, 10.0f),0.0f);
+    pLights[2].position = glm::vec4(glm::vec3(-10.0f, -10.0f, 10.0f), 0.0f);
+    pLights[3].position = glm::vec4(glm::vec3(10.0f, -10.0f, 10.0f),0.0f);
+    for(int i = 0; i < pLights.size(); i++)
+    {
+        lightData.pLights[i].position = pLights[i].position;
+    }
 
     Renderer::UploadSingleUniformDataToShader("light buffer", lightData, false);
 }

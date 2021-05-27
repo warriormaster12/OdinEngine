@@ -26,10 +26,11 @@ struct PointLight
     vec4 color; //vec3
 };
 
-layout(set = 0, binding = 1) uniform LightData
+layout(std430, set = 0, binding = 1) buffer LightData
 {
-    PointLight pLights[4];
+    vec4 lightCount; //int
     vec4 camPos; //vec3
+    PointLight pLights[];
 }lightData;
 
 void main()
@@ -44,7 +45,7 @@ void main()
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
-    for(int i = 0; i < 4; ++i) 
+    for(int i = 0; i < int(lightData.lightCount); ++i) 
     {
         // calculate per-light radiance
         vec3 L = normalize(vec3(lightData.pLights[i].position) - inPosition);
