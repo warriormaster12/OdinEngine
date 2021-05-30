@@ -1,11 +1,19 @@
 #include "Include/render_object.h"
 #include "Include/renderer.h"
 #include "Include/material_manager.h"
+#include "glm/fwd.hpp"
 #include "logger.h"
 #include <memory>
 
+#include <glm/glm.hpp>
+
 
 std::vector<RenderObject> objects;
+
+struct TextureCheck
+{
+    glm::vec4 textures[2];
+};
 
 
 void ObjectManager::Init()
@@ -84,6 +92,10 @@ void ObjectManager::RenderObjects()
             else 
             {
                 Renderer::BindShader("default world");
+                TextureCheck data{};
+                data.textures[0] = glm::vec4(0);
+                data.textures[1] = glm::vec4(1);
+                //Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &data);
             }
             MaterialManager::BindMaterial(*currentDc.p_material);
             Renderer::BindUniforms("camera data", 0, 0, true);

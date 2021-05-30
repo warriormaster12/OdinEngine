@@ -113,6 +113,13 @@ struct VertexLocationInfo
 	uint32_t offset;
 };
 
+struct PushConstant
+{
+    uint32_t offset;
+    uint32_t dataSize = 0;
+    ShaderStageFlags shaderStage;
+};
+
 struct ShaderDescriptions
 {
     std::vector <VertexLocationInfo> vertexLocations;
@@ -123,6 +130,9 @@ struct ShaderDescriptions
 
     bool depthTesting = false;
     CompareOp depthCompareType = COMPARE_OP_EQUAL;
+
+    PushConstant pushConstant;
+
 };
 
 namespace Renderer
@@ -159,6 +169,8 @@ namespace Renderer
 
     //Equivalent to binding descriptor sets
     void BindUniforms(const std::string& name, const uint32_t& set, const uint32_t& dynamicOffset = 0, const bool& frameOverlap = false);
+
+    void BindPushConstants(const ShaderStageFlags& shaderStage, const uint32_t& offset, const uint32_t& dataSize, const void* data);
 
     void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     

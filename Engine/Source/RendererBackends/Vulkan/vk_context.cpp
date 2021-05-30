@@ -14,7 +14,6 @@
 
 
 
-
 VkRenderPass mainPass;
 std::vector<VkFramebuffer> mainFramebuffer;
 
@@ -447,6 +446,16 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
     {
         layouts.push_back(FindUnorderdMap(layoutNames[i], descriptorSetLayout)->layout);
     }
+    if(descriptions.pushConstant.dataSize != 0)
+    {
+        VkPushConstantRange pushConstantRange;
+        pushConstantRange.offset = descriptions.pushConstant.offset;
+        pushConstantRange.size = descriptions.pushConstant.dataSize;
+        pushConstantRange.stageFlags = descriptions.pushConstant.shaderStage;
+        pipLayoutInfo.pushConstantRangeCount = 1;
+        pipLayoutInfo.pPushConstantRanges = &pushConstantRange;
+    }
+
     pipLayoutInfo.pSetLayouts = layouts.data();
     pipLayoutInfo.setLayoutCount = layouts.size();
     shaderEffect = *vkcomponent::BuildEffect(shaderModules, pipLayoutInfo);
@@ -515,6 +524,10 @@ void VulkanContext::BindGraphicsPipeline(const std::string& shaderName)
     else {
         vkCmdBindPipeline(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.pipeline);
     }
+}
+void VulkanContext::PushConstants(const VkShaderStageFlags& shaderStage, const uint32_t& offset, const uint32_t& dataSize, const void* data)
+{
+    vkCmdPushConstants(VkCommandbufferManager::GetCommandBuffer(), FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, shaderStage, offset, dataSize, data);
 }
 void VulkanContext::BindDescriptorSet(const std::string& descriptorName, const uint32_t& set, const uint32_t& dynamicOffset, const bool& frameOverlap)
 {

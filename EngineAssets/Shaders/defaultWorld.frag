@@ -17,7 +17,7 @@ layout(set = 1, binding = 1) uniform MaterialData
     vec4 roughness; //float
     vec4 ao; //float
 
-    vec4 repeateCount;
+    vec4 repeateCount; //int
 }materialData;
 
 struct PointLight

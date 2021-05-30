@@ -2,17 +2,39 @@
 
 #extension GL_GOOGLE_include_directive : enable
 
-#include "test.glsl"
+#include "PBRFunctions.glsl"
 
-layout (location = 0) in vec3 inColor;
+layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec2 inUv;
-layout (location = 0) out vec4 outFragColor;
+layout (location = 2) in vec3 inNormal;
+
+layout( push_constant ) uniform constants
+{
+    vec4 textures[8]; //int
+} PushConstants;
 
 layout(set = 1, binding = 1) uniform MaterialData
 {
-    vec4 color;
-    vec4 repeateCount;
+    vec4 albedo; //vec3
+    vec4 metallic; //float
+    vec4 roughness; //float
+    vec4 ao; //float
+
+    vec4 repeateCount; //int
 }materialData;
+
+struct PointLight
+{
+    vec4 position; //vec3
+    vec4 color; //vec3
+};
+
+layout(std430, set = 0, binding = 1) buffer LightData
+{
+    vec4 lightCount; //int
+    vec4 camPos; //vec3
+    PointLight pLights[];
+}lightData;
 
 layout(set = 2, binding = 0) uniform sampler2D textureMaps[2];
 void main()

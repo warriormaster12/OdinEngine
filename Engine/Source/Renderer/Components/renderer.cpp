@@ -1,5 +1,7 @@
 #include "Include/renderer.h"
 #include "logger.h"
+#include "vk_context.h"
+#include <vulkan/vulkan_core.h>
 
 
 
@@ -144,6 +146,9 @@ void Renderer::CreateShader(std::vector<std::string> shaderPaths, const std::str
             vkDescriptions.depthTesting = descriptions->depthTesting;
             vkDescriptions.polygonMode = (VkPolygonMode)descriptions->polygonMode;
             vkDescriptions.vertexLocations.resize(descriptions->vertexLocations.size());
+            vkDescriptions.pushConstant.dataSize = descriptions->pushConstant.dataSize;
+            vkDescriptions.pushConstant.offset = descriptions->pushConstant.offset;
+            vkDescriptions.pushConstant.shaderStage = descriptions->pushConstant.shaderStage;
             for(int i = 0; i < descriptions->vertexLocations.size(); i++)
             {
                 vkDescriptions.vertexLocations[i].format = (VkFormat)descriptions->vertexLocations[i].format;
@@ -175,6 +180,17 @@ void Renderer::UpdateRenderer(std::array<float, 4> clearColor, std::function<voi
     {
         VulkanContext::UpdateDraw(clearColor.data(), [=]{drawCalls();});
     } 
+}
+
+void Renderer::BindPushConstants(const ShaderStageFlags& shaderStage, const uint32_t& offset, const uint32_t& dataSize, const void* data)
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        VulkanContext::PushConstants((VkShaderStageFlags)shaderStage, offset, dataSize, data);
+    } 
+    else {
+        ENGINE_CORE_ERROR("Please select an API that supports push constants feature");
+    }
 }
 
 void Renderer::BindVertexBuffer(AllocatedBuffer& vertexBuffer)

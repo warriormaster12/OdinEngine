@@ -21,6 +21,13 @@ struct ShaderProgram
     vkcomponent::ShaderPass pass;
 };
 
+struct VkPushConstant
+{
+    uint32_t offset;
+    uint32_t dataSize;
+    VkShaderStageFlags shaderStage;
+};
+
 struct VkShaderDescriptions
 {
     std::vector <VkLocationInfo> vertexLocations;
@@ -31,6 +38,8 @@ struct VkShaderDescriptions
 
     bool depthTesting = false;
     VkCompareOp depthCompareType = VK_COMPARE_OP_EQUAL;
+
+    VkPushConstant pushConstant;
 };
 
 
@@ -69,6 +78,7 @@ public:
     static void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap);
 
     static void BindGraphicsPipeline(const std::string& shaderName);
+    static void PushConstants(const VkShaderStageFlags& shaderStage, const uint32_t& offset, const uint32_t& dataSize, const void* data);
     static void BindDescriptorSet(const std::string& descriptorName, const uint32_t& set,const uint32_t& dynamicOffset, const bool& frameOverlap);
     static void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     static void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
