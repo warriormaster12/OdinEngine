@@ -161,11 +161,11 @@ void Renderer::BindShader(const std::string& shaderName)
         VulkanContext::BindGraphicsPipeline(shaderName);
     }   
 }
-void Renderer::BindUniforms(const std::string& name, const uint32_t& set, const uint32_t& dynamicOffset /*= 0*/ )
+void Renderer::BindUniforms(const std::string& name, const uint32_t& set, const uint32_t& dynamicOffset /*= 0*/, const bool& frameOverlap /*= false*/ )
 {
     if(currentBackend == AvailableBackends::Vulkan)
     {
-        VulkanContext::BindDescriptorSet(name, set,dynamicOffset);
+        VulkanContext::BindDescriptorSet(name, set,dynamicOffset, frameOverlap);
     }
 }
 

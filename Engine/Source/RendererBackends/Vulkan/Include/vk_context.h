@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 
+#include "vk_commandbuffer.h"
 #include "vk_pipelinebuilder.h"
 #include "vk_types.h"
 #include "vk_utils.h"
@@ -68,7 +69,7 @@ public:
     static void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap);
 
     static void BindGraphicsPipeline(const std::string& shaderName);
-    static void BindDescriptorSet(const std::string& descriptorName, const uint32_t& set,const uint32_t& dynamicOffset);
+    static void BindDescriptorSet(const std::string& descriptorName, const uint32_t& set,const uint32_t& dynamicOffset, const bool& frameOverlap);
     static void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     static void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
     static void DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance);
@@ -89,7 +90,10 @@ public:
     {
         if(frameOverlap)
         {
-            UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data, byteOffset);
+            for(int i = 0; i < FRAME_OVERLAP; i++)
+            {
+                UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer)->allocation, data, byteOffset);
+            }
         }
         else
         {
@@ -103,7 +107,11 @@ public:
     {
         if(frameOverlap)
         {
-            UploadVectorData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, data);
+            for(int i = 0; i < FRAME_OVERLAP; i++)
+            {
+                UploadVectorData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer)->allocation, data);
+            }
+            
         }
         else
         {

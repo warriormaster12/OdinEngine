@@ -86,7 +86,7 @@ void ObjectManager::RenderObjects()
                 Renderer::BindShader("default world");
             }
             MaterialManager::BindMaterial(*currentDc.p_material);
-            Renderer::BindUniforms("camera data", 0);
+            Renderer::BindUniforms("camera data", 0, 0, true);
             Renderer::BindUniforms("object data", 1, MaterialManager::GetMaterial(*currentDc.p_material).offset);
             Renderer::BindVertexBuffer(currentDc.p_mesh->vertexBuffer);
             Renderer::BindIndexBuffer(currentDc.p_mesh->indexBuffer);

@@ -10,10 +10,10 @@ int lightCount = 0;
 
 void LightManager::Init()
 {
-    Renderer::CreateShaderUniformBuffer("light buffer", false, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPULightData));
+    Renderer::CreateShaderUniformBuffer("light buffer", true, BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(GPULightData));
     
 
-    Renderer::WriteShaderUniform("camera data", "per frame layout",1,false,"light buffer");
+    Renderer::WriteShaderUniform("camera data", "per frame layout",1,true,"light buffer");
 }
 
 void LightManager::AddLight(const glm::vec3& position, const glm::vec3& color)
@@ -38,11 +38,11 @@ void LightManager::Update()
         }
     }
 
-    Renderer::UploadSingleUniformDataToShader("light buffer", lightData, false);
+    Renderer::UploadSingleUniformDataToShader("light buffer", lightData, true);
 }
 
 
 void LightManager::Destroy()
 {
-    Renderer::RemoveAllocatedBuffer("light buffer", false);
+    Renderer::RemoveAllocatedBuffer("light buffer", true);
 };
