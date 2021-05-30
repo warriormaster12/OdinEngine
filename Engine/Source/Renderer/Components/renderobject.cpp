@@ -103,7 +103,7 @@ void ObjectManager::Destroy()
 
     MaterialManager::DeleteAllMaterials();
 
-    Mesh* p_lastMesh;
+    Mesh* p_lastMesh = nullptr;
     for(int i = 0; i < objects.size(); i++)
     {
         if(p_lastMesh != objects[i].p_mesh)
