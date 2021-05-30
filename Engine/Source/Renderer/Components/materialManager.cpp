@@ -5,7 +5,6 @@
 #include "vk_utils.h"
 #include "unordered_finder.h"
 
-#include <bits/stdint-uintn.h>
 #include <unordered_map>
 #include <vector>
 
