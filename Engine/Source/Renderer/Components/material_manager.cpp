@@ -1,4 +1,4 @@
-#include "Include/materialManager.h"
+#include "Include/material_manager.h"
 #include "Include/renderer.h"
 #include "glm/fwd.hpp"
 #include "logger.h"

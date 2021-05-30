@@ -4,8 +4,6 @@
 #include "logger.h"
 
 //Temporary
-#include "renderobject.h"
-#include "materialManager.h"
 #include "camera.h"
 
 #include "function_queuer.h"
@@ -58,8 +56,6 @@ void Core::CoreInit()
 
     Renderer::WriteShaderUniform("camera data", "per frame layout",0,false,"camera buffer");
     
-    MaterialManager::Init();
-    ObjectManager::Init();
 
 
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
@@ -98,13 +94,11 @@ void Core::CoreCleanup()
     {
         additionalDeletion.PushFunction([=](){
             Renderer::RemoveShaderUniformLayout("texture data layout");
-            //Renderer::RemoveShaderUniformLayout("material data layout");
             Renderer::RemoveShaderUniformLayout("per frame layout");
             Renderer::RemoveShaderUniformLayout("per object layout");
 
             
             PipelineManager::DestroyRendererPipelines();
-            ObjectManager::Destroy();
             Renderer::RemoveAllocatedBuffer("camera buffer", false);
             
         });

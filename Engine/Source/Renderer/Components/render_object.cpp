@@ -1,6 +1,6 @@
-#include "Include/renderobject.h"
+#include "Include/render_object.h"
 #include "Include/renderer.h"
-#include "Include/materialManager.h"
+#include "Include/material_manager.h"
 #include "logger.h"
 #include <memory>
 

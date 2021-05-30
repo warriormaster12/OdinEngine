@@ -1,13 +1,17 @@
 #include "Include/geometry_pipeline.h"
 
 #include "logger.h"
-#include "renderobject.h"
+#include "render_object.h"
+#include "material_manager.h"
 #include "renderer.h"
 
 #include "light.h"
 
 void GeometryPipeline::Init()
 {
+
+    ObjectManager::Init();
+    MaterialManager::Init();
 
     ShaderDescriptions descriptionInfo;
     descriptionInfo.vertexLocations = {
@@ -43,6 +47,7 @@ void GeometryPipeline::Update()
 void GeometryPipeline::Destroy()
 {
     LightManager::Destroy();
+    ObjectManager::Destroy();
     Renderer::DestroySampler("default sampler");
     ENGINE_CORE_INFO("geometry pipeline destroyed");
 }

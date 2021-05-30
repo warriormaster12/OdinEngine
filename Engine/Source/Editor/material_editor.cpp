@@ -4,7 +4,7 @@
 #include "imgui.h"
 
 #include "logger.h"
-#include "materialManager.h"
+#include "material_manager.h"
 
 char materialNameBuffer[64];
 char albedoBuffer[64];
