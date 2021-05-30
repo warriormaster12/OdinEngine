@@ -12,6 +12,7 @@ void GeometryPipeline::Init()
 
     ObjectManager::Init();
     MaterialManager::Init();
+    LightManager::Init();
 
     ShaderDescriptions descriptionInfo;
     descriptionInfo.vertexLocations = {
@@ -33,8 +34,6 @@ void GeometryPipeline::Init()
 
     Renderer::CreateShader({"EngineAssets/Shaders/defaultWorld.frag", "EngineAssets/Shaders/defaultWorld.vert"}, "default world", {"per frame layout", "per object layout"},&descriptionInfo);
     Renderer::CreateSampler("default sampler", FILTER_NEAREST, SAMPLER_ADDRESS_MODE_REPEAT);
-
-    LightManager::Init();
 
     ENGINE_CORE_INFO("geometry pipeline created");
 }

@@ -238,14 +238,24 @@ void VulkanContext::RemoveDescriptorSetLayout(const std::string& layoutName)
 
 void VulkanContext::CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter, const VkSamplerAddressMode& samplerAddressMode)
 {
-    VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(samplerFilter, samplerAddressMode);
+    if(FindUnorderdMap(samplerName, samplers) == nullptr)
+    {
+        VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(samplerFilter, samplerAddressMode);
 
-    vkCreateSampler(VkDeviceManager::GetDevice(), &samplerInfo, nullptr, &samplers[samplerName]);
+        vkCreateSampler(VkDeviceManager::GetDevice(), &samplerInfo, nullptr, &samplers[samplerName]);
+    }
+    else {
+        ENGINE_CORE_INFO("sampler {0} will be reused", samplerName);
+    }
 }
 
 void VulkanContext::DestroySampler(const std::string& samplerName)
 {
-    vkDestroySampler(VkDeviceManager::GetDevice(), *FindUnorderdMap(samplerName, samplers), nullptr);
+    if(FindUnorderdMap(samplerName, samplers) != nullptr)
+    {
+        vkDestroySampler(VkDeviceManager::GetDevice(), *FindUnorderdMap(samplerName, samplers), nullptr);
+        samplers.erase(samplerName);
+    }
 }
 
 void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views,const VkFormat& imageFormat /*= VK_FORMAT_R8G8B8A8_SRGB*/)
