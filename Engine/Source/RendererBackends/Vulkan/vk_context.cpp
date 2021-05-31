@@ -458,7 +458,7 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
 
     pipLayoutInfo.pSetLayouts = layouts.data();
     pipLayoutInfo.setLayoutCount = layouts.size();
-    shaderEffect = *vkcomponent::BuildEffect(shaderModules, pipLayoutInfo);
+    shaderEffect = vkcomponent::BuildEffect(shaderModules, pipLayoutInfo);
 
     pipelineBuilder.pipelineLayout = shaderEffect.builtLayout;
     shaderEffect.FlushLayout();
@@ -499,11 +499,11 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
     vkcomponent::ShaderPass shaderPass;
     if(renderPass != VK_NULL_HANDLE)
     {
-        shaderPass = *vkcomponent::BuildShader(renderPass, pipelineBuilder, &shaderEffect);
+        shaderPass = vkcomponent::BuildShader(renderPass, pipelineBuilder, shaderEffect);
     }
     else
     {
-        shaderPass = *vkcomponent::BuildShader(mainPass, pipelineBuilder, &shaderEffect);
+        shaderPass = vkcomponent::BuildShader(mainPass, pipelineBuilder, shaderEffect);
     }
 
     shaderProgram[shaderName].pass = shaderPass;

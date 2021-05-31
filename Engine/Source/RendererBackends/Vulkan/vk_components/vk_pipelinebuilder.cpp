@@ -1,6 +1,7 @@
 #include "Include/vk_pipelinebuilder.h"
 #include <iostream>
 #include <array>
+#include <memory>
 #include "vk_device.h"
 #include "vk_check.h"
 
@@ -81,12 +82,12 @@ namespace vkcomponent
         }
     }
 
-    void PipelineBuilder::SetShaders(ShaderEffect* effect)
+    void PipelineBuilder::SetShaders(ShaderEffect& effect)
     {
         shaderStages.clear();
-        effect->FillStages(shaderStages);
+        effect.FillStages(shaderStages);
 
-        pipelineLayout = effect->builtLayout;
+        pipelineLayout = effect.builtLayout;
     }
 
     VkPipeline ComputePipelineBuilder::BuildPipeline()
@@ -120,36 +121,32 @@ namespace vkcomponent
         pipelineLayout = effect->builtLayout;
     }
 
-    ShaderEffect* BuildEffect(std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info)
+    ShaderEffect BuildEffect(std::vector<vkcomponent::ShaderModule>& shaders, VkPipelineLayoutCreateInfo& info)
     {
-        //textured defaultlit shader
-        ShaderEffect* effect = new ShaderEffect;
+        ShaderEffect effect;
         for(int i = 0; i < shaders.size(); i++)
         {
-            effect->AddStage(&shaders[i], shaders[i].stage);
+            effect.AddStage(&shaders[i], shaders[i].stage);
         }
-        VK_CHECK(vkCreatePipelineLayout(VkDeviceManager::GetDevice(), &info, nullptr, &effect->builtLayout));
+        VK_CHECK(vkCreatePipelineLayout(VkDeviceManager::GetDevice(), &info, nullptr, &effect.builtLayout));
         return effect; 
-        delete effect;
     }
 
-    ShaderPass* BuildShader(VkRenderPass renderPass, PipelineBuilder& builder, ShaderEffect* effect)
+    ShaderPass BuildShader(VkRenderPass renderPass, PipelineBuilder& builder, ShaderEffect& effect)
     {
-        ShaderPass* pass = new ShaderPass();
-
-        pass->effect = effect;
-        pass->layout = effect->builtLayout;
+        ShaderPass pass;
+        pass.layout = effect.builtLayout;
+        pass.effect = effect;
 
         PipelineBuilder pipbuilder = builder;
 
-        pipbuilder.SetShaders(pass->effect);
+        pipbuilder.SetShaders(pass.effect);
 
-        pass->pipeline = pipbuilder.BuildPipeline(renderPass);
+        pass.pipeline = pipbuilder.BuildPipeline(renderPass);
 
-        effect->FlushShaders(VkDeviceManager::GetDevice());
+        effect.FlushShaders(VkDeviceManager::GetDevice());
 
         return pass;
-        delete effect;
     }
 
     void ShaderPass::FlushPass()

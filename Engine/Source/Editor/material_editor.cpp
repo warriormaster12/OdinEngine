@@ -13,6 +13,8 @@ bool materialCreated = false;
 
 ImVec4 color;
 
+int textureCount = 0;
+
 void MaterialEditor::ShowMaterialWindow()
 {
     static bool isActive = false;
@@ -53,13 +55,14 @@ void MaterialEditor::ShowMaterialWindow()
         {
             if(textures[i] != "EngineAssets/Textures/")
             {
+                textureCount ++;
                 MaterialManager::GetMaterial(materialNameBuffer).textureCheck.textures[i] = 1;
             }
             else {
                 MaterialManager::GetMaterial(materialNameBuffer).textureCheck.textures[i] = 0;
             }
         }
-        if(textures.size() != 0)
+        if(textureCount != 0)
         {
             MaterialManager::GetMaterial(materialNameBuffer).SetTextures({textures});
             
