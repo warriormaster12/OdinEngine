@@ -79,15 +79,14 @@ void main()
     {
         ao = float(materialData.ao);
     }
-//     if(int(PushConstants.textures[4]) == 1)
-//     {
-//         N = getNormalFromMap(texture(textureMaps[4], inUv), inUv, inPosition, inNormal);
-//     }
-//     else
-//     {
-//         
-//     }
-    N = normalize(inNormal);
+    if(int(PushConstants.textures[4]) == 1)
+    {
+        N = getNormalFromMap(texture(textureMaps[4], inUv).xyz, inUv, inPosition, inNormal);
+    }
+    else
+    {
+        N = normalize(inNormal);
+    }
 
     vec3 V = normalize(vec3(lightData.camPos) - inPosition);
 
