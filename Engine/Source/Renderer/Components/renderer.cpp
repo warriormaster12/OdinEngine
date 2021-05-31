@@ -1,6 +1,7 @@
 #include "Include/renderer.h"
 #include "logger.h"
 #include "vk_context.h"
+#include <memory>
 #include <vulkan/vulkan_core.h>
 
 
@@ -146,9 +147,13 @@ void Renderer::CreateShader(std::vector<std::string> shaderPaths, const std::str
             vkDescriptions.depthTesting = descriptions->depthTesting;
             vkDescriptions.polygonMode = (VkPolygonMode)descriptions->polygonMode;
             vkDescriptions.vertexLocations.resize(descriptions->vertexLocations.size());
-            vkDescriptions.pushConstant.dataSize = descriptions->pushConstant.dataSize;
-            vkDescriptions.pushConstant.offset = descriptions->pushConstant.offset;
-            vkDescriptions.pushConstant.shaderStage = descriptions->pushConstant.shaderStage;
+            if(descriptions->p_pushConstant != nullptr)
+            {
+                vkDescriptions.p_pushConstant = std::make_unique<VkPushConstantInfo>();
+                vkDescriptions.p_pushConstant->dataSize = descriptions->p_pushConstant->dataSize;
+                vkDescriptions.p_pushConstant->offset = descriptions->p_pushConstant->offset;
+                vkDescriptions.p_pushConstant->shaderStage = (VkShaderStageFlags)descriptions->p_pushConstant->shaderStage;
+            }
             for(int i = 0; i < descriptions->vertexLocations.size(); i++)
             {
                 vkDescriptions.vertexLocations[i].format = (VkFormat)descriptions->vertexLocations[i].format;

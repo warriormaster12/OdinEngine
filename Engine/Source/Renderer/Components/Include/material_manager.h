@@ -7,11 +7,15 @@
 
 #include "texture.h"
 
+struct TextureCheck
+{
+    int textures[5];
+};
 
 class Material 
 {
 public:
-    
+    TextureCheck textureCheck;
     void SetColor(const glm::vec4& input)
     {
         color = input;

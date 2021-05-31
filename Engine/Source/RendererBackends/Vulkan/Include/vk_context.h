@@ -21,7 +21,7 @@ struct ShaderProgram
     vkcomponent::ShaderPass pass;
 };
 
-struct VkPushConstant
+struct VkPushConstantInfo
 {
     uint32_t offset;
     uint32_t dataSize;
@@ -39,7 +39,7 @@ struct VkShaderDescriptions
     bool depthTesting = false;
     VkCompareOp depthCompareType = VK_COMPARE_OP_EQUAL;
 
-    VkPushConstant pushConstant;
+    std::unique_ptr<VkPushConstantInfo> p_pushConstant = nullptr;
 };
 
 

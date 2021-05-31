@@ -45,7 +45,7 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER_DYNAMIC,SHADER_STAGE_FRAGMENT_BIT, 1);
     Renderer::CreateShaderUniformLayout("per object layout");
 
-    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 0, 2);
+    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 0, 5);
     Renderer::CreateShaderUniformLayout("texture data layout");
     
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());

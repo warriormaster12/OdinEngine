@@ -46,5 +46,22 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 // ----------------------------------------------------------------------------
+vec3 getNormalFromMap(vec3 normalMap, vec2 inUv, vec3 inPosition, vec3 inNormal)
+{
+    vec3 tangentNormal = normalMap * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(inPosition);
+    vec3 Q2  = dFdy(inPosition);
+    vec2 st1 = dFdx(inUv);
+    vec2 st2 = dFdy(inUv);
+
+    vec3 N   = normalize(inNormal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
+// ----------------------------------------------------------------------------
 
 #endif

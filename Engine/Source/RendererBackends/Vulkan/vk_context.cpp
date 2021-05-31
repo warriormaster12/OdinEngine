@@ -446,12 +446,12 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
     {
         layouts.push_back(FindUnorderdMap(layoutNames[i], descriptorSetLayout)->layout);
     }
-    if(descriptions.pushConstant.dataSize != 0)
+    VkPushConstantRange pushConstantRange = {};
+    if(descriptions.p_pushConstant != nullptr)
     {
-        VkPushConstantRange pushConstantRange;
-        pushConstantRange.offset = descriptions.pushConstant.offset;
-        pushConstantRange.size = descriptions.pushConstant.dataSize;
-        pushConstantRange.stageFlags = descriptions.pushConstant.shaderStage;
+        pushConstantRange.offset = descriptions.p_pushConstant->offset;
+        pushConstantRange.size = descriptions.p_pushConstant->dataSize;
+        pushConstantRange.stageFlags = descriptions.p_pushConstant->shaderStage;
         pipLayoutInfo.pushConstantRangeCount = 1;
         pipLayoutInfo.pPushConstantRanges = &pushConstantRange;
     }

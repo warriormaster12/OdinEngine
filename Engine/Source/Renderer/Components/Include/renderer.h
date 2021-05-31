@@ -4,6 +4,7 @@
 #include "vk_context.h"
 
 #include <array>
+#include <memory>
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
@@ -131,7 +132,7 @@ struct ShaderDescriptions
     bool depthTesting = false;
     CompareOp depthCompareType = COMPARE_OP_EQUAL;
 
-    PushConstant pushConstant;
+    std::unique_ptr<PushConstant> p_pushConstant = nullptr;
 
 };
 

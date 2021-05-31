@@ -90,6 +90,7 @@ void MaterialManager::BindMaterial(const std::string& materialName)
     if(FindUnorderdMap(materialName, materials)->textureObjects.size() != 0)
     {
         Renderer::BindUniforms(materialName,2,offset);
+        Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderdMap(materialName, materials)->textureCheck);
     } 
 }
 
