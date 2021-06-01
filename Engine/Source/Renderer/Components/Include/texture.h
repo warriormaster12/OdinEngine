@@ -11,5 +11,6 @@ struct Texture {
 	VkImageView imageView;
 
 	void CreateTexture(const std::string& filePath);
+	void CreateCubeMapTexture(const std::vector<std::string>& filepaths);
 	void DestroyTexture();
 };

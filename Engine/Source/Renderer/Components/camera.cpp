@@ -125,6 +125,10 @@ void Camera::UpdateCamera(float deltaTime)
 		camData.projectionMatrix = GetProjectionMatrix();
 
 		Renderer::UploadSingleUniformDataToShader("camera buffer", camData, true);
+
+		camData.viewMatrix = glm::mat4(glm::mat3(GetViewMatrix()));
+
+		Renderer::UploadSingleUniformDataToShader("camera buffer cube", camData, true);
 		cameraUpdated = false;
 	}
 	LightManager::SetCamPos(position);

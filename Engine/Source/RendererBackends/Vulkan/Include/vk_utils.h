@@ -5,7 +5,6 @@
 #include "vk_device.h"
 
 #include <cstring>
-#include <vulkan/vulkan_core.h>
 
 struct CreateBufferInfo {
     size_t allocSize;

@@ -47,14 +47,16 @@ void Core::CoreInit()
 
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 0, 5);
     Renderer::CreateShaderUniformLayout("texture data layout");
-    
-    PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
-    PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
 
     Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
-    
+    Renderer::CreateShaderUniformBuffer("camera buffer cube", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
 
+    
+    PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
     Renderer::WriteShaderUniform("camera data", "per frame layout",0,true,"camera buffer");
+    PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
+
+    
     
 
 

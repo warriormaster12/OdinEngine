@@ -80,21 +80,34 @@ void ObjectManager::RenderObjects()
         }
         for(auto& currentDc : batch)
         {
-            if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextures().size() != 0)
+            if(*currentDc.p_material == "cube")
             {
-                Renderer::BindShader("default textured world");
+                Renderer::BindShader("cube map");
+                Renderer::BindUniforms("cube camera", 0, 0, true);
+                Renderer::BindUniforms("cube map texture", 1);
+
+                Renderer::BindVertexBuffer(currentDc.p_mesh->vertexBuffer);
+                Renderer::BindIndexBuffer(currentDc.p_mesh->indexBuffer);
+
+                Renderer::DrawIndexed(currentDc.p_mesh->indices, currentDc.index);
             }
-            else 
-            {
-                Renderer::BindShader("default world");
+            else {
+                if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextures().size() != 0)
+                {
+                    Renderer::BindShader("default textured world");
+                }
+                else 
+                {
+                    Renderer::BindShader("default world");
+                }
+                MaterialManager::BindMaterial(*currentDc.p_material);
+                Renderer::BindUniforms("camera data", 0, 0, true);
+                Renderer::BindUniforms("object data", 1, MaterialManager::GetMaterial(*currentDc.p_material).offset);
+                Renderer::BindVertexBuffer(currentDc.p_mesh->vertexBuffer);
+                Renderer::BindIndexBuffer(currentDc.p_mesh->indexBuffer);
+
+                Renderer::DrawIndexed(currentDc.p_mesh->indices, currentDc.index);
             }
-            MaterialManager::BindMaterial(*currentDc.p_material);
-            Renderer::BindUniforms("camera data", 0, 0, true);
-            Renderer::BindUniforms("object data", 1, MaterialManager::GetMaterial(*currentDc.p_material).offset);
-            Renderer::BindVertexBuffer(currentDc.p_mesh->vertexBuffer);
-            Renderer::BindIndexBuffer(currentDc.p_mesh->indexBuffer);
-            
-            Renderer::DrawIndexed(currentDc.p_mesh->indices, currentDc.index);
             //Renderer::DrawIndexedIndirect(currentDc.count, currentDc.index);
         }
     }
