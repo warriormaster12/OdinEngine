@@ -9,6 +9,13 @@
 
 FunctionQueuer descriptorDeletionQueue;
 bool glslangInitialized = false;
+
+#ifdef NDEBUG
+	const bool forceShaderRecompile = false;
+#else 
+	const bool forceShaderRecompile = true;
+#endif
+
   
 TBuiltInResource vkcomponent::HandleResources()
 {
@@ -169,7 +176,7 @@ const std::string vkcomponent::CompileGLSL(const std::string& filename)
     std::string SpirV_filename = filename + ".spv";
     //Check that spv file already exists
     std::ifstream file_spirv(SpirV_filename);
-    if (file_spirv.fail())
+    if (file_spirv.fail() || forceShaderRecompile == true)
     {
         if (!glslangInitialized)
         {

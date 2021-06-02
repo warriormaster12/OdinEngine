@@ -4,9 +4,11 @@
 //bootstrap library
 #include "VkBootstrap.h"
 
-
-
-constexpr bool bUseValidationLayers = true;
+#ifdef NDEBUG
+	const bool bUseValidationLayers = false;
+#else 
+	const bool bUseValidationLayers = true;
+#endif
 
 
 void VkDeviceManager::InitDevice()
