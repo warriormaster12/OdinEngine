@@ -101,8 +101,11 @@ void GeometryPipeline::Update()
 
 void GeometryPipeline::Destroy()
 {
+   
+    skyboxCubemap.DestroyTexture();
     LightManager::Destroy();
     ObjectManager::Destroy();
     Renderer::DestroySampler("default sampler");
+    Renderer::DestroySampler("cube map sampler");
     ENGINE_CORE_INFO("geometry pipeline destroyed");
 }

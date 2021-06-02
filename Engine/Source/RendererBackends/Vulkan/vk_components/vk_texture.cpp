@@ -271,7 +271,10 @@ bool vkcomponent::LoadImageFromFiles(const std::vector<std::string>& filenames, 
     vmaUnmapMemory(VkDeviceManager::GetAllocator(), stagingBuffer.allocation);
 
     //we no longer need the loaded data, so we can free the pixels as they are now in the staging buffer
-	stbi_image_free(pixels.data());
+	for(auto& currentPixeData : pixels)
+	{
+		stbi_image_free(currentPixeData);
+	}
 
     UploadCubeMapImage(texWidth, texHeight,byteOffsets,imageFormat, stagingBuffer, outImage);
 

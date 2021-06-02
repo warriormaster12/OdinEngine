@@ -10,7 +10,7 @@
 
 #include "logger.h"
 #include <iostream>
-#include <vulkan/vulkan_core.h>
+
 
 
 
@@ -29,6 +29,8 @@ vkcomponent::DescriptorAllocator descriptorAllocator;
 vkcomponent::DescriptorLayoutCache descriptorLayoutCache;
 
 std::unordered_map<std::string, DescriptorSetLayoutInfo> descriptorSetLayout;
+std::vector<std::string> descriptorLayoutNames;
+
 std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
 
 std::unordered_map<std::string, VkSampler> samplers;
@@ -115,6 +117,10 @@ void VulkanContext::CleanUpVulkan(FunctionQueuer* p_additionalDeletion)
 {
     vkDeviceWaitIdle(VkDeviceManager::GetDevice());
     p_additionalDeletion->Flush();
+    for(int i = 0; i < descriptorLayoutNames.size(); i++)
+    {
+        vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(descriptorLayoutNames[i], descriptorSetLayout)->layout, nullptr);
+    }
     swapDeletionQueue.Flush();
     mainDeletionQueue.Flush();
     
@@ -228,11 +234,23 @@ void VulkanContext::CreateDescriptorSetLayout(const std::string& layoutName)
     FindUnorderdMap(layoutName, descriptorSetLayout)->layout = descriptorLayoutCache.CreateDescriptorLayout(&set);
     FindUnorderdMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
     descriptorSetLayoutBindings.clear();
+
+    descriptorLayoutNames.push_back(layoutName);
 }
 
 void VulkanContext::RemoveDescriptorSetLayout(const std::string& layoutName)
 {
     vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
+    for(int i = 0; i < descriptorLayoutNames.size(); i++)
+    {
+        if(descriptorLayoutNames[i] == layoutName)
+        {
+            descriptorLayoutNames.erase(descriptorLayoutNames.begin() + i);
+            descriptorLayoutNames.shrink_to_fit();
+        }
+    }
+    ENGINE_CORE_INFO("descriptor set layout {0} destroyed", layoutName);
+    descriptorSetLayout.erase(layoutName);
 }
 
 void VulkanContext::CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter, const VkSamplerAddressMode& samplerAddressMode)

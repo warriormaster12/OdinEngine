@@ -102,6 +102,7 @@ void Core::CoreCleanup()
             
             PipelineManager::DestroyRendererPipelines();
             Renderer::RemoveAllocatedBuffer("camera buffer", true);
+            Renderer::RemoveAllocatedBuffer("camera buffer cube", true);
             
         });
         Renderer::CleanUpRenderer(&additionalDeletion);
