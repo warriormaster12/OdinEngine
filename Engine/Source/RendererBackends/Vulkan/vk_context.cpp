@@ -444,6 +444,8 @@ void VulkanContext::RemoveAllocatedBuffer(const std::string& bufferName, const b
             allocatedBuffers.erase(bufferName);
         }
     }
+
+    ENGINE_CORE_INFO("buffer: {0} removed", bufferName);
 }
 
 

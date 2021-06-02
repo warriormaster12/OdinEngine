@@ -4,12 +4,13 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
 
 
 
 struct RenderObject
 {
-    Mesh* p_mesh = new Mesh;
+    std::shared_ptr<Mesh> p_mesh = std::make_shared<Mesh>();
     std::string material;
 
     glm::mat4 transformMatrix;
@@ -17,7 +18,7 @@ struct RenderObject
 
 struct DrawCall
 {
-    Mesh* p_mesh = nullptr;
+    std::shared_ptr<Mesh> p_mesh;
     std::string* p_material = nullptr;
 
     uint32_t descriptorSetCount;

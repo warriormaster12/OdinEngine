@@ -43,7 +43,7 @@ void ObjectManager::RenderObjects()
         //batch draw calls
         std::vector<DrawCall> batch;
 
-        Mesh* pLastMesh = nullptr;
+        std::shared_ptr<Mesh> pLastMesh;
         std::string* pLastMaterial = nullptr;
 
         // std::vector<uint32_t> objIndicesSize;
@@ -119,7 +119,7 @@ void ObjectManager::Destroy()
 
     MaterialManager::DeleteAllMaterials();
 
-    Mesh* p_lastMesh = nullptr;
+    std::shared_ptr<Mesh> p_lastMesh;
     for(int i = 0; i < objects.size(); i++)
     {
         if(p_lastMesh != objects[i].p_mesh)

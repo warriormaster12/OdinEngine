@@ -5,9 +5,9 @@
 #include "VkBootstrap.h"
 
 #ifdef NDEBUG
-	const bool bUseValidationLayers = false;
+	constexpr bool bUseValidationLayers = false;
 #else 
-	const bool bUseValidationLayers = true;
+	constexpr bool bUseValidationLayers = true;
 #endif
 
 
