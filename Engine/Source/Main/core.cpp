@@ -15,8 +15,6 @@
 
 bool isInitialized{ false };
 
-Camera camera;
-
 FunctionQueuer additionalDeletion;
 
 
@@ -48,18 +46,18 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 0, 5);
     Renderer::CreateShaderUniformLayout("texture data layout");
 
-    Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
-
+    
+    CameraManager::Init();
     
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
-    Renderer::WriteShaderUniform("camera data", "per frame layout",0,true,"camera buffer");
     PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
 
     
-    
+    CameraManager::AddCamera("camera", "per frame layout");
+    CameraManager::GetCamera("camera").isActive = true;
 
 
-    camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
+    CameraManager::GetCamera("camera").position = glm::vec3(0.0f, 0.0f, 5.0f);
 
     //everything went fine
     isInitialized = true;
@@ -82,7 +80,7 @@ void Core::CoreUpdate()
 		//RendererCore::RendererEvents();
 		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
         {
-            camera.UpdateCamera(deltaTime);
+            CameraManager::Update(deltaTime);
             PipelineManager::UpdateRendererPipelines();
             
         });
@@ -93,15 +91,9 @@ void Core::CoreCleanup()
 {
     if (isInitialized)
     {
-        additionalDeletion.PushFunction([=](){
-            Renderer::RemoveShaderUniformLayout("texture data layout");
-            Renderer::RemoveShaderUniformLayout("per frame layout");
-            Renderer::RemoveShaderUniformLayout("per object layout");
-
-            
+        additionalDeletion.PushFunction([=](){            
             PipelineManager::DestroyRendererPipelines();
-            Renderer::RemoveAllocatedBuffer("camera buffer", true);
-            
+            CameraManager::Destroy();
         });
         Renderer::CleanUpRenderer(&additionalDeletion);
 		windowHandler.DestroyWindow();

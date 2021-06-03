@@ -4,15 +4,7 @@
 #include <glm/glm.hpp>
 #include "renderer.h"
 
-
-struct GPUCameraData
-{
-    glm::mat4 viewMatrix;
-    glm::mat4 projectionMatrix;
-
-	glm::mat4 projViewMatrix;
-};
-
+#include <string>
 
 class Camera {
 public:
@@ -37,13 +29,28 @@ public:
 
 	bool bSprint = false;
 	bool possessCamera = false;
+	bool isActive = false;
 
 
 	void ProcessInputEvent();
 	void UpdateCamera(float deltaTime);
+
+	const std::string GetCameraBuffer(){return "camera buffer";}
 
 
 	glm::mat4 GetViewMatrix() const;
 	glm::mat4 GetProjectionMatrix(bool bReverse = false, bool flipY =true) const;
 	glm::mat4 GetRotationMatrix() const;
 };
+
+struct CameraManager
+{
+	static void Init();
+	static void AddCamera(const std::string& cameraName, const std::string& layoutName);
+	static Camera& GetCamera(const std::string& cameraName);
+	static void Update(float deltaTime);
+	static void Destroy();
+};
+
+
+

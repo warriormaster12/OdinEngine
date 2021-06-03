@@ -83,7 +83,7 @@ void ObjectManager::RenderObjects()
             if(*currentDc.p_material == "cube")
             {
                 Renderer::BindShader("cube map");
-                Renderer::BindUniforms("cube camera", 0, 0, true);
+                Renderer::BindUniforms("camera cube data", 0, 0, true);
                 Renderer::BindUniforms("cube map texture", 1);
 
                 Renderer::BindVertexBuffer(currentDc.p_mesh->vertexBuffer);

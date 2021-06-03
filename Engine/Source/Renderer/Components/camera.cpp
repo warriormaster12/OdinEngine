@@ -8,8 +8,73 @@
 
 #include "light.h"
 
+#include <unordered_map>
+#include <vector>
+
+#include "unordered_finder.h"
+
 
 bool cameraUpdated = false;
+
+std::unordered_map<std::string, std::string> cameraLayouts;
+
+std::unordered_map<std::string,Camera> cameraList;
+std::vector<std::string> cameraNameList;
+
+
+struct GPUCameraData
+{
+    glm::mat4 viewMatrix;
+    glm::mat4 projectionMatrix;
+
+	glm::mat4 projViewMatrix;
+};
+
+
+
+void CameraManager::Init()
+{
+	Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
+}
+
+void CameraManager::AddCamera(const std::string& cameraName, const std::string& layoutName)
+{
+	if(FindUnorderdMap(layoutName, cameraLayouts) == nullptr)
+	{
+		cameraLayouts[layoutName];
+	}
+	if(FindUnorderdMap(cameraName, cameraList) == nullptr)
+	{
+		cameraList[cameraName];
+		cameraNameList.push_back(cameraName);
+	}
+	else if (FindUnorderdMap(cameraName, cameraList) != nullptr && cameraNameList.size() == 1) {
+		FindUnorderdMap(cameraName, cameraList)->isActive = true;
+	}
+}
+
+Camera& CameraManager::GetCamera(const std::string& cameraName)
+{
+	return *FindUnorderdMap(cameraName, cameraList);
+}
+
+void CameraManager::Update(float deltaTime)
+{
+	for(int i = 0; i < cameraNameList.size(); i++)
+	{
+		auto& currentCamera = *FindUnorderdMap(cameraNameList[i], cameraList);
+		if(currentCamera.isActive == true)
+		{
+			currentCamera.UpdateCamera(deltaTime);
+		}
+	}
+}
+
+void CameraManager::Destroy()
+{
+	Renderer::RemoveAllocatedBuffer("camera buffer", true);
+	cameraLayouts.clear();
+}
 
 Camera::Camera()
 {
