@@ -28,7 +28,7 @@ void GeometryPipeline::Init()
     };
     descriptionInfo.cullMode = CULL_MODE_BACK_BIT;
     descriptionInfo.depthTesting = true;
-    descriptionInfo.depthCompareType = COMPARE_OP_LESS_OR_EQUAL;
+    descriptionInfo.depthCompareType = COMPARE_OP_LESS;
 
     descriptionInfo.p_pushConstant = std::make_unique<PushConstant>();
     descriptionInfo.p_pushConstant->dataSize = sizeof(TextureCheck);
@@ -45,7 +45,7 @@ void GeometryPipeline::Init()
     };
     descriptionInfo2.cullMode = CULL_MODE_BACK_BIT;
     descriptionInfo2.depthTesting = true;
-    descriptionInfo2.depthCompareType = COMPARE_OP_LESS_OR_EQUAL;
+    descriptionInfo2.depthCompareType = COMPARE_OP_LESS;
 
     Renderer::CreateShader({"EngineAssets/Shaders/defaultWorld.frag", "EngineAssets/Shaders/pbr_vert.vert"}, "default world", {"per frame layout", "per object layout"},&descriptionInfo2);
 
@@ -79,7 +79,7 @@ void GeometryPipeline::Init()
 
     Renderer::CreateSampler("cube map sampler", FILTER_NEAREST, SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 
-    Renderer::WriteShaderUniform("cube camera", "camera layout",0,true,"camera buffer cube");
+    Renderer::WriteShaderUniform("cube camera", "camera layout",0,true,"camera buffer");
 
     Renderer::WriteShaderImage("cube map texture", "Cube texture layout", 0, "cube map sampler", {skyboxCubemap.imageView});
 

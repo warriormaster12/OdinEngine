@@ -9,6 +9,8 @@ struct GPUCameraData
 {
     glm::mat4 viewMatrix;
     glm::mat4 projectionMatrix;
+
+	glm::mat4 projViewMatrix;
 };
 
 

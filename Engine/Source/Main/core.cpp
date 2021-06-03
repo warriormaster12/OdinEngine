@@ -49,7 +49,6 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayout("texture data layout");
 
     Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
-    Renderer::CreateShaderUniformBuffer("camera buffer cube", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
 
     
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
@@ -102,7 +101,6 @@ void Core::CoreCleanup()
             
             PipelineManager::DestroyRendererPipelines();
             Renderer::RemoveAllocatedBuffer("camera buffer", true);
-            Renderer::RemoveAllocatedBuffer("camera buffer cube", true);
             
         });
         Renderer::CleanUpRenderer(&additionalDeletion);

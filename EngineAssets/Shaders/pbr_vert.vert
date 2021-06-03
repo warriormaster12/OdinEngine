@@ -13,6 +13,7 @@ layout(set = 0, binding = 0) uniform CameraData
 {
 	mat4 view;
 	mat4 projection;
+	mat4 projViewMatrix;
 }cameraData;
 struct ObjectData{
 	mat4 model;
@@ -27,5 +28,5 @@ void main()
 	outPosition = vec3(objectBuffer.objects[gl_InstanceIndex].model * vec4(inPosition, 1.0));
 	outNormal = mat3(objectBuffer.objects[gl_InstanceIndex].model) * inNormal;
 	//output the position of each vertex
-	gl_Position = cameraData.projection * cameraData.view * vec4(outPosition, 1.0);
+	gl_Position = cameraData.projViewMatrix * vec4(outPosition, 1.0);
 }

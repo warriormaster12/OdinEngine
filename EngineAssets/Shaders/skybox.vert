@@ -14,7 +14,10 @@ layout (location = 0) out vec3 outUVW;
 void main() 
 {
 	outUVW = inPos;
-	// Convert cubemap coordinates into Vulkan coordinate space
-	vec4 pos = cameraData.projection * cameraData.view * vec4(inPos, 1.0);
+
+	//remove translation from view matrix
+	mat4 outView = mat4(mat3(cameraData.view));
+
+	vec4 pos = cameraData.projection * outView * vec4(inPos, 1.0);
 	gl_Position = pos.xyww;
 }
