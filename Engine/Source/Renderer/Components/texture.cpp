@@ -43,6 +43,6 @@ void Texture::DestroyTexture()
     if(Renderer::GetActiveAPI() == AvailableBackends::Vulkan)
     {
         vkDestroyImageView(VkDeviceManager::GetDevice(), imageView, nullptr);
-        vkDestroyImage(VkDeviceManager::GetDevice(), image.image, nullptr);
+        vmaDestroyImage(VkDeviceManager::GetAllocator(), image.image, image.allocation);
     }
 }
