@@ -108,6 +108,7 @@ Camera::Camera()
 void Camera::SetIsActive(const bool& input)
 {
 	isActive = input;
+	cameraUpdated = true;
 }
 
 void Camera::ProcessInputEvent()

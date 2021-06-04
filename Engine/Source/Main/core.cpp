@@ -83,6 +83,23 @@ void Core::CoreUpdate()
 		//RendererCore::RendererEvents();
 		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
         {
+            if(windowHandler.GetKInput(GLFW_KEY_J) == GLFW_PRESS)
+            {
+                CameraManager::AddCamera("camera");
+                CameraManager::GetCamera("camera").SetIsActive(false);
+
+                CameraManager::AddCamera("camera2");
+                CameraManager::GetCamera("camera2").SetIsActive(true);
+
+            }
+            if(windowHandler.GetKInput(GLFW_KEY_K) == GLFW_PRESS)
+            {
+                CameraManager::AddCamera("camera");
+                CameraManager::GetCamera("camera").SetIsActive(true);
+
+                CameraManager::AddCamera("camera2");
+                CameraManager::GetCamera("camera2").SetIsActive(false);
+            }
             CameraManager::Update(deltaTime);
             PipelineManager::UpdateRendererPipelines();
             
