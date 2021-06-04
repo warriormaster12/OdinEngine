@@ -48,16 +48,19 @@ void Core::CoreInit()
 
     
     CameraManager::Init();
+
+    CameraManager::AddCamera("camera");
+    CameraManager::GetCamera("camera").SetIsActive(true);
+
+    CameraManager::AddCamera("camera2");
+    CameraManager::GetCamera("camera2").SetIsActive(false);
     
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
 
-    
-    CameraManager::AddCamera("camera", "per frame layout");
-    CameraManager::GetCamera("camera").isActive = true;
-
 
     CameraManager::GetCamera("camera").position = glm::vec3(0.0f, 0.0f, 5.0f);
+    CameraManager::GetCamera("camera2").position = glm::vec3(0.0f, 5.0f, 5.0f);
 
     //everything went fine
     isInitialized = true;

@@ -16,8 +16,6 @@
 
 bool cameraUpdated = false;
 
-std::unordered_map<std::string, std::string> cameraLayouts;
-
 std::unordered_map<std::string,Camera> cameraList;
 std::vector<std::string> cameraNameList;
 
@@ -37,19 +35,12 @@ void CameraManager::Init()
 	Renderer::CreateShaderUniformBuffer("camera buffer", true, BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GPUCameraData));
 }
 
-void CameraManager::AddCamera(const std::string& cameraName, const std::string& layoutName)
+void CameraManager::AddCamera(const std::string& cameraName)
 {
-	if(FindUnorderdMap(layoutName, cameraLayouts) == nullptr)
-	{
-		cameraLayouts[layoutName];
-	}
 	if(FindUnorderdMap(cameraName, cameraList) == nullptr)
 	{
 		cameraList[cameraName];
 		cameraNameList.push_back(cameraName);
-	}
-	else if (FindUnorderdMap(cameraName, cameraList) != nullptr && cameraNameList.size() == 1) {
-		FindUnorderdMap(cameraName, cameraList)->isActive = true;
 	}
 }
 
@@ -58,27 +49,65 @@ Camera& CameraManager::GetCamera(const std::string& cameraName)
 	return *FindUnorderdMap(cameraName, cameraList);
 }
 
+Camera& CameraManager::GetActiveCamera()
+{
+	std::string currentActiveCamera;
+	for(int i = 0; i < cameraNameList.size(); i++)
+	{
+		if(FindUnorderdMap(cameraNameList[i], cameraList)->GetIsActive() == true)
+		{
+			currentActiveCamera = cameraNameList[i];
+		}
+	}
+	return *FindUnorderdMap(currentActiveCamera, cameraList);
+}
+
 void CameraManager::Update(float deltaTime)
 {
+	std::vector<std::string> activeCameras;
 	for(int i = 0; i < cameraNameList.size(); i++)
 	{
 		auto& currentCamera = *FindUnorderdMap(cameraNameList[i], cameraList);
-		if(currentCamera.isActive == true)
+		if(currentCamera.GetIsActive() == true)
 		{
-			currentCamera.UpdateCamera(deltaTime);
+			activeCameras.push_back(cameraNameList[i]);
 		}
+	}
+	if(activeCameras.size() > 1)
+	{
+		for(int i = activeCameras.size()-1; i > 0; i--)
+		{
+			auto& currentCamera = *FindUnorderdMap(activeCameras[i], cameraList);
+			if(i == activeCameras.size() -1)
+			{
+				currentCamera.UpdateCamera(deltaTime);
+			}
+			else {
+				currentCamera.SetIsActive(false);
+				activeCameras.erase(activeCameras.begin() + i);
+				activeCameras.shrink_to_fit();
+			}
+		}
+	}
+	else {
+		auto& currentCamera = *FindUnorderdMap(activeCameras[0], cameraList);
+		currentCamera.UpdateCamera(deltaTime);
 	}
 }
 
 void CameraManager::Destroy()
 {
 	Renderer::RemoveAllocatedBuffer("camera buffer", true);
-	cameraLayouts.clear();
 }
 
 Camera::Camera()
 {
 	cameraUpdated = true;
+}
+
+void Camera::SetIsActive(const bool& input)
+{
+	isActive = input;
 }
 
 void Camera::ProcessInputEvent()

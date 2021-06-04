@@ -29,7 +29,7 @@ public:
 
 	bool bSprint = false;
 	bool possessCamera = false;
-	bool isActive = false;
+	
 
 
 	void ProcessInputEvent();
@@ -41,13 +41,19 @@ public:
 	glm::mat4 GetViewMatrix() const;
 	glm::mat4 GetProjectionMatrix(bool bReverse = false, bool flipY =true) const;
 	glm::mat4 GetRotationMatrix() const;
+
+	bool& GetIsActive() {return isActive;}
+	void SetIsActive(const bool& input);
+private:
+	bool isActive = false;
 };
 
 struct CameraManager
 {
 	static void Init();
-	static void AddCamera(const std::string& cameraName, const std::string& layoutName);
+	static void AddCamera(const std::string& cameraName);
 	static Camera& GetCamera(const std::string& cameraName);
+	static Camera& GetActiveCamera();
 	static void Update(float deltaTime);
 	static void Destroy();
 };

@@ -80,9 +80,9 @@ void GeometryPipeline::Init()
 
     Renderer::CreateSampler("cube map sampler", FILTER_NEAREST, SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 
-    Renderer::WriteShaderUniform("camera data", "per frame layout",0,true,CameraManager::GetCamera("camera").GetCameraBuffer());
+    Renderer::WriteShaderUniform("camera data", "per frame layout",0,true,CameraManager::GetActiveCamera().GetCameraBuffer());
 
-    Renderer::WriteShaderUniform("camera cube data", "camera layout",0,true,CameraManager::GetCamera("camera").GetCameraBuffer());
+    Renderer::WriteShaderUniform("camera cube data", "camera layout",0,true,CameraManager::GetActiveCamera().GetCameraBuffer());
 
     Renderer::WriteShaderImage("cube map texture", "Cube texture layout", 0, "cube map sampler", {skyboxCubemap.imageView});
 
