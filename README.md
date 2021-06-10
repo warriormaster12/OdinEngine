@@ -27,7 +27,12 @@ Download and install python for compiling glslang https://www.python.org/downloa
 $ mkdir build
 $ cd build
 $ cmake ..
-
+```
+##### if you want to compile the engine for Wayland display server instead of X11
+```
+$ cmake .. -DGLFW_USE_WAYLAND=ON
+```
+```
 (without multithreading)
 $ make
 
