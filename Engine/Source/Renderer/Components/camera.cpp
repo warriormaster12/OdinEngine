@@ -62,7 +62,40 @@ Camera& CameraManager::GetActiveCamera()
 	return *FindUnorderdMap(currentActiveCamera, cameraList);
 }
 
-void CameraManager::Update(float deltaTime)
+void CameraManager::Render()
+{
+	std::vector<std::string> activeCameras;
+	for(int i = 0; i < cameraNameList.size(); i++)
+	{
+		auto& currentCamera = *FindUnorderdMap(cameraNameList[i], cameraList);
+		if(currentCamera.GetIsActive() == true)
+		{
+			activeCameras.push_back(cameraNameList[i]);
+		}
+	}
+	if(activeCameras.size() > 1)
+	{
+		for(int i = activeCameras.size()-1; i > 0; i--)
+		{
+			auto& currentCamera = *FindUnorderdMap(activeCameras[i], cameraList);
+			if(i == activeCameras.size() -1)
+			{
+				currentCamera.RenderCamera();
+			}
+			else {
+				currentCamera.SetIsActive(false);
+				activeCameras.erase(activeCameras.begin() + i);
+				activeCameras.shrink_to_fit();
+			}
+		}
+	}
+	else {
+		auto& currentCamera = *FindUnorderdMap(activeCameras[0], cameraList);
+		currentCamera.RenderCamera();
+	}
+}
+
+void CameraManager::UpdateInput(const float& deltaTime)
 {
 	std::vector<std::string> activeCameras;
 	for(int i = 0; i < cameraNameList.size(); i++)
@@ -189,11 +222,11 @@ void Camera::ProcessInputEvent()
 	}
 }
 
-void Camera::UpdateCamera(float deltaTime)
+void Camera::UpdateCamera(const float& deltaTime)
 {
 	ProcessInputEvent();
 
-	const float cam_vel = 0.001f + bSprint * 0.01;
+	const float cam_vel = 1.0f + bSprint * 2.0f;
 	glm::vec3 forward = { 0,0,-cam_vel };
 	glm::vec3 right = { cam_vel,0,0 };
 	glm::vec3 up = { 0,cam_vel,0 };
@@ -206,13 +239,16 @@ void Camera::UpdateCamera(float deltaTime)
 
 	velocity = inputAxis.x * forward + inputAxis.y * right + inputAxis.z * up;
 
-	velocity *= 10 * deltaTime;
+	velocity *= 4.0f * deltaTime;
 
 	if(possessCamera)
 	{
 		position += velocity;
-	}
+	}	
+}
 
+void Camera::RenderCamera()
+{
 	if(cameraUpdated == true)
 	{
 		GPUCameraData camData{};
@@ -225,7 +261,6 @@ void Camera::UpdateCamera(float deltaTime)
 	}
 	LightManager::SetCamPos(position);
 	LightManager::Update();
-	
 }
 
 

@@ -33,7 +33,8 @@ public:
 
 
 	void ProcessInputEvent();
-	void UpdateCamera(float deltaTime);
+	void UpdateCamera(const float& deltaTime);
+	void RenderCamera();
 
 	const std::string GetCameraBuffer(){return "camera buffer";}
 
@@ -54,7 +55,8 @@ struct CameraManager
 	static void AddCamera(const std::string& cameraName);
 	static Camera& GetCamera(const std::string& cameraName);
 	static Camera& GetActiveCamera();
-	static void Update(float deltaTime);
+	static void Render();
+	static void UpdateInput(const float& deltaTime);
 	static void Destroy();
 };
 

@@ -11,6 +11,7 @@
 #include "pipeline_manager.h"
 #include "geometry_pipeline.h"
 #include "editor_pipeline.h"
+#include "statistics.h"
 
 
 bool isInitialized{ false };
@@ -18,10 +19,6 @@ bool isInitialized{ false };
 FunctionQueuer additionalDeletion;
 
 
-auto start = std::chrono::system_clock::now();
-auto end = std::chrono::system_clock::now();
-float deltaTime;
-float timer;
 
 
 void Core::CoreInit()
@@ -72,14 +69,7 @@ void Core::CoreUpdate()
 	while (!windowHandler.WindowShouldClose())
 	{
 		glfwPollEvents();
-
-        end = std::chrono::system_clock::now();
-        using ms = std::chrono::duration<float, std::milli>;
-        deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-        start = std::chrono::system_clock::now();
-
-        timer += deltaTime * 0.001;
-
+        Statistics::Start();
 		//RendererCore::RendererEvents();
 		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
         {
@@ -100,10 +90,12 @@ void Core::CoreUpdate()
                 CameraManager::AddCamera("camera2");
                 CameraManager::GetCamera("camera2").SetIsActive(false);
             }
-            CameraManager::Update(deltaTime);
+            CameraManager::Render();
             PipelineManager::UpdateRendererPipelines();
             
         });
+        Statistics::End();
+        CameraManager::UpdateInput(Statistics::GetDeltaTime());
     }
 }
 

@@ -13,6 +13,7 @@
 #include "Include/mesh_adder.h"
 #include "Include/material_editor.h"
 #include "Include/light_adder.h"
+#include "Include/stats.h"
 
 
 void MenuBar::ShowMenuBar()
@@ -22,6 +23,7 @@ void MenuBar::ShowMenuBar()
         static bool showAbout = false; 
         static bool showDemo = false; 
         static bool showMeshAdder = false;
+        static bool showStats = true;
         //checking what is the size of the menu bar
         //ENGINE_CORE_INFO("bar size, x = {0} y = {1}", ImGui::GetWindowSize().x,  ImGui::GetWindowSize().y);
         if (ImGui::BeginMenu("File"))
@@ -51,6 +53,8 @@ void MenuBar::ShowMenuBar()
         }
         if (ImGui::BeginMenu("Help"))
         {
+            ImGui::MenuItem("Show Stats",NULL, &showStats);
+
             ImGui::MenuItem("Show Demo Window",NULL, &showDemo);
 
             ImGui::MenuItem("About Engine",NULL, &showAbout);
@@ -72,6 +76,10 @@ void MenuBar::ShowMenuBar()
             MeshAdder::ShowMeshAdderWindow();
             MaterialEditor::ShowMaterialWindow();
             LightAdder::ShowLightAdderWindow();
+        }
+        if(showStats)
+        {
+            Stats::ShowStatsWindow();
         }
     }
     
