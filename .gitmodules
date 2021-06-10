@@ -10,3 +10,7 @@
 [submodule "Third-Party/volk"]
 	path = Third-Party/volk
 	url = https://github.com/zeux/volk.git
+[submodule "Third-Party/glfw"]
+	path = Third-Party/glfw
+	url = https://github.com/glfw/glfw.git
+	branch = 3.3-stable

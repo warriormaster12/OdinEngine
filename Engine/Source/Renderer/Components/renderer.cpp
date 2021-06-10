@@ -2,7 +2,6 @@
 #include "logger.h"
 #include "vk_context.h"
 #include <memory>
-#include <vulkan/vulkan_core.h>
 
 
 

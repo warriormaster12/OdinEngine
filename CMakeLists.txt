@@ -5,11 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
-
-find_package(X11 REQUIRED)
-
-
 file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/Engine/Source/*)
 
 add_executable(OdinEngine ${SRC})
@@ -47,13 +42,8 @@ if (UNIX AND NOT APPLE)
     set (LINUX TRUE)
     if(DGLFW_USE_WAYLAND=ON)
         set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WAYLAND_KHR)
-        target_include_directories(OdinEngine PRIVATE ${WAYLAND+INCLUDE_DIR})
-        target_link_libraries(OdinEngine PRIVATE ${WAYLAND_LIBRARIES} -lm)
-    
     else()
         set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
-        target_include_directories(OdinEngine PRIVATE ${X11+INCLUDE_DIR})
-        target_link_libraries(OdinEngine PRIVATE ${X11_LIBRARIES} -lm)
     endif ()
 endif ()
 
