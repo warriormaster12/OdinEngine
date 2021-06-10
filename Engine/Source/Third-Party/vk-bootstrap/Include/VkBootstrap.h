@@ -20,8 +20,7 @@
 
 #include <vector>
 #include <system_error>
-#define VK_NO_PROTOTYPES
-#include "volk.h"
+#include <vulkan/vulkan.h>
 
 
 namespace vkb {

@@ -2046,7 +2046,6 @@ available through VmaAllocatorCreateInfo::pRecordSettings.
 #endif // #if defined(__ANDROID__) && VMA_STATIC_VULKAN_FUNCTIONS && VK_NO_PROTOTYPES
 
 #ifndef VULKAN_H_
-    #define VK_NO_PROTOTYPES
     #include "volk.h"
 #endif
 

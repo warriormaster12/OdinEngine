@@ -2,6 +2,7 @@
 #include "logger.h"
 #include "window_handler.h"
 //bootstrap library
+#define VK_NO_PROTOTYPES
 #include "VkBootstrap.h"
 
 #ifdef NDEBUG
