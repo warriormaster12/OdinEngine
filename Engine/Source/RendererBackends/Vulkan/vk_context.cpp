@@ -16,7 +16,7 @@
 
 
 std::unordered_map<std::string, VkRenderPass> renderPass;
-std::vector<VkFramebuffer> mainFramebuffer;
+std::vector<std::unordered_map<std::string, VkFramebuffer>>frameBuffers;
 
 //objects deleted on application closed
 FunctionQueuer mainDeletionQueue;
@@ -131,27 +131,39 @@ void VulkanContext::CleanUpVulkan(FunctionQueuer* p_additionalDeletion)
 
 void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique_ptr<VkFrameBufferAdditionalInfo> bufferInfo)
 {
-    // if(bufferInfo == nullptr && bufferName == "")
-    // {
+    if(bufferInfo == nullptr && bufferName == "")
+    {
+        const uint32_t swapchainImageCount = VkSwapChainManager::GetSwapchainImageViews().size();
+        frameBuffers.resize(swapchainImageCount);
         
-    // }
-    // else {
-        
-    // }
-    const uint32_t swapchainImageCount = VkSwapChainManager::GetSwapchainImageViews().size();
-    mainFramebuffer.resize(swapchainImageCount);
-    
-    
-    for (int i = 0; i < swapchainImageCount; i++) {
-        std::vector <VkImageView> attachments = {VkSwapChainManager::GetSwapchainImageViews()[i], VkSwapChainManager::GetSwapchainDepthView()};
-        VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent());
-        fbInfo.attachmentCount = attachments.size();
-        fbInfo.pAttachments = attachments.data();
-        vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &mainFramebuffer[i]);
+        for (int i = 0; i < swapchainImageCount; i++) {
+            frameBuffers[i]["main framebuffer"];
+            std::vector <VkImageView> attachments = {VkSwapChainManager::GetSwapchainImageViews()[i], VkSwapChainManager::GetSwapchainDepthView()};
+            VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent());
+            fbInfo.attachmentCount = attachments.size();
+            fbInfo.pAttachments = attachments.data();
+            vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, FindUnorderdMap("main framebuffer", frameBuffers[i]));
 
-        swapDeletionQueue.PushFunction([=]() {
-            vkDestroyFramebuffer(VkDeviceManager::GetDevice(), mainFramebuffer[i], nullptr);
-        });
+            swapDeletionQueue.PushFunction([=]() {
+                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), *FindUnorderdMap("main framebuffer", frameBuffers[i]), nullptr);
+            });
+        }
+    }
+    else {
+        frameBuffers.resize(1);
+        frameBuffers[0][bufferName];
+        std::vector <VkImageView> attachments;
+		// attachments[0] = offscreenPass.color.view;
+		// attachments[1] = offscreenPass.depth.view;
+        VkExtent2D extent = {};
+        extent.height = bufferInfo->height;
+        extent.width = bufferInfo->width;
+		VkFramebufferCreateInfo fbufCreateInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap(bufferInfo->renderPass, renderPass), extent);
+		fbufCreateInfo.attachmentCount = attachments.size();
+		fbufCreateInfo.pAttachments = attachments.data();
+		fbufCreateInfo.layers = 1;
+
+		vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbufCreateInfo, nullptr, FindUnorderdMap(bufferName, frameBuffers[0]));
     }
 }
 
@@ -659,7 +671,7 @@ void VulkanContext::BeginRenderpass(const float clearColor[4])
     // {
         
     // }
-    rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[VkCommandbufferManager::GetImageIndex()]);
+    rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent(), *FindUnorderdMap("main framebuffer", frameBuffers[VkCommandbufferManager::GetImageIndex()]));
     //connect clear values
     rpInfo.clearValueCount = 2;
 
