@@ -58,10 +58,10 @@ void GeometryPipeline::Init()
     descriptionInfo3.depthTesting = true;
     descriptionInfo3.depthCompareType = COMPARE_OP_LESS_OR_EQUAL;
 
-    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
+    Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayout("camera layout");
 
-    Renderer::CreateShaderUniformLayoutBinding(UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 0);
+    Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 0);
     Renderer::CreateShaderUniformLayout("Cube texture layout");
 
     Renderer::CreateShader({"EngineAssets/Shaders/skybox.frag", "EngineAssets/Shaders/skybox.vert"}, "cube map", {"camera layout", "Cube texture layout"},&descriptionInfo3);
