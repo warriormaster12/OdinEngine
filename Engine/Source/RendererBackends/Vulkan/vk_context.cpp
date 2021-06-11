@@ -10,11 +10,12 @@
 
 #include "logger.h"
 #include <iostream>
+#include <unordered_map>
 
 
 
 
-VkRenderPass mainPass;
+std::unordered_map<std::string, VkRenderPass> renderPass;
 std::vector<VkFramebuffer> mainFramebuffer;
 
 //objects deleted on application closed
@@ -43,7 +44,8 @@ std::string currentlyBoundShader;
 
 VkRenderPass& VulkanContext::GetRenderpass()
 {
-    return mainPass;
+    
+    return *FindUnorderdMap("main pass", renderPass);
 }
 
 
@@ -83,11 +85,12 @@ void VulkanContext::ResizeWindow()
 
     //then we recreate and move deletion functions back to swapchain queue
     VkSwapChainManager::InitSwapchain();
+    CreateFramebuffer("", nullptr);
 
     swapDeletionQueue.PushFunction([=]() {
         VkSwapChainManager::DeleteSwapchain();
     });
-    CreateMainFramebuffer();   
+    ;   
 }
 
 void VulkanContext::UpdateDraw(float clearColor[4],std::function<void()>&& drawCalls)
@@ -126,15 +129,22 @@ void VulkanContext::CleanUpVulkan(FunctionQueuer* p_additionalDeletion)
     
 }
 
-void VulkanContext::CreateMainFramebuffer()
+void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique_ptr<VkFrameBufferAdditionalInfo> bufferInfo)
 {
+    // if(bufferInfo == nullptr && bufferName == "")
+    // {
+        
+    // }
+    // else {
+        
+    // }
     const uint32_t swapchainImageCount = VkSwapChainManager::GetSwapchainImageViews().size();
-    mainFramebuffer = std::vector<VkFramebuffer>(swapchainImageCount);
+    mainFramebuffer.resize(swapchainImageCount);
     
     
     for (int i = 0; i < swapchainImageCount; i++) {
         std::vector <VkImageView> attachments = {VkSwapChainManager::GetSwapchainImageViews()[i], VkSwapChainManager::GetSwapchainDepthView()};
-        VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(mainPass, VkSwapChainManager::GetSwapchainExtent());
+        VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent());
         fbInfo.attachmentCount = attachments.size();
         fbInfo.pAttachments = attachments.data();
         vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &mainFramebuffer[i]);
@@ -145,7 +155,7 @@ void VulkanContext::CreateMainFramebuffer()
     }
 }
 
-void VulkanContext::CreateDefaultRenderpass()
+void VulkanContext::CreateRenderpass(const std::string& passName)
 {
     //we define an attachment description for our main color image
     //the attachment is loaded as "clear" when renderpass start
@@ -213,11 +223,14 @@ void VulkanContext::CreateDefaultRenderpass()
     render_pass_info.pSubpasses = &subpass;
     render_pass_info.dependencyCount = 1;
     render_pass_info.pDependencies = &dependency;
-
-    VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &render_pass_info, nullptr, &mainPass));
+    if(passName == "")
+    {
+        renderPass["main pass"];
+    }
+    VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &render_pass_info, nullptr, FindUnorderdMap("main pass", renderPass)));
     ENGINE_CORE_INFO("main renderpass created");
     mainDeletionQueue.PushFunction([=]() {
-        vkDestroyRenderPass(VkDeviceManager::GetDevice(), mainPass, nullptr);
+        vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap("main pass", renderPass), nullptr);
     }); 
 }
 
@@ -449,7 +462,7 @@ void VulkanContext::RemoveAllocatedBuffer(const std::string& bufferName, const b
 }
 
 
-void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkShaderDescriptions& descriptions,const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)
+void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkShaderDescriptions& descriptions)
 {
     vkcomponent::PipelineBuilder pipelineBuilder;
 
@@ -517,14 +530,15 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
 
     //build the pipeline
     vkcomponent::ShaderPass shaderPass;
-    if(renderPass != VK_NULL_HANDLE)
-    {
-        shaderPass = vkcomponent::BuildShader(renderPass, pipelineBuilder, shaderEffect);
-    }
-    else
-    {
-        shaderPass = vkcomponent::BuildShader(mainPass, pipelineBuilder, shaderEffect);
-    }
+    // if(renderPass != VK_NULL_HANDLE)
+    // {
+    //     shaderPass = vkcomponent::BuildShader(renderPass, pipelineBuilder, shaderEffect);
+    // }
+    // else
+    // {
+        
+    // }
+    shaderPass = vkcomponent::BuildShader(*FindUnorderdMap("main pass", renderPass), pipelineBuilder, shaderEffect);
 
     shaderProgram[shaderName].pass = shaderPass;
 
@@ -625,7 +639,7 @@ void VulkanContext::DrawIndexed(std::vector<std::uint32_t>& indices, const uint3
     vkCmdDrawIndexed(VkCommandbufferManager::GetCommandBuffer(), indices.size(), 1,0,0,currentInstance);
 }
 
-void VulkanContext::BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass /*= VK_NULL_HANDLE*/)
+void VulkanContext::BeginRenderpass(const float clearColor[4])
 {
     VkClearValue clearValue;
     clearValue.color = { {clearColor[0], clearColor[1], clearColor[2], clearColor[3]} };
@@ -637,14 +651,15 @@ void VulkanContext::BeginRenderpass(const float clearColor[4], const VkRenderPas
     //start the main renderpass. 
     //We will use the clear color from above, and the framebuffer of the index the swapchain gave us
     VkRenderPassBeginInfo rpInfo;
-    if(renderPass != VK_NULL_HANDLE)
-    {
-        rpInfo = vkinit::RenderpassBeginInfo(renderPass, VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[VkCommandbufferManager::GetImageIndex()]);
-    }
-    else
-    {
-        rpInfo = vkinit::RenderpassBeginInfo(mainPass, VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[VkCommandbufferManager::GetImageIndex()]);
-    }
+    // if(renderPass != VK_NULL_HANDLE)
+    // {
+    //     rpInfo = vkinit::RenderpassBeginInfo(renderPass, VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[VkCommandbufferManager::GetImageIndex()]);
+    // }
+    // else
+    // {
+        
+    // }
+    rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[VkCommandbufferManager::GetImageIndex()]);
     //connect clear values
     rpInfo.clearValueCount = 2;
 

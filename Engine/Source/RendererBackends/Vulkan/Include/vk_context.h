@@ -42,6 +42,14 @@ struct VkShaderDescriptions
     std::unique_ptr<VkPushConstantInfo> p_pushConstant = nullptr;
 };
 
+struct VkFrameBufferAdditionalInfo
+{
+    std::string renderPass;
+    uint32_t width;
+    uint32_t height;
+    bool resizable; 
+};
+
 
 
 
@@ -56,14 +64,15 @@ public:
 
     static void CleanUpVulkan(FunctionQueuer* p_additionalDeletion);
 
-    static void CreateDefaultRenderpass();
-    static void CreateMainFramebuffer();
+    static void CreateRenderpass(const std::string& passName);
+    static void CreateFramebuffer(const std::string& bufferName, std::unique_ptr<VkFrameBufferAdditionalInfo> bufferInfo);
+    
 
     static void CreateDescriptorSetLayoutBinding(DescripotrSetLayoutBindingInfo layoutBindingInfo);
     static void CreateDescriptorSetLayout(const std::string& layoutName);
     static void RemoveDescriptorSetLayout(const std::string& layoutName);
 
-    static void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkShaderDescriptions& descriptions, const VkRenderPass& renderPass = VK_NULL_HANDLE);
+    static void CreateGraphicsPipeline(std::vector<std::string>& shaderPaths, const std::string& shaderName, const std::vector<std::string>& layoutNames, const VkShaderDescriptions& descriptions);
     
     static void CreateUniformBufferInfo(const std::string& bufferName, const bool& frameOverlap,const VkBufferUsageFlags& bufferUsage, const size_t& dataSize, const size_t& dataRange);
 
@@ -91,7 +100,7 @@ public:
 
     static VkRenderPass& GetRenderpass();
 
-    static void BeginRenderpass(const float clearColor[4], const VkRenderPass& renderPass = VK_NULL_HANDLE);
+    static void BeginRenderpass(const float clearColor[4]);
     static void EndRenderpass();
 
     // template functions 

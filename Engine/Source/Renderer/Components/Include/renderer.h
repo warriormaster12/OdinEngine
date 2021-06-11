@@ -4,6 +4,7 @@
 #include "vk_context.h"
 
 #include <array>
+#include <bits/stdint-uintn.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -136,14 +137,45 @@ struct ShaderDescriptions
 
 };
 
+struct FrameBufferInfo 
+{
+    std::string renderPassName;
+
+    uint32_t width = 0;
+    uint32_t height = 0;
+
+    //if set to true then width and height will be equal to swapchain.
+    bool resiziable = false;
+};
+
 namespace Renderer
 {
     void InitRenderer(AvailableBackends selectBackend);
     void UpdateRenderer(std::array<float, 4> clearColor, std::function<void()>&& drawCalls);
     void CleanUpRenderer(FunctionQueuer* p_additionalDeletion = nullptr);
 
-    void CreateFramebuffer(ObjectType type);
-    void CreateRenderPass(ObjectType type);
+
+    /**
+     * Creates color, depth or stencil information for framebuffer to consume
+     *
+     *
+     *
+     * @param type tells which type of a render pass we are creating
+     * @param passName if type is offscreen then we need to give it a name
+     */
+    void CreateRenderPass(ObjectType type, const std::string& passName = "");
+
+    /**
+     * Creates a frame to which the rendered content is going to be displayed
+     *
+     *
+     *
+     * @param type tells which type of a framebuffer we are creating
+     * @param bufferName if type is offscreen then we need to give it a name
+     * @param p_additionalInfo tell additional information for offscreen buffer only
+     */
+    void CreateFramebuffer(ObjectType type, const std::string& bufferName = "", std::unique_ptr<FrameBufferInfo> p_additionalInfo = nullptr);
+    
 
     //Equivalent to creating a descriptor set layout 
     void CreateShaderUniformLayoutBinding(const UniformType& uniformType, const ShaderStageFlags& shaderStage,const uint32_t& binding, const uint32_t& writeCount = 1);

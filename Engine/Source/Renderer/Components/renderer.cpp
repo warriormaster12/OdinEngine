@@ -20,34 +20,51 @@ void Renderer::InitRenderer(AvailableBackends selectBackend)
     }
 }
 
-void Renderer::CreateFramebuffer(ObjectType type)
+void Renderer::CreateRenderPass(ObjectType type, const std::string& passName /*= ""*/)
 {
     if(currentBackend == AvailableBackends::Vulkan)
     {
         if(type == ObjectType::Main)
         {
-            VulkanContext::CreateMainFramebuffer();
-        }
-        else
-        {
-            ENGINE_CORE_ERROR("offscreen framebuffers aren't currently supported");   
-        }
-    }   
-}
-
-void Renderer::CreateRenderPass(ObjectType type)
-{
-    if(currentBackend == AvailableBackends::Vulkan)
-    {
-        if(type == ObjectType::Main)
-        {
-            VulkanContext::CreateDefaultRenderpass();
+            VulkanContext::CreateRenderpass(passName);
         }
         else
         {
             ENGINE_CORE_ERROR("offscreen renderPasses aren't currently supported");   
         }
     } 
+}
+
+void Renderer::CreateFramebuffer(ObjectType type, const std::string& bufferName /*= ""*/, std::unique_ptr<FrameBufferInfo> p_additionalInfo /*= nullptr*/)
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        if(type == ObjectType::Main)
+        {
+            VulkanContext::CreateFramebuffer(bufferName, nullptr);
+        }
+        else
+        {
+            if(bufferName != "")
+            {
+                if(p_additionalInfo != nullptr)
+                {
+                    std::unique_ptr<VkFrameBufferAdditionalInfo> bufferInfo = std::make_unique<VkFrameBufferAdditionalInfo>();
+                    bufferInfo->height = p_additionalInfo->height;
+                    bufferInfo->width = p_additionalInfo->width;
+                    bufferInfo->renderPass = p_additionalInfo->renderPassName;
+                    bufferInfo->resizable = p_additionalInfo->resiziable;
+                    VulkanContext::CreateFramebuffer(bufferName, std::move(bufferInfo));
+                }
+                else {
+                    ENGINE_CORE_ERROR("offscreen framebuffers additional information");
+                }
+            }
+            else {
+                ENGINE_CORE_ERROR("offscreen framebuffers require a name");
+            }    
+        }
+    }   
 }
 void Renderer::CreateShaderUniformLayoutBinding(const UniformType& uniformType, const ShaderStageFlags& shaderStage,const uint32_t& binding, const uint32_t& writeCount /*= 1*/)
 {
@@ -135,7 +152,7 @@ void Renderer::CreateShader(std::vector<std::string> shaderPaths, const std::str
         if(descriptions == nullptr)
         {
             VkShaderDescriptions vkDescriptions;
-            VulkanContext::CreateGraphicsPipeline(shaderPaths, shaderName, layoutNames, vkDescriptions, 0);
+            VulkanContext::CreateGraphicsPipeline(shaderPaths, shaderName, layoutNames, vkDescriptions);
         }
         else
         {
@@ -158,7 +175,7 @@ void Renderer::CreateShader(std::vector<std::string> shaderPaths, const std::str
                 vkDescriptions.vertexLocations[i].format = (VkFormat)descriptions->vertexLocations[i].format;
                 vkDescriptions.vertexLocations[i].offset = descriptions->vertexLocations[i].offset;
             }
-            VulkanContext::CreateGraphicsPipeline(shaderPaths, shaderName, layoutNames,vkDescriptions, 0);
+            VulkanContext::CreateGraphicsPipeline(shaderPaths, shaderName, layoutNames,vkDescriptions);
         }
     }
 }
