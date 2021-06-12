@@ -30,7 +30,7 @@ void Renderer::CreateRenderPass(ObjectType type, const std::string& passName /*=
         }
         else
         {
-            ENGINE_CORE_ERROR("offscreen renderPasses aren't currently supported");   
+            VulkanContext::CreateRenderpass(passName);  
         }
     } 
 }

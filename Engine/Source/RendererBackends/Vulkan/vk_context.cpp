@@ -211,7 +211,10 @@ void VulkanContext::CreateRenderpass(const std::string& passName)
             attachmentDescriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
         }
         attachmentDescriptions[0].format = VK_FORMAT_R8G8B8A8_UNORM;
+        attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
         attachmentDescriptions[1].format = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+        attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 
         VkAttachmentReference colorReference = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
@@ -252,7 +255,7 @@ void VulkanContext::CreateRenderpass(const std::string& passName)
 		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 		renderPassInfo.pDependencies = dependencies.data();
         renderPass[passName];
-        VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap("main pass", renderPass)));
+        VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap(passName, renderPass)));
         ENGINE_CORE_INFO("{0} renderpass created", passName);
     } 
 }

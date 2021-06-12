@@ -34,7 +34,7 @@ void Core::CoreInit()
     Renderer::CreateRenderPass(RENDERPASS_MAIN);
     Renderer::CreateFramebuffer(FRAMEBUFFER_MAIN);
 
-    //PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
+    PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
 
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_STORAGE_BUFFER, SHADER_STAGE_FRAGMENT_BIT, 1);

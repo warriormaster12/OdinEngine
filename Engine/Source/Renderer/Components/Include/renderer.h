@@ -28,7 +28,7 @@ enum class AvailableBackends
 enum class ObjectType
 {
     Main = 0,
-    Offscreen = 0
+    Offscreen = 1
 };
 
 enum class UniformType 

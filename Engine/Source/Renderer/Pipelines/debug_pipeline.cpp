@@ -11,7 +11,7 @@ void DebugPipeline::Init()
     bufferInfo->height = 512;
     bufferInfo->resiziable = false;
     bufferInfo->renderPassName = "test pass";
-    Renderer::CreateFramebuffer(FRAMEBUFFER_OFFSCREEN, "test offscreen", std::move(bufferInfo));
+    //Renderer::CreateFramebuffer(FRAMEBUFFER_OFFSCREEN, "test offscreen", std::move(bufferInfo));
 }
 
 void DebugPipeline::Update()
