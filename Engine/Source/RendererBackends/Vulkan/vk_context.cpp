@@ -12,6 +12,7 @@
 #include "logger.h"
 #include <iostream>
 #include <unordered_map>
+#include <vulkan/vulkan_core.h>
 
 
 
@@ -98,26 +99,10 @@ void VulkanContext::ResizeWindow()
     ;   
 }
 
-void VulkanContext::UpdateDraw(float clearColor[4],std::function<void()>&& drawCalls)
+void VulkanContext::UpdateDraw(std::function<void()>&& drawCalls)
 {
     VkCommandbufferManager::BeginCommands(ResizeWindow);
-    BeginRenderpass(clearColor);
-    VkViewport viewport = {};
-    viewport.width = VkSwapChainManager::GetSwapchainExtent().width;
-    viewport.height = VkSwapChainManager::GetSwapchainExtent().height;
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    VkRect2D scissor = {};
-    scissor.extent = VkSwapChainManager::GetSwapchainExtent();
-    scissor.offset = {0, 0};
-
-    vkCmdSetViewport(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &viewport);
-    vkCmdSetScissor(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &scissor);
-
     drawCalls();
-    EndRenderpass();
     VkCommandbufferManager::EndCommands(ResizeWindow);
 }
 
@@ -328,6 +313,8 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 		fbufCreateInfo.layers = 1;
 
 		vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbufCreateInfo, nullptr, &buffers[0]);
+        //Check if we want to resize the framebuffer
+        //At the moment the implementation isn't flexible 
         if(bufferInfo->resizable == true)
         {
             resizableFramebuffers.push_back(bufferName);
@@ -750,36 +737,47 @@ void VulkanContext::DrawIndexed(std::vector<std::uint32_t>& indices, const uint3
     vkCmdDrawIndexed(VkCommandbufferManager::GetCommandBuffer(), indices.size(), 1,0,0,currentInstance);
 }
 
-void VulkanContext::BeginRenderpass(const float clearColor[4])
+void VulkanContext::BeginRenderpass(const float& clearValueCount, const float clearColor[4], const float& depth, const std::string& passName /*="main pass"*/, const std::string& frameBufferName /*="main framebuffer"*/)
 {
     VkClearValue clearValue;
     clearValue.color = { {clearColor[0], clearColor[1], clearColor[2], clearColor[3]} };
 
     //clear depth at 1
     VkClearValue depthClear;
-    depthClear.depthStencil.depth = 1.f;
+    depthClear.depthStencil.depth = depth;
+
+    std::vector<VkClearValue> clearValues;
+    clearValues.push_back(clearValue);
+    if(clearValueCount > 1)
+    {
+        clearValues.push_back(depthClear);
+    }
     
     //start the main renderpass. 
     //We will use the clear color from above, and the framebuffer of the index the swapchain gave us
     VkRenderPassBeginInfo rpInfo;
-    // if(renderPass != VK_NULL_HANDLE)
-    // {
-    //     rpInfo = vkinit::RenderpassBeginInfo(renderPass, VkSwapChainManager::GetSwapchainExtent(), mainFramebuffer[VkCommandbufferManager::GetImageIndex()]);
-    // }
-    // else
-    // {
-        
-    // }
-    auto& buffers = *FindUnorderdMap("main framebuffer", frameBuffers);
-    rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers[VkCommandbufferManager::GetImageIndex()]);
+    auto& buffers = *FindUnorderdMap(frameBufferName, frameBuffers);
+    rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers[VkCommandbufferManager::GetImageIndex()]);
     //connect clear values
-    rpInfo.clearValueCount = 2;
+    rpInfo.clearValueCount = clearValueCount;
 
-    VkClearValue clearValues[] = { clearValue, depthClear };
-
-    rpInfo.pClearValues = &clearValues[0];
+    rpInfo.pClearValues = clearValues.data();
     
     vkCmdBeginRenderPass(VkCommandbufferManager::GetCommandBuffer(), &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkViewport viewport = {};
+    viewport.width = VkSwapChainManager::GetSwapchainExtent().width;
+    viewport.height = VkSwapChainManager::GetSwapchainExtent().height;
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = depth;
+    VkRect2D scissor = {};
+    scissor.extent = VkSwapChainManager::GetSwapchainExtent();
+    scissor.offset = {0, 0};
+
+    vkCmdSetViewport(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &viewport);
+    vkCmdSetScissor(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &scissor);
     
 }
 void VulkanContext::EndRenderpass()

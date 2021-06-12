@@ -17,6 +17,8 @@
 
 #include "editor_layer.h"
 
+#include "renderer.h"
+
 FunctionQueuer imguiQueue;
 
 void EditorPipeline::Init()

@@ -65,7 +65,7 @@ public:
 
     static void ResizeWindow();
 
-    static void UpdateDraw(float clearColor[4],std::function<void()>&& drawCalls);
+    static void UpdateDraw(std::function<void()>&& drawCalls);
 
     static void CleanUpVulkan(FunctionQueuer* p_additionalDeletion);
 
@@ -105,7 +105,7 @@ public:
 
     static VkRenderPass& GetRenderpass();
 
-    static void BeginRenderpass(const float clearColor[4]);
+    static void BeginRenderpass(const float& clearValueCount, const float clearColor[4], const float& depth, const std::string& passName ="main pass", const std::string& frameBufferName ="main framebuffer");
     static void EndRenderpass();
 
     // template functions 

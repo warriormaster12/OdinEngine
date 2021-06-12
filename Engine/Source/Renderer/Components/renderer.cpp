@@ -197,11 +197,27 @@ void Renderer::BindUniforms(const std::string& name, const uint32_t& set, const 
     }
 }
 
-void Renderer::UpdateRenderer(std::array<float, 4> clearColor, std::function<void()>&& drawCalls)
+void Renderer::BeginRenderpass(const float& clearValueCount, std::array<float, 4> clearColor, const float& depth, const std::string& passName /*="main pass"*/, const std::string& frameBufferName /*="main framebuffer"*/)
 {
     if(currentBackend == AvailableBackends::Vulkan)
     {
-        VulkanContext::UpdateDraw(clearColor.data(), [=]{drawCalls();});
+        VulkanContext::BeginRenderpass(clearValueCount, clearColor.data(), depth, passName, frameBufferName);
+    }   
+}
+
+void Renderer::UpdateRenderer(std::function<void()>&& drawCalls)
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        VulkanContext::UpdateDraw([=]{drawCalls();});
+    } 
+}
+
+void Renderer::EndRenderpass()
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        VulkanContext::EndRenderpass();
     } 
 }
 

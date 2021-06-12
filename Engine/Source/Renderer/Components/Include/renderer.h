@@ -158,7 +158,10 @@ struct FrameBufferInfo
 namespace Renderer
 {
     void InitRenderer(AvailableBackends selectBackend);
-    void UpdateRenderer(std::array<float, 4> clearColor, std::function<void()>&& drawCalls);
+    void BeginRenderpass(const float& clearValueCount, std::array<float, 4> clearColor, const float& depth, const std::string& passName ="main pass", const std::string& frameBufferName ="main framebuffer");
+    void UpdateRenderer(std::function<void()>&& drawCalls);
+    void EndRenderpass();
+
     void CleanUpRenderer(FunctionQueuer* p_additionalDeletion = nullptr);
 
 

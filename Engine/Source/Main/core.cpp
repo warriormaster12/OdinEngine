@@ -75,7 +75,7 @@ void Core::CoreUpdate()
 		glfwPollEvents();
         Statistics::Start();
 		//RendererCore::RendererEvents();
-		Renderer::UpdateRenderer({0.0f, 0.0f, 0.0f, 1.0f}, [=]()
+		Renderer::UpdateRenderer([=]()
         {
             if(windowHandler.GetKInput(GLFW_KEY_J) == GLFW_PRESS)
             {
@@ -95,7 +95,9 @@ void Core::CoreUpdate()
                 CameraManager::GetCamera("camera2").SetIsActive(false);
             }
             CameraManager::Render();
+            Renderer::BeginRenderpass(2, {0.0f, 0.0f, 0.0f, 1.0f}, 1.0f);
             PipelineManager::UpdateRendererPipelines();
+            Renderer::EndRenderpass();
             
         });
         Statistics::End();
