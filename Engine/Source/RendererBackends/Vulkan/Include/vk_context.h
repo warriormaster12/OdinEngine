@@ -48,6 +48,9 @@ struct VkFrameBufferAdditionalInfo
     uint32_t width;
     uint32_t height;
     bool resizable; 
+    std::vector<AllocatedImage> images;
+
+    std::string imageSampler;
 };
 
 

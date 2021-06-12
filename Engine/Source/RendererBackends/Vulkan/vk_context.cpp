@@ -11,13 +11,12 @@
 #include "logger.h"
 #include <iostream>
 #include <unordered_map>
-#include <vulkan/vulkan_core.h>
 
 
 
 
 std::unordered_map<std::string, VkRenderPass> renderPass;
-std::vector<std::unordered_map<std::string, VkFramebuffer>>frameBuffers;
+std::unordered_map<std::string, std::vector<VkFramebuffer>>frameBuffers;
 
 //objects deleted on application closed
 FunctionQueuer mainDeletionQueue;
@@ -264,37 +263,61 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 {
     if(bufferInfo == nullptr && bufferName == "")
     {
+        frameBuffers["main framebuffer"];
         const uint32_t swapchainImageCount = VkSwapChainManager::GetSwapchainImageViews().size();
-        frameBuffers.resize(swapchainImageCount);
-        
+        FindUnorderdMap("main framebuffer",frameBuffers)->resize(swapchainImageCount);
+        auto& buffers = *FindUnorderdMap("main framebuffer",frameBuffers);
         for (int i = 0; i < swapchainImageCount; i++) {
-            frameBuffers[i]["main framebuffer"];
             std::vector <VkImageView> attachments = {VkSwapChainManager::GetSwapchainImageViews()[i], VkSwapChainManager::GetSwapchainDepthView()};
             VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent());
             fbInfo.attachmentCount = attachments.size();
             fbInfo.pAttachments = attachments.data();
-            vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, FindUnorderdMap("main framebuffer", frameBuffers[i]));
+            vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &buffers[i]);
 
             swapDeletionQueue.PushFunction([=]() {
-                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), *FindUnorderdMap("main framebuffer", frameBuffers[i]), nullptr);
+                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), buffers[i], nullptr);
             });
         }
     }
     else {
-        frameBuffers.resize(1);
-        frameBuffers[0][bufferName];
+        frameBuffers[bufferName];
+        FindUnorderdMap(bufferName,frameBuffers)->resize(1);
+
+        auto& buffers = *FindUnorderdMap(bufferName,frameBuffers);
+        
+        //create images for buffer
+        VkExtent3D extent3D;
+        extent3D.width = bufferInfo->width;
+        extent3D.height = bufferInfo->height;
+        extent3D.depth = 1.0f;
+        VkImageCreateInfo imageInfo = vkinit::ImageCreateInfo(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, extent3D);
+
+        VmaAllocationCreateInfo dimg_allocinfo = {};
+        dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &bufferInfo->images[0].image, &bufferInfo->images[0].allocation, nullptr);
+        imageInfo.format = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+        imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &bufferInfo->images[1].image, &bufferInfo->images[1].allocation, nullptr);
+
+        VkImageViewCreateInfo imageViewInfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_UNORM, bufferInfo->images[0].image, VK_IMAGE_ASPECT_COLOR_BIT);
+        vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &bufferInfo->images[0].defaultView);
+        imageViewInfo.image = bufferInfo->images[1].image;
+        imageViewInfo.format = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+        vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &bufferInfo->images[1].defaultView);
+
         std::vector <VkImageView> attachments;
-		// attachments[0] = offscreenPass.color.view;
-		// attachments[1] = offscreenPass.depth.view;
+        attachments.resize(bufferInfo->images.size());
+		attachments[0] = bufferInfo->images[0].defaultView;
+		attachments[1] = bufferInfo->images[1].defaultView;
         VkExtent2D extent = {};
-        extent.height = bufferInfo->height;
-        extent.width = bufferInfo->width;
+        extent.height = extent3D.height;
+        extent.width = extent3D.width;
 		VkFramebufferCreateInfo fbufCreateInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap(bufferInfo->renderPass, renderPass), extent);
 		fbufCreateInfo.attachmentCount = attachments.size();
 		fbufCreateInfo.pAttachments = attachments.data();
 		fbufCreateInfo.layers = 1;
 
-		vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbufCreateInfo, nullptr, FindUnorderdMap(bufferName, frameBuffers[0]));
+		vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbufCreateInfo, nullptr, &buffers[0]);
     }
 }
 
@@ -724,7 +747,8 @@ void VulkanContext::BeginRenderpass(const float clearColor[4])
     // {
         
     // }
-    rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent(), *FindUnorderdMap("main framebuffer", frameBuffers[VkCommandbufferManager::GetImageIndex()]));
+    auto& buffers = *FindUnorderdMap("main framebuffer", frameBuffers);
+    rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers[VkCommandbufferManager::GetImageIndex()]);
     //connect clear values
     rpInfo.clearValueCount = 2;
 

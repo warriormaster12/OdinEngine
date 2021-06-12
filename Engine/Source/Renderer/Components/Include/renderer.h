@@ -148,6 +148,9 @@ struct FrameBufferInfo
 
     //if set to true then width and height will be equal to swapchain.
     bool resiziable = false;
+
+    uint32_t imageCount = 1;
+    std::string imageSampler;
 };
 
 namespace Renderer

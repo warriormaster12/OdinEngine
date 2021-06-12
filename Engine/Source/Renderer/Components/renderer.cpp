@@ -54,6 +54,8 @@ void Renderer::CreateFramebuffer(ObjectType type, const std::string& bufferName 
                     bufferInfo->width = p_additionalInfo->width;
                     bufferInfo->renderPass = p_additionalInfo->renderPassName;
                     bufferInfo->resizable = p_additionalInfo->resiziable;
+                    bufferInfo->images.resize(p_additionalInfo->imageCount);
+                    bufferInfo->imageSampler = p_additionalInfo->imageSampler;
                     VulkanContext::CreateFramebuffer(bufferName, std::move(bufferInfo));
                 }
                 else {
