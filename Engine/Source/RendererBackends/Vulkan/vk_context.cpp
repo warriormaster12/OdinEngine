@@ -5,6 +5,7 @@
 #include "Include/vk_init.h"
 
 #include "vk_check.h"
+#include "vk_types.h"
 #include "vk_utils.h"
 #include "window_handler.h"
 
@@ -17,6 +18,7 @@
 
 std::unordered_map<std::string, VkRenderPass> renderPass;
 std::unordered_map<std::string, std::vector<VkFramebuffer>>frameBuffers;
+std::vector<std::string> resizableFramebuffers;
 
 //objects deleted on application closed
 FunctionQueuer mainDeletionQueue;
@@ -85,7 +87,10 @@ void VulkanContext::ResizeWindow()
 
     //then we recreate and move deletion functions back to swapchain queue
     VkSwapChainManager::InitSwapchain();
-    CreateFramebuffer("", nullptr);
+    for(auto& currentBuffer : resizableFramebuffers)
+    {
+        CreateFramebuffer(currentBuffer, nullptr);
+    }
 
     swapDeletionQueue.PushFunction([=]() {
         VkSwapChainManager::DeleteSwapchain();
@@ -256,6 +261,10 @@ void VulkanContext::CreateRenderpass(const std::string& passName)
         renderPass[passName];
         VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap(passName, renderPass)));
         ENGINE_CORE_INFO("{0} renderpass created", passName);
+
+        mainDeletionQueue.PushFunction([=]() {
+            vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap(passName, renderPass), nullptr);
+        });
     } 
 }
 
@@ -263,6 +272,7 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 {
     if(bufferInfo == nullptr && bufferName == "")
     {
+        resizableFramebuffers.push_back(bufferName);
         frameBuffers["main framebuffer"];
         const uint32_t swapchainImageCount = VkSwapChainManager::GetSwapchainImageViews().size();
         FindUnorderdMap("main framebuffer",frameBuffers)->resize(swapchainImageCount);
@@ -318,6 +328,27 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 		fbufCreateInfo.layers = 1;
 
 		vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbufCreateInfo, nullptr, &buffers[0]);
+        if(bufferInfo->resizable == true)
+        {
+            resizableFramebuffers.push_back(bufferName);
+            swapDeletionQueue.PushFunction([=]() {
+                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), buffers[0], nullptr);
+            });
+        }
+        else {
+            mainDeletionQueue.PushFunction([=]() {
+                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), buffers[0], nullptr);
+            });  
+        }
+        std::vector<AllocatedImage> imageDeletionQueue;
+        imageDeletionQueue = bufferInfo->images;
+        mainDeletionQueue.PushFunction([=]() {
+            for(int i = 0; i < attachments.size(); i++)
+            {
+                vkDestroyImageView(VkDeviceManager::GetDevice(), attachments[i],nullptr);
+                vmaDestroyImage(VkDeviceManager::GetAllocator(), imageDeletionQueue[i].image,  imageDeletionQueue[i].allocation);
+            }
+        }); 
     }
 }
 
@@ -618,15 +649,7 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
 
     //build the pipeline
     vkcomponent::ShaderPass shaderPass;
-    // if(renderPass != VK_NULL_HANDLE)
-    // {
-    //     shaderPass = vkcomponent::BuildShader(renderPass, pipelineBuilder, shaderEffect);
-    // }
-    // else
-    // {
-        
-    // }
-    shaderPass = vkcomponent::BuildShader(*FindUnorderdMap("main pass", renderPass), pipelineBuilder, shaderEffect);
+    shaderPass = vkcomponent::BuildShader(*FindUnorderdMap(descriptions.renderPassName, renderPass), pipelineBuilder, shaderEffect);
 
     shaderProgram[shaderName].pass = shaderPass;
 

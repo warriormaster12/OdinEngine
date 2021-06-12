@@ -40,6 +40,8 @@ struct VkShaderDescriptions
     VkCompareOp depthCompareType = VK_COMPARE_OP_EQUAL;
 
     std::unique_ptr<VkPushConstantInfo> p_pushConstant = nullptr;
+
+    std::string renderPassName = "main pass";
 };
 
 struct VkFrameBufferAdditionalInfo

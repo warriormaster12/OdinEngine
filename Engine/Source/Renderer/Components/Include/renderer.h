@@ -137,6 +137,8 @@ struct ShaderDescriptions
 
     std::unique_ptr<PushConstant> p_pushConstant = nullptr;
 
+    std::string renderPassName = "main pass";
+
 };
 
 struct FrameBufferInfo 
