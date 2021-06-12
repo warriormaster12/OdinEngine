@@ -145,6 +145,7 @@ void EditorPipeline::Update()
 	ImGui::Render();
 
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), VkCommandbufferManager::GetCommandBuffer());
+	Renderer::EndRenderpass();
 }
 
 void EditorPipeline::Destroy()

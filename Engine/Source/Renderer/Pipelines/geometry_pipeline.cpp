@@ -99,6 +99,7 @@ void GeometryPipeline::Init()
 
 void GeometryPipeline::Update()
 {
+    Renderer::BeginRenderpass(2, {0.0f, 0.0f, 0.0f, 1.0f}, 1.0f);
     ObjectManager::RenderObjects();
 }
 

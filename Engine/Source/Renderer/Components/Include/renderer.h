@@ -219,6 +219,8 @@ namespace Renderer
     
     void BindIndexBuffer(AllocatedBuffer& indexBuffer);
 
+    void Draw(const uint32_t& vertices, const uint32_t& instanceCount, const uint32_t& firstVertex, const uint32_t& firstInstance);
+
     void DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance);
 
     void PrepareIndirectDraw(const uint32_t& MAX_COMMANDS);

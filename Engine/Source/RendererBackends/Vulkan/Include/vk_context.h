@@ -1,5 +1,6 @@
 #pragma once 
 
+#include <bits/stdint-uintn.h>
 #include <iostream>
 #include <functional>
 #include <string>
@@ -98,7 +99,10 @@ public:
     static void BindDescriptorSet(const std::string& descriptorName, const uint32_t& set,const uint32_t& dynamicOffset, const bool& frameOverlap);
     static void BindIndexBuffer(AllocatedBuffer& indexBuffer);
     static void BindVertexBuffer(AllocatedBuffer& vertexBuffer);
-    static void DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance);
+
+    static void Draw(const uint32_t& vertices, const uint32_t& instanceCount, const uint32_t& firstVertex, const uint32_t& firstInstance);
+
+    static void DrawIndexed(std::vector<uint32_t>& indices, const uint32_t& currentInstance);
 
     static void PrepareIndirectDraw(const uint32_t& MAX_COMMANDS);
     static void UploadIndirectDraw(const uint32_t& objectCount, const std::vector<uint32_t>& indexSize, const uint32_t& currentInstance);

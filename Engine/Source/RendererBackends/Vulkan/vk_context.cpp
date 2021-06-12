@@ -739,6 +739,11 @@ void VulkanContext::DrawIndexedIndirect(const uint32_t& drawCount, const uint32_
     vkCmdDrawIndexedIndirect(VkCommandbufferManager::GetCommandBuffer(), FindUnorderdMap("indirect draw", VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->buffer, offset, drawCount, stride);
 }
 
+void VulkanContext::Draw(const uint32_t& vertices, const uint32_t& instanceCount, const uint32_t& firstVertex, const uint32_t& firstInstance)
+{
+    vkCmdDraw(VkCommandbufferManager::GetCommandBuffer(), vertices, instanceCount, firstVertex, firstInstance);
+}
+
 void VulkanContext::DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance)
 {   
     vkCmdDrawIndexed(VkCommandbufferManager::GetCommandBuffer(), indices.size(), 1,0,0,currentInstance);
@@ -764,9 +769,12 @@ void VulkanContext::BeginRenderpass(const float& clearValueCount, const float cl
     //We will use the clear color from above, and the framebuffer of the index the swapchain gave us
     VkRenderPassBeginInfo rpInfo;
     auto& buffers = *FindUnorderdMap(frameBufferName, frameBuffers);
-    if(frameBufferName != "main framebuffer")
+    if(frameBufferName != "main framebuffer" && passName != "main pass")
     {
-        rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers.frameBuffers[0]);
+        for(int i = 0; i < buffers.frameBuffers.size(); i++)
+        {
+            rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), {buffers.width, buffers.height}, buffers.frameBuffers[i]);
+        }
     }
     else {
         rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers.frameBuffers[VkCommandbufferManager::GetImageIndex()]);

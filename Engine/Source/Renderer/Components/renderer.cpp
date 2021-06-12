@@ -248,6 +248,13 @@ void Renderer::BindIndexBuffer(AllocatedBuffer& indexBuffer)
     }
 }
 
+void Renderer::Draw(const uint32_t& vertices, const uint32_t& instanceCount, const uint32_t& firstVertex, const uint32_t& firstInstance)
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        VulkanContext::Draw(vertices, instanceCount, firstVertex,firstInstance);
+    } 
+}
 
 void Renderer::DrawIndexed(std::vector<std::uint32_t>& indices, const uint32_t& currentInstance)
 {
