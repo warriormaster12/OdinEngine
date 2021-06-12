@@ -53,6 +53,8 @@ struct VkFrameBufferAdditionalInfo
     std::vector<AllocatedImage> images;
 
     std::string imageSampler;
+
+    std::vector<VkFramebuffer> frameBuffers;
 };
 
 

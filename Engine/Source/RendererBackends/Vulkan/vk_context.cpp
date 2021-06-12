@@ -12,13 +12,13 @@
 #include "logger.h"
 #include <iostream>
 #include <unordered_map>
-#include <vulkan/vulkan_core.h>
+
 
 
 
 
 std::unordered_map<std::string, VkRenderPass> renderPass;
-std::unordered_map<std::string, std::vector<VkFramebuffer>>frameBuffers;
+std::unordered_map<std::string, VkFrameBufferAdditionalInfo>frameBuffers;
 std::vector<std::string> resizableFramebuffers;
 
 //objects deleted on application closed
@@ -257,28 +257,35 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 {
     if(bufferInfo == nullptr && bufferName == "")
     {
-        resizableFramebuffers.push_back(bufferName);
-        frameBuffers["main framebuffer"];
-        const uint32_t swapchainImageCount = VkSwapChainManager::GetSwapchainImageViews().size();
-        FindUnorderdMap("main framebuffer",frameBuffers)->resize(swapchainImageCount);
-        auto& buffers = *FindUnorderdMap("main framebuffer",frameBuffers);
-        for (int i = 0; i < swapchainImageCount; i++) {
+        if(FindUnorderdMap("main framebuffer",frameBuffers) == nullptr)
+        {
+            resizableFramebuffers.push_back(bufferName);
+            frameBuffers["main framebuffer"];
+        }
+        FindUnorderdMap("main framebuffer",frameBuffers)->frameBuffers.resize(VkSwapChainManager::GetSwapchainImageViews().size());
+        auto& bufferInfo = *FindUnorderdMap("main framebuffer",frameBuffers);
+        bufferInfo.width = VkSwapChainManager::GetSwapchainExtent().width;
+        bufferInfo.height = VkSwapChainManager::GetSwapchainExtent().height;
+        for (int i = 0; i < bufferInfo.frameBuffers.size(); i++) {
             std::vector <VkImageView> attachments = {VkSwapChainManager::GetSwapchainImageViews()[i], VkSwapChainManager::GetSwapchainDepthView()};
             VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent());
             fbInfo.attachmentCount = attachments.size();
             fbInfo.pAttachments = attachments.data();
-            vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &buffers[i]);
+            vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &bufferInfo.frameBuffers[i]);
 
             swapDeletionQueue.PushFunction([=]() {
-                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), buffers[i], nullptr);
+                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), bufferInfo.frameBuffers[i], nullptr);
             });
         }
     }
     else {
         frameBuffers[bufferName];
-        FindUnorderdMap(bufferName,frameBuffers)->resize(1);
+        FindUnorderdMap(bufferName,frameBuffers);
 
-        auto& buffers = *FindUnorderdMap(bufferName,frameBuffers);
+        auto& fbufferInfo = *FindUnorderdMap(bufferName,frameBuffers);
+        fbufferInfo.width = bufferInfo->width;
+        fbufferInfo.height = bufferInfo->height;
+        fbufferInfo.frameBuffers.resize(1);
         
         //create images for buffer
         VkExtent3D extent3D;
@@ -312,19 +319,19 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 		fbufCreateInfo.pAttachments = attachments.data();
 		fbufCreateInfo.layers = 1;
 
-		vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbufCreateInfo, nullptr, &buffers[0]);
+		vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbufCreateInfo, nullptr, &fbufferInfo.frameBuffers[0]);
         //Check if we want to resize the framebuffer
         //At the moment the implementation isn't flexible 
         if(bufferInfo->resizable == true)
         {
             resizableFramebuffers.push_back(bufferName);
             swapDeletionQueue.PushFunction([=]() {
-                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), buffers[0], nullptr);
+                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), fbufferInfo.frameBuffers[0], nullptr);
             });
         }
         else {
             mainDeletionQueue.PushFunction([=]() {
-                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), buffers[0], nullptr);
+                vkDestroyFramebuffer(VkDeviceManager::GetDevice(), fbufferInfo.frameBuffers[0], nullptr);
             });  
         }
         std::vector<AllocatedImage> imageDeletionQueue;
@@ -757,7 +764,13 @@ void VulkanContext::BeginRenderpass(const float& clearValueCount, const float cl
     //We will use the clear color from above, and the framebuffer of the index the swapchain gave us
     VkRenderPassBeginInfo rpInfo;
     auto& buffers = *FindUnorderdMap(frameBufferName, frameBuffers);
-    rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers[VkCommandbufferManager::GetImageIndex()]);
+    if(frameBufferName != "main framebuffer")
+    {
+        rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers.frameBuffers[0]);
+    }
+    else {
+        rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers.frameBuffers[VkCommandbufferManager::GetImageIndex()]);
+    }
     //connect clear values
     rpInfo.clearValueCount = clearValueCount;
 
@@ -766,14 +779,15 @@ void VulkanContext::BeginRenderpass(const float& clearValueCount, const float cl
     vkCmdBeginRenderPass(VkCommandbufferManager::GetCommandBuffer(), &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     VkViewport viewport = {};
-    viewport.width = VkSwapChainManager::GetSwapchainExtent().width;
-    viewport.height = VkSwapChainManager::GetSwapchainExtent().height;
+    VkRect2D scissor = {};
+    viewport.width = buffers.width;
+    viewport.height = buffers.height;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = depth;
-    VkRect2D scissor = {};
-    scissor.extent = VkSwapChainManager::GetSwapchainExtent();
+    
+    scissor.extent = {buffers.width, buffers.height};
     scissor.offset = {0, 0};
 
     vkCmdSetViewport(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &viewport);
