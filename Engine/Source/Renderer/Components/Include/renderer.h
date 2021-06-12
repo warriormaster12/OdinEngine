@@ -10,7 +10,7 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-#include <vulkan/vulkan_core.h>
+
 
 #define BACKEND_VULKAN AvailableBackends::Vulkan
 

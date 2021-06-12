@@ -181,26 +181,78 @@ void VulkanContext::CreateRenderpass(const std::string& passName)
         dependency.srcAccessMask = 0;
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        VkRenderPassCreateInfo render_pass_info = {};
-        render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        VkRenderPassCreateInfo renderPassInfo = {};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         //2 attachments from said array
-        render_pass_info.attachmentCount = 2;
-        render_pass_info.pAttachments = &attachmentDescriptions[0];
-        render_pass_info.subpassCount = 1;
-        render_pass_info.pSubpasses = &subpass;
-        render_pass_info.dependencyCount = 1;
-        render_pass_info.pDependencies = &dependency;
+        renderPassInfo.attachmentCount = 2;
+        renderPassInfo.pAttachments = &attachmentDescriptions[0];
+        renderPassInfo.subpassCount = 1;
+        renderPassInfo.pSubpasses = &subpass;
+        renderPassInfo.dependencyCount = 1;
+        renderPassInfo.pDependencies = &dependency;
         
         renderPass["main pass"];
-        VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &render_pass_info, nullptr, FindUnorderdMap("main pass", renderPass)));
+        VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap("main pass", renderPass)));
         
         mainDeletionQueue.PushFunction([=]() {
             vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap("main pass", renderPass), nullptr);
         });
     }
     else {
+        //for now a lot of stuff is hard coded
+        std::array<VkAttachmentDescription, 2> attachmentDescriptions = {};
+        for(int i = 0; i < attachmentDescriptions.size(); i++)
+        {
+            attachmentDescriptions[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            attachmentDescriptions[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            attachmentDescriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
+        }
+        attachmentDescriptions[0].format = VK_FORMAT_R8G8B8A8_UNORM;
+        attachmentDescriptions[1].format = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+
+
+        VkAttachmentReference colorReference = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference depthReference = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+
+		VkSubpassDescription subpassDescription = {};
+		subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpassDescription.colorAttachmentCount = 1;
+		subpassDescription.pColorAttachments = &colorReference;
+		subpassDescription.pDepthStencilAttachment = &depthReference;
+
+		// Use subpass dependencies for layout transitions
+		std::array<VkSubpassDependency, 2> dependencies;
+
+		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass = 0;
+		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		dependencies[1].srcSubpass = 0;
+		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		// Create the actual renderpass
+		VkRenderPassCreateInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
+		renderPassInfo.pAttachments = attachmentDescriptions.data();
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpassDescription;
+		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+		renderPassInfo.pDependencies = dependencies.data();
         renderPass[passName];
-        //VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &render_pass_info, nullptr, FindUnorderdMap("main pass", renderPass)));
+        VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap("main pass", renderPass)));
         ENGINE_CORE_INFO("{0} renderpass created", passName);
     } 
 }

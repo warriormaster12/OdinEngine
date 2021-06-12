@@ -55,6 +55,6 @@ namespace vkinit {
 
     VkBool32 FormatIsFilterable(VkPhysicalDevice physicalDevice, VkFormat format, VkImageTiling tiling);
 
-    VkFormat GetSupportedDepthFormat(bool checkSamplingSupport, VkPhysicalDevice& physicalDevice);
+    VkFormat GetSupportedDepthFormat(VkPhysicalDevice& physicalDevice);
 }
 

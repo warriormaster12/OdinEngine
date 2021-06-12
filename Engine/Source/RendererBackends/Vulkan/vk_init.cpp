@@ -372,26 +372,30 @@ const VkDescriptorSetLayoutBindingFlagsCreateInfo vkinit::DescriptorLayoutBindin
     return bindingFlags;
  }
 
-VkFormat vkinit::GetSupportedDepthFormat(bool checkSamplingSupport, VkPhysicalDevice& physicalDevice)
+VkFormat vkinit::GetSupportedDepthFormat(VkPhysicalDevice& physicalDevice)
 {
-    // All depth formats may be optional, so we need to find a suitable depth format to use
-    std::vector<VkFormat> depthFormats = { VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D16_UNORM };
+    // Since all depth formats may be optional, we need to find a suitable depth format to use
+    // Start with the highest precision packed format
+    std::vector<VkFormat> depthFormats = {
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM
+    };
+    VkFormat output;
     for (auto& format : depthFormats)
     {
-        VkFormatProperties formatProperties;
-        vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
+        VkFormatProperties formatProps;
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProps);
         // Format must support depth stencil attachment for optimal tiling
-        if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+        if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
         {
-            if (checkSamplingSupport) {
-                if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)) {
-                    continue;
-                }
-            }
-            return format;
+            output = format;
         }
     }
-    throw std::runtime_error("Could not find a matching depth format");
+
+    return output;
 }
 
 
