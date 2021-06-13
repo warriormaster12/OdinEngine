@@ -672,15 +672,17 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
     //input assembly is the configuration for drawing triangle lists, strips, or individual points.
     //we are just going to draw triangle list
     pipelineBuilder.inputAssembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-
+    
     VertexInputDescription vertexDescription = VkVertex::GetVertexDescription(descriptions.vertexLocations);
+    if(descriptions.vertexLocations.size() > 0)
+    {
+        //connect the pipeline builder vertex input info to the one we get from Vertex
+        pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
+        pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
 
-    //connect the pipeline builder vertex input info to the one we get from Vertex
-    pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
-    pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = vertexDescription.attributes.size();
-
-    pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
-    pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
+        pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
+        pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = vertexDescription.bindings.size();
+    }
 
 
     //build the pipeline

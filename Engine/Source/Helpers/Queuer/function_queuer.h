@@ -14,8 +14,11 @@ struct FunctionQueuer
         executer.push_back(function);
     }
 
+
+    /**
+    *@param inverse if true, functions will be called in order.
+    */
     void Flush(const bool& inverse = false) {
-        // reverse iterate the executer queue to execute all the functions
         if(inverse == true)
         {
             for (auto it = executer.begin(); it != executer.end(); it++) {
@@ -23,6 +26,7 @@ struct FunctionQueuer
             } 
         }
         else {
+            // reverse iterate the executer queue to execute all the functions
            for (auto it = executer.rbegin(); it != executer.rend(); it++) {
                 (*it)(); //call functors
             } 
