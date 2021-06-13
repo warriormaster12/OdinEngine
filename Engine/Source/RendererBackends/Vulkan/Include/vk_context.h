@@ -1,12 +1,13 @@
 #pragma once 
 
-#include <bits/stdint-uintn.h>
 #include <iostream>
 #include <functional>
 #include <string>
 #include <vector>
 #include <memory>
 #include <unordered_map>
+
+
 
 
 #include "vk_commandbuffer.h"
@@ -58,6 +59,14 @@ struct VkFrameBufferAdditionalInfo
     std::vector<VkFramebuffer> frameBuffers;
 };
 
+struct VkRenderPassInfo 
+{
+    std::vector<VkClearValue> clearValues;
+    std::string frameBufferName;
+
+    FunctionQueuer passQueue;
+};
+
 
 
 
@@ -68,7 +77,7 @@ public:
 
     static void ResizeWindow();
 
-    static void UpdateDraw(std::function<void()>&& drawCalls);
+    static void UpdateDraw();
 
     static void CleanUpVulkan(FunctionQueuer* p_additionalDeletion);
 
@@ -111,8 +120,8 @@ public:
 
     static VkRenderPass& GetRenderpass();
 
-    static void BeginRenderpass(const float& clearValueCount, const float clearColor[4], const float& depth, const std::string& passName ="main pass", const std::string& frameBufferName ="main framebuffer");
-    static void EndRenderpass();
+    static void AddDrawToRenderpassQueue(std::function<void()>&& drawCalls, const std::string& passName ="main pass");
+    static void PrepareRenderpassForDraw(const float& clearValueCount, const float clearColor[4], const float& depth, const std::string& passName ="main pass", const std::string& frameBufferName ="main framebuffer");
 
     // template functions 
     template<typename T>

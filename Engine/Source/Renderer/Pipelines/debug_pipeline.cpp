@@ -27,11 +27,11 @@ void DebugPipeline::Init()
 
 void DebugPipeline::Update()
 {
-    Renderer::BeginRenderpass(2, {0.0f, 0.0f, 0.0f,1.0f}, 1.0f, "test pass", "test offscreen");
-    Renderer::BindShader("debug shader");
-    Renderer::Draw(3,1,0,0);
-    Renderer::EndRenderpass();
-
+    Renderer::PrepareRenderpassForDraw(2, {0.0f, 0.0f, 0.0f,1.0f}, 1.0f, "test pass", "test offscreen");
+    Renderer::AddDrawToRenderpassQueue([=]{
+        Renderer::BindShader("debug shader");
+        Renderer::Draw(3,1,0,0);
+    }, "test pass");
 }
 
 void DebugPipeline::Destroy()

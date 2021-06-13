@@ -136,16 +136,17 @@ void EditorPipeline::Init()
 
 void EditorPipeline::Update()
 {
-	ImGui_ImplGlfw_NewFrame();
-    ImGui_ImplVulkan_NewFrame();
+	Renderer::AddDrawToRenderpassQueue([=] {
+		ImGui_ImplGlfw_NewFrame();
+    	ImGui_ImplVulkan_NewFrame();
     
 
-    ImGui::NewFrame();        
-    EditorLayer::ShowEditor();
-	ImGui::Render();
+    	ImGui::NewFrame();        
+    	EditorLayer::ShowEditor();
+		ImGui::Render();
 
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), VkCommandbufferManager::GetCommandBuffer());
-	Renderer::EndRenderpass();
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), VkCommandbufferManager::GetCommandBuffer());
+	});
 }
 
 void EditorPipeline::Destroy()

@@ -34,7 +34,7 @@ void Core::CoreInit()
     Renderer::CreateRenderPass(RENDERPASS_MAIN);
     Renderer::CreateFramebuffer(FRAMEBUFFER_MAIN);
 
-    PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
+    //PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
 
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_STORAGE_BUFFER, SHADER_STAGE_FRAGMENT_BIT, 1);
@@ -75,29 +75,27 @@ void Core::CoreUpdate()
 		glfwPollEvents();
         Statistics::Start();
 		//RendererCore::RendererEvents();
-		Renderer::UpdateRenderer([=]()
+        if(windowHandler.GetKInput(GLFW_KEY_J) == GLFW_PRESS)
         {
-            if(windowHandler.GetKInput(GLFW_KEY_J) == GLFW_PRESS)
-            {
-                CameraManager::AddCamera("camera");
-                CameraManager::GetCamera("camera").SetIsActive(false);
+            CameraManager::AddCamera("camera");
+            CameraManager::GetCamera("camera").SetIsActive(false);
 
-                CameraManager::AddCamera("camera2");
-                CameraManager::GetCamera("camera2").SetIsActive(true);
+            CameraManager::AddCamera("camera2");
+            CameraManager::GetCamera("camera2").SetIsActive(true);
 
-            }
-            if(windowHandler.GetKInput(GLFW_KEY_K) == GLFW_PRESS)
-            {
-                CameraManager::AddCamera("camera");
-                CameraManager::GetCamera("camera").SetIsActive(true);
+        }
+        if(windowHandler.GetKInput(GLFW_KEY_K) == GLFW_PRESS)
+        {
+            CameraManager::AddCamera("camera");
+            CameraManager::GetCamera("camera").SetIsActive(true);
 
-                CameraManager::AddCamera("camera2");
-                CameraManager::GetCamera("camera2").SetIsActive(false);
-            }
-            CameraManager::Render();
-            PipelineManager::UpdateRendererPipelines();
-            
-        });
+            CameraManager::AddCamera("camera2");
+            CameraManager::GetCamera("camera2").SetIsActive(false);
+        }
+        CameraManager::Render();
+        PipelineManager::UpdateRendererPipelines();
+
+		Renderer::UpdateRenderer();
         Statistics::End();
         CameraManager::UpdateInput(Statistics::GetDeltaTime());
     }

@@ -12,12 +12,15 @@
 #include "logger.h"
 #include <iostream>
 #include <unordered_map>
+#include <vulkan/vulkan_core.h>
 
 
 
 
 
 std::unordered_map<std::string, VkRenderPass> renderPass;
+std::vector<std::string> renderPassNames;
+std::unordered_map<std::string, VkRenderPassInfo>renderPassInfo;
 std::unordered_map<std::string, VkFrameBufferAdditionalInfo>frameBuffers;
 std::vector<std::string> resizableFramebuffers;
 
@@ -99,10 +102,47 @@ void VulkanContext::ResizeWindow()
     ;   
 }
 
-void VulkanContext::UpdateDraw(std::function<void()>&& drawCalls)
+void VulkanContext::UpdateDraw()
 {
     VkCommandbufferManager::BeginCommands(ResizeWindow);
-    drawCalls();
+    for(int i = renderPassNames.size()-1; i > -1;i--)
+    {
+        auto& currentPass = *FindUnorderdMap(renderPassNames[i], renderPassInfo);
+        auto& currentBuffer = *FindUnorderdMap(FindUnorderdMap(renderPassNames[i], renderPassInfo)->frameBufferName, frameBuffers);
+        VkRenderPassBeginInfo rpInfo = {};
+        if(currentPass.frameBufferName != "main framebuffer" && renderPassNames[i] != "main pass")
+        {
+            for(int j = 0; j < currentBuffer.frameBuffers.size(); j++)
+            {
+                rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(renderPassNames[i], renderPass), {currentBuffer.width, currentBuffer.height}, currentBuffer.frameBuffers[j]);
+            }
+        }
+        else {
+            rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(renderPassNames[i], renderPass), VkSwapChainManager::GetSwapchainExtent(), currentBuffer.frameBuffers[VkCommandbufferManager::GetImageIndex()]);
+        }
+        rpInfo.clearValueCount = currentPass.clearValues.size();
+
+        rpInfo.pClearValues = currentPass.clearValues.data();
+        vkCmdBeginRenderPass(VkCommandbufferManager::GetCommandBuffer(), &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
+        VkViewport viewport = {};
+        VkRect2D scissor = {};
+        viewport.width = currentBuffer.width;
+        viewport.height = currentBuffer.height;
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        
+        scissor.extent = {currentBuffer.width, currentBuffer.height};
+        scissor.offset = {0, 0};
+
+        vkCmdSetViewport(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &viewport);
+        vkCmdSetScissor(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &scissor);
+
+        currentPass.passQueue.Flush(true);
+
+        vkCmdEndRenderPass(VkCommandbufferManager::GetCommandBuffer());
+    }
     VkCommandbufferManager::EndCommands(ResizeWindow);
 }
 
@@ -181,6 +221,7 @@ void VulkanContext::CreateRenderpass(const std::string& passName)
         renderPassInfo.pDependencies = &dependency;
         
         renderPass["main pass"];
+        renderPassNames.push_back("main pass");
         VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap("main pass", renderPass)));
         
         mainDeletionQueue.PushFunction([=]() {
@@ -244,6 +285,7 @@ void VulkanContext::CreateRenderpass(const std::string& passName)
 		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 		renderPassInfo.pDependencies = dependencies.data();
         renderPass[passName];
+         renderPassNames.push_back(passName);
         VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap(passName, renderPass)));
         ENGINE_CORE_INFO("{0} renderpass created", passName);
 
@@ -749,62 +791,53 @@ void VulkanContext::DrawIndexed(std::vector<std::uint32_t>& indices, const uint3
     vkCmdDrawIndexed(VkCommandbufferManager::GetCommandBuffer(), indices.size(), 1,0,0,currentInstance);
 }
 
-void VulkanContext::BeginRenderpass(const float& clearValueCount, const float clearColor[4], const float& depth, const std::string& passName /*="main pass"*/, const std::string& frameBufferName /*="main framebuffer"*/)
+void VulkanContext::PrepareRenderpassForDraw(const float& clearValueCount, const float clearColor[4], const float& depth, const std::string& passName /*="main pass"*/, const std::string& frameBufferName /*="main framebuffer"*/)
 {
-    VkClearValue clearValue;
-    clearValue.color = { {clearColor[0], clearColor[1], clearColor[2], clearColor[3]} };
-
-    //clear depth at 1
-    VkClearValue depthClear;
-    depthClear.depthStencil.depth = depth;
-
-    std::vector<VkClearValue> clearValues;
-    clearValues.push_back(clearValue);
-    if(clearValueCount > 1)
+    if(FindUnorderdMap(passName, renderPassInfo) == nullptr)
     {
-        clearValues.push_back(depthClear);
-    }
-    
-    //start the main renderpass. 
-    //We will use the clear color from above, and the framebuffer of the index the swapchain gave us
-    VkRenderPassBeginInfo rpInfo;
-    auto& buffers = *FindUnorderdMap(frameBufferName, frameBuffers);
-    if(frameBufferName != "main framebuffer" && passName != "main pass")
-    {
-        for(int i = 0; i < buffers.frameBuffers.size(); i++)
+        renderPassInfo[passName];
+        VkClearValue clearValue;
+        clearValue.color = { {clearColor[0], clearColor[1], clearColor[2], clearColor[3]} };
+
+        //clear depth at 1
+        VkClearValue depthClear;
+        depthClear.depthStencil.depth = 1.0f;
+
+        FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(clearValue);
+        if(clearValueCount > 1)
         {
-            rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), {buffers.width, buffers.height}, buffers.frameBuffers[i]);
+            FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(depthClear);
         }
+        
+        FindUnorderdMap(passName, renderPassInfo)->frameBufferName = frameBufferName;
     }
     else {
-        rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(passName, renderPass), VkSwapChainManager::GetSwapchainExtent(), buffers.frameBuffers[VkCommandbufferManager::GetImageIndex()]);
+        VkClearValue clearValue;
+        clearValue.color = { {clearColor[0], clearColor[1], clearColor[2], clearColor[3]} };
+
+        //clear depth at 1
+        VkClearValue depthClear;
+        depthClear.depthStencil.depth = 1.0f;
+
+        FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(clearValue);
+        if(clearValueCount > 1)
+        {
+            FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(depthClear);
+        }
+        
+        //start the main renderpass. 
+        //We will use the clear color from above, and the framebuffer of the index the swapchain gave us
+        
+
+        FindUnorderdMap(passName, renderPassInfo)->frameBufferName = frameBufferName;
     }
-    //connect clear values
-    rpInfo.clearValueCount = clearValueCount;
-
-    rpInfo.pClearValues = clearValues.data();
-    
-    vkCmdBeginRenderPass(VkCommandbufferManager::GetCommandBuffer(), &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    VkViewport viewport = {};
-    VkRect2D scissor = {};
-    viewport.width = buffers.width;
-    viewport.height = buffers.height;
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = depth;
-    
-    scissor.extent = {buffers.width, buffers.height};
-    scissor.offset = {0, 0};
-
-    vkCmdSetViewport(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &viewport);
-    vkCmdSetScissor(VkCommandbufferManager::GetCommandBuffer(), 0, 1, &scissor);
     
 }
-void VulkanContext::EndRenderpass()
+void VulkanContext::AddDrawToRenderpassQueue(std::function<void()>&& drawCalls, const std::string& passName /*="main pass"*/)
 {
-    //finalize the render pass
-    vkCmdEndRenderPass(VkCommandbufferManager::GetCommandBuffer());
+    auto& pass = *FindUnorderdMap(passName, renderPassInfo);
+    pass.passQueue.PushFunction([=]{
+        drawCalls();
+    });
 }
 
