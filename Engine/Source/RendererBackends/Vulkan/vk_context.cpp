@@ -803,7 +803,7 @@ void VulkanContext::PrepareRenderpassForDraw(const float& clearValueCount, const
 
         //clear depth at 1
         VkClearValue depthClear;
-        depthClear.depthStencil.depth = 1.0f;
+        depthClear.depthStencil.depth = depth;
 
         FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(clearValue);
         if(clearValueCount > 1)
@@ -819,7 +819,7 @@ void VulkanContext::PrepareRenderpassForDraw(const float& clearValueCount, const
 
         //clear depth at 1
         VkClearValue depthClear;
-        depthClear.depthStencil.depth = 1.0f;
+        depthClear.depthStencil.depth = depth;
 
         FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(clearValue);
         if(clearValueCount > 1)

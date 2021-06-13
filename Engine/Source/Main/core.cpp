@@ -3,7 +3,10 @@
 #include "renderer.h"
 #include "logger.h"
 
-//Temporary
+#include "material_manager.h"
+#include "render_object.h"
+#include "light.h"
+
 #include "camera.h"
 
 #include "function_queuer.h"
@@ -26,15 +29,11 @@ FunctionQueuer additionalDeletion;
 void Core::CoreInit()
 {
     Logger::Init();
-
     
-	
 	windowHandler.CreateWindow(1920,1080);
     Renderer::InitRenderer(BACKEND_VULKAN);
     Renderer::CreateRenderPass(RENDERPASS_MAIN);
     Renderer::CreateFramebuffer(FRAMEBUFFER_MAIN);
-
-    PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
 
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_STORAGE_BUFFER, SHADER_STAGE_FRAGMENT_BIT, 1);
@@ -47,6 +46,10 @@ void Core::CoreInit()
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 0, 5);
     Renderer::CreateShaderUniformLayout("texture data layout");
 
+    ObjectManager::Init();
+    MaterialManager::Init();
+    LightManager::Init();
+
     
     CameraManager::Init();
 
@@ -55,9 +58,12 @@ void Core::CoreInit()
 
     CameraManager::AddCamera("camera2");
     CameraManager::GetCamera("camera2").SetIsActive(false);
-    
+
+
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
+    PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
+    
 
 
     CameraManager::GetCamera("camera").position = glm::vec3(0.0f, 0.0f, 5.0f);

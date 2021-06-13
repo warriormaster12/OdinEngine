@@ -17,10 +17,6 @@ Texture skyboxCubemap;
 void GeometryPipeline::Init()
 {
 
-    ObjectManager::Init();
-    MaterialManager::Init();
-    LightManager::Init();
-
     ShaderDescriptions descriptionInfo;
     descriptionInfo.vertexLocations = {
         {SRGB32,offsetof(Vertex, position)},
