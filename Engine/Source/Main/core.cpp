@@ -15,6 +15,7 @@
 #include "geometry_pipeline.h"
 #include "editor_pipeline.h"
 #include "debug_pipeline.h"
+#include "composition_pipeline.h"
 #include "statistics.h"
 #include <memory>
 
@@ -59,7 +60,7 @@ void Core::CoreInit()
     CameraManager::AddCamera("camera2");
     CameraManager::GetCamera("camera2").SetIsActive(false);
 
-
+    PipelineManager::AddRendererPipeline(std::make_unique<CompositionPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());

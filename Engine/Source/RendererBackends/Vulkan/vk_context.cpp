@@ -347,6 +347,7 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
         vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &bufferInfo->images[0].defaultView);
         imageViewInfo.image = bufferInfo->images[1].image;
         imageViewInfo.format = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+        imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &bufferInfo->images[1].defaultView);
 
         std::vector <VkImageView> attachments;

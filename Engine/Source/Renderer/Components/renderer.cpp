@@ -165,6 +165,7 @@ void Renderer::CreateShader(std::vector<std::string> shaderPaths, const std::str
             vkDescriptions.depthTesting = descriptions->depthTesting;
             vkDescriptions.polygonMode = (VkPolygonMode)descriptions->polygonMode;
             vkDescriptions.vertexLocations.resize(descriptions->vertexLocations.size());
+            vkDescriptions.renderPassName = descriptions->renderPassName;
             if(descriptions->p_pushConstant != nullptr)
             {
                 vkDescriptions.p_pushConstant = std::make_unique<VkPushConstantInfo>();

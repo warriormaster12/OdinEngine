@@ -20,9 +20,10 @@ void CompositionPipeline::Init()
     ShaderDescriptions debugShaderDescription = {};
     debugShaderDescription.cullMode = CULL_MODE_FRONT_BIT;
     debugShaderDescription.depthTesting = false;
+    debugShaderDescription.renderPassName = "test pass";
     debugShaderDescription.vertexLocations = {};
 
-    Renderer::CreateShader({"EngineAssets/Shaders/debugQuad.frag", "EngineAssets/Shaders/debugQuad.vert"}, "debug shader", {}, &debugShaderDescription);
+    Renderer::CreateShader({"EngineAssets/Shaders/debugQuad.frag", "EngineAssets/Shaders/debugQuad.vert"}, "debug shader2", {}, &debugShaderDescription);
 
     ENGINE_CORE_INFO("debug pipeline created");
 
@@ -30,11 +31,11 @@ void CompositionPipeline::Init()
 
 void CompositionPipeline::Update()
 {
-    Renderer::PrepareRenderpassForDraw(2, {0.0f, 0.0f, 0.0f,1.0f}, 1.0f);
+    Renderer::PrepareRenderpassForDraw(2, {0.0f, 0.0f, 0.0f,1.0f}, 1.0f, "test pass", "test offscreen");
     Renderer::AddDrawToRenderpassQueue([=]{
-        Renderer::BindShader("debug shader");
+        Renderer::BindShader("debug shader2");
         Renderer::Draw(3,1,0,0);
-    });
+    }, "test pass");
 }
 
 void CompositionPipeline::Destroy()
