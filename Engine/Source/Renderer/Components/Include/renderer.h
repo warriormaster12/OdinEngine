@@ -17,8 +17,6 @@
 #define FRAMEBUFFER_MAIN ObjectType::Main
 #define FRAMEBUFFER_OFFSCREEN ObjectType::Offscreen
 
-#define RENDERPASS_MAIN ObjectType::Main
-#define RENDERPASS_OFFSCREEN ObjectType::Offscreen
 
 enum class AvailableBackends
 {
@@ -152,7 +150,7 @@ struct FrameBufferInfo
     bool resiziable = false;
 
     uint32_t imageCount = 1;
-    std::string imageSampler;
+    
 };
 
 namespace Renderer
@@ -165,17 +163,6 @@ namespace Renderer
     
 
     void CleanUpRenderer(FunctionQueuer* p_additionalDeletion = nullptr);
-
-
-    /**
-     * Creates color, depth or stencil information for framebuffer to consume
-     *
-     *
-     *
-     * @param type tells which type of a render pass we are creating
-     * @param passName if type is offscreen then we need to give it a name
-     */
-    void CreateRenderPass(ObjectType type, const std::string& passName = "");
 
     /**
      * Creates a frame to which the rendered content is going to be displayed

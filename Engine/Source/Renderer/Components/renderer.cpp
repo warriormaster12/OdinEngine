@@ -20,20 +20,6 @@ void Renderer::InitRenderer(AvailableBackends selectBackend)
     }
 }
 
-void Renderer::CreateRenderPass(ObjectType type, const std::string& passName /*= ""*/)
-{
-    if(currentBackend == AvailableBackends::Vulkan)
-    {
-        if(type == ObjectType::Main)
-        {
-            VulkanContext::CreateRenderpass(passName);
-        }
-        else
-        {
-            VulkanContext::CreateRenderpass(passName);  
-        }
-    } 
-}
 
 void Renderer::CreateFramebuffer(ObjectType type, const std::string& bufferName /*= ""*/, std::unique_ptr<FrameBufferInfo> p_additionalInfo /*= nullptr*/)
 {
@@ -55,7 +41,6 @@ void Renderer::CreateFramebuffer(ObjectType type, const std::string& bufferName 
                     bufferInfo->renderPass = p_additionalInfo->renderPassName;
                     bufferInfo->resizable = p_additionalInfo->resiziable;
                     bufferInfo->images.resize(p_additionalInfo->imageCount);
-                    bufferInfo->imageSampler = p_additionalInfo->imageSampler;
                     VulkanContext::CreateFramebuffer(bufferName, std::move(bufferInfo));
                 }
                 else {

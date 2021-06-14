@@ -10,7 +10,6 @@
 
 void CompositionPipeline::Init()
 {
-    Renderer::CreateRenderPass(RENDERPASS_OFFSCREEN, "test pass");
     std::unique_ptr<FrameBufferInfo> bufferInfo = std::make_unique<FrameBufferInfo>();
     bufferInfo->width = 1280;
     bufferInfo->height = 720;

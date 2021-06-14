@@ -18,7 +18,7 @@ void DebugPipeline::Init()
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_COMBINED_IMAGE_SAMPLER, SHADER_STAGE_FRAGMENT_BIT, 0);
     Renderer::CreateShaderUniformLayout("output image layout");
 
-    Renderer::CreateShader({"EngineAssets/Shaders/debugQuad.frag", "EngineAssets/Shaders/debugQuad.vert"}, "debug shader", {"output image layout"}, &debugShaderDescription);
+    Renderer::CreateShader({"EngineAssets/Shaders/Contrast.frag", "EngineAssets/Shaders/debugQuad.vert"}, "debug shader", {"output image layout"}, &debugShaderDescription);
 
     Renderer::CreateSampler("debug sampler", FILTER_LINEAR,  SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 

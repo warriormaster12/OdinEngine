@@ -26,6 +26,7 @@ void GeometryPipeline::Init()
     descriptionInfo3.cullMode = CULL_MODE_FRONT_BIT;
     descriptionInfo3.depthTesting = true;
     descriptionInfo3.depthCompareType = COMPARE_OP_LESS_OR_EQUAL;
+    descriptionInfo3.renderPassName = "test pass";
 
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayout("camera layout");

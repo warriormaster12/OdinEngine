@@ -153,147 +153,77 @@ void VulkanContext::CleanUpVulkan(FunctionQueuer* p_additionalDeletion)
     mainDeletionQueue.Flush();
     
 }
-
-void VulkanContext::CreateRenderpass(const std::string& passName)
+void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique_ptr<VkFrameBufferAdditionalInfo> p_bufferInfo)
 {
-    
-    if(passName == "")
+    if(p_bufferInfo == nullptr && bufferName == "")
     {
-        //we define an attachment description for our main color image
-        //the attachment is loaded as "clear" when renderpass start
-        //the attachment is stored when renderpass ends
-        //the attachment layout starts as "undefined", and transitions to "Present" so its possible to display it
-        //we dont care about stencil, and dont use multisampling
-        std::array<VkAttachmentDescription, 2> attachmentDescriptions = {};
-        for(int i = 0; i < attachmentDescriptions.size(); i++)
+        if(FindUnorderdMap("main pass", renderPass) == nullptr)
         {
-            attachmentDescriptions[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            attachmentDescriptions[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachmentDescriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
+            //we define an attachment description for our main color image
+            //the attachment is loaded as "clear" when renderpass start
+            //the attachment is stored when renderpass ends
+            //the attachment layout starts as "undefined", and transitions to "Present" so its possible to display it
+            //we dont care about stencil, and dont use multisampling
+            std::array<VkAttachmentDescription, 2> attachmentDescriptions = {};
+            for(int i = 0; i < attachmentDescriptions.size(); i++)
+            {
+                attachmentDescriptions[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                attachmentDescriptions[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                attachmentDescriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
+            }
+
+            VkAttachmentDescription color_attachment = {};
+            attachmentDescriptions[0].format = VkSwapChainManager::GetSwapchainImageFormat();
+            attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            attachmentDescriptions[1].format = VkSwapChainManager::GetSwapchainDepthFormat();
+            attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+            VkAttachmentReference color_attachment_ref = {};
+            color_attachment_ref.attachment = 0;
+            color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+            VkAttachmentReference depth_attachment_ref = {};
+            depth_attachment_ref.attachment = 1;
+            depth_attachment_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+            //we are going to create 1 subpass, which is the minimum you can do
+            VkSubpassDescription subpass = {};
+            subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            subpass.colorAttachmentCount = 1;
+            subpass.pColorAttachments = &color_attachment_ref;
+            //hook the depth attachment into the subpass
+            subpass.pDepthStencilAttachment = &depth_attachment_ref;
+
+            //1 dependency, which is from "outside" into the subpass. And we can read or write color
+            VkSubpassDependency dependency = {};
+            dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+            dependency.dstSubpass = 0;
+            dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependency.srcAccessMask = 0;
+            dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            VkRenderPassCreateInfo renderPassInfo = {};
+            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+            //2 attachments from said array
+            renderPassInfo.attachmentCount = 2;
+            renderPassInfo.pAttachments = &attachmentDescriptions[0];
+            renderPassInfo.subpassCount = 1;
+            renderPassInfo.pSubpasses = &subpass;
+            renderPassInfo.dependencyCount = 1;
+            renderPassInfo.pDependencies = &dependency;
+            
+            renderPass["main pass"];
+            renderPassNames.push_back("main pass");
+            VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap("main pass", renderPass)));
+            
+            mainDeletionQueue.PushFunction([=]() {
+                vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap("main pass", renderPass), nullptr);
+            });
         }
 
-        VkAttachmentDescription color_attachment = {};
-        attachmentDescriptions[0].format = VkSwapChainManager::GetSwapchainImageFormat();
-        attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        attachmentDescriptions[1].format = VkSwapChainManager::GetSwapchainDepthFormat();
-        attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        VkAttachmentReference color_attachment_ref = {};
-        color_attachment_ref.attachment = 0;
-        color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-        VkAttachmentReference depth_attachment_ref = {};
-        depth_attachment_ref.attachment = 1;
-        depth_attachment_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        //we are going to create 1 subpass, which is the minimum you can do
-        VkSubpassDescription subpass = {};
-        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &color_attachment_ref;
-        //hook the depth attachment into the subpass
-        subpass.pDepthStencilAttachment = &depth_attachment_ref;
-
-        //1 dependency, which is from "outside" into the subpass. And we can read or write color
-        VkSubpassDependency dependency = {};
-        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubpass = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.srcAccessMask = 0;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        VkRenderPassCreateInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        //2 attachments from said array
-        renderPassInfo.attachmentCount = 2;
-        renderPassInfo.pAttachments = &attachmentDescriptions[0];
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &subpass;
-        renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &dependency;
-        
-        renderPass["main pass"];
-        renderPassNames.push_back("main pass");
-        VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap("main pass", renderPass)));
-        
-        mainDeletionQueue.PushFunction([=]() {
-            vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap("main pass", renderPass), nullptr);
-        });
-    }
-    else {
-        //for now a lot of stuff is hard coded
-        std::array<VkAttachmentDescription, 2> attachmentDescriptions = {};
-        for(int i = 0; i < attachmentDescriptions.size(); i++)
-        {
-            attachmentDescriptions[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            attachmentDescriptions[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachmentDescriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
-        }
-        attachmentDescriptions[0].format = VkSwapChainManager::GetSwapchainImageFormat();
-        attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        attachmentDescriptions[1].format = VkSwapChainManager::GetSwapchainDepthFormat();
-        attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-
-        VkAttachmentReference colorReference = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference depthReference = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-
-		VkSubpassDescription subpassDescription = {};
-		subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpassDescription.colorAttachmentCount = 1;
-		subpassDescription.pColorAttachments = &colorReference;
-		subpassDescription.pDepthStencilAttachment = &depthReference;
-
-		// Use subpass dependencies for layout transitions
-		std::array<VkSubpassDependency, 2> dependencies;
-
-		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass = 0;
-		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		dependencies[1].srcSubpass = 0;
-		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		// Create the actual renderpass
-		VkRenderPassCreateInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
-		renderPassInfo.pAttachments = attachmentDescriptions.data();
-		renderPassInfo.subpassCount = 1;
-		renderPassInfo.pSubpasses = &subpassDescription;
-		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
-		renderPassInfo.pDependencies = dependencies.data();
-        renderPass[passName];
-         renderPassNames.push_back(passName);
-        VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap(passName, renderPass)));
-        ENGINE_CORE_INFO("{0} renderpass created", passName);
-
-        mainDeletionQueue.PushFunction([=]() {
-            vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap(passName, renderPass), nullptr);
-        });
-    } 
-}
-
-void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique_ptr<VkFrameBufferAdditionalInfo> bufferInfo)
-{
-    if(bufferInfo == nullptr && bufferName == "")
-    {
         if(FindUnorderdMap("main framebuffer",frameBuffers) == nullptr)
         {
             resizableFramebuffers.push_back(bufferName);
@@ -316,42 +246,125 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
         }
     }
     else {
+
         frameBuffers[bufferName];
         auto& fbufferInfo = *FindUnorderdMap(bufferName,frameBuffers);
-        fbufferInfo.width = bufferInfo->width;
-        fbufferInfo.height = bufferInfo->height;
-        fbufferInfo.images = bufferInfo->images;
+        fbufferInfo = *p_bufferInfo;
         fbufferInfo.frameBuffers.resize(1);
+        if(FindUnorderdMap(fbufferInfo.renderPass, renderPass) == nullptr)
+        {
+            //for now a lot of stuff is hard coded
+            std::vector<VkAttachmentDescription> attachmentDescriptions = {};
+            attachmentDescriptions.resize(fbufferInfo.images.size());
+            std::vector<VkAttachmentReference> attachmentRefs;
+            attachmentRefs.resize(fbufferInfo.images.size());
+            for(int i = 0; i < attachmentDescriptions.size(); i++)
+            {
+                attachmentDescriptions[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                attachmentDescriptions[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                attachmentDescriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
+                if(fbufferInfo.attachmentRefs[i].layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+                {
+                    attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                }
+                else {
+                    attachmentDescriptions[i].finalLayout = fbufferInfo.attachmentRefs[i].layout;
+                }
+                attachmentRefs[i].attachment = i;
+                attachmentRefs[i].layout = fbufferInfo.attachmentRefs[i].layout;
+                attachmentDescriptions[i].format = fbufferInfo.imageFormats[i];
+            }
+
+            VkSubpassDescription subpassDescription = {};
+            subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            subpassDescription.colorAttachmentCount = 1;
+            for(int i = 0; i < attachmentRefs.size(); i++)
+            {
+                if(i == 0)
+                {
+                    subpassDescription.pColorAttachments = &attachmentRefs[i];
+                }
+                else {
+                    subpassDescription.pDepthStencilAttachment = &attachmentRefs[i];
+                }
+            }
+
+            // Use subpass dependencies for layout transitions
+            std::array<VkSubpassDependency, 2> dependencies;
+
+            dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+            dependencies[0].dstSubpass = 0;
+            dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+            dependencies[1].srcSubpass = 0;
+            dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+            dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+            // Create the actual renderpass
+            VkRenderPassCreateInfo renderPassInfo = {};
+            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+            renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
+            renderPassInfo.pAttachments = attachmentDescriptions.data();
+            renderPassInfo.subpassCount = 1;
+            renderPassInfo.pSubpasses = &subpassDescription;
+            renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+            renderPassInfo.pDependencies = dependencies.data();
+            renderPass[fbufferInfo.renderPass];
+            renderPassNames.push_back(fbufferInfo.renderPass);
+            VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap(fbufferInfo.renderPass, renderPass)));
+            ENGINE_CORE_INFO("{0} renderpass created", fbufferInfo.renderPass);
+            mainDeletionQueue.PushFunction([=]() {
+                vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap(fbufferInfo.renderPass, renderPass), nullptr);
+            });
+        }
         
         //create images for buffer
         VkExtent3D extent3D;
         extent3D.width = fbufferInfo.width;
         extent3D.height = fbufferInfo.height;
         extent3D.depth = 1.0f;
-        VkImageCreateInfo imageInfo = vkinit::ImageCreateInfo(VkSwapChainManager::GetSwapchainImageFormat(), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, extent3D);
-
-        VmaAllocationCreateInfo dimg_allocinfo = {};
-        dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &fbufferInfo.images[0].image, &fbufferInfo.images[0].allocation, nullptr);
-        imageInfo.format = VkSwapChainManager::GetSwapchainDepthFormat();
-        imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &fbufferInfo.images[1].image, &fbufferInfo.images[1].allocation, nullptr);
-
-        VkImageViewCreateInfo imageViewInfo = vkinit::ImageViewCreateInfo(VkSwapChainManager::GetSwapchainImageFormat(), fbufferInfo.images[0].image, VK_IMAGE_ASPECT_COLOR_BIT);
-        vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &fbufferInfo.images[0].defaultView);
-        imageViewInfo.image = fbufferInfo.images[1].image;
-        imageViewInfo.format = VkSwapChainManager::GetSwapchainDepthFormat();
-        imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-        vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &fbufferInfo.images[1].defaultView);
-
         std::vector <VkImageView> attachments;
-        attachments.resize(fbufferInfo.images.size());
-		attachments[0] = fbufferInfo.images[0].defaultView;
-		attachments[1] = fbufferInfo.images[1].defaultView;
+
+        for(int i = 0; i < fbufferInfo.images.size(); i++)
+        {
+            VkImageCreateInfo imageInfo = {};
+            if(fbufferInfo.attachmentRefs[i].layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+            {
+                imageInfo = vkinit::ImageCreateInfo(fbufferInfo.imageFormats[i], VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, extent3D);
+            }
+            else {
+                imageInfo = vkinit::ImageCreateInfo(fbufferInfo.imageFormats[i], VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, extent3D);
+            }
+            VmaAllocationCreateInfo dimg_allocinfo = {};
+            dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+            vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &fbufferInfo.images[i].image, &fbufferInfo.images[i].allocation, nullptr);
+
+            VkImageViewCreateInfo imageViewInfo = {};
+            if(fbufferInfo.attachmentRefs[i].layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+            {
+                imageViewInfo = vkinit::ImageViewCreateInfo(fbufferInfo.imageFormats[i], fbufferInfo.images[i].image, VK_IMAGE_ASPECT_COLOR_BIT);
+            }
+            else {
+                imageViewInfo = vkinit::ImageViewCreateInfo(fbufferInfo.imageFormats[i], fbufferInfo.images[i].image, VK_IMAGE_ASPECT_DEPTH_BIT);
+            }
+            vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &fbufferInfo.images[i].defaultView);
+            attachments.push_back(fbufferInfo.images[i].defaultView);
+        }
         VkExtent2D extent = {};
         extent.height = extent3D.height;
         extent.width = extent3D.width;
-		VkFramebufferCreateInfo fbufCreateInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap(bufferInfo->renderPass, renderPass), extent);
+		VkFramebufferCreateInfo fbufCreateInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap(fbufferInfo.renderPass, renderPass), extent);
 		fbufCreateInfo.attachmentCount = attachments.size();
 		fbufCreateInfo.pAttachments = attachments.data();
 		fbufCreateInfo.layers = 1;
@@ -359,7 +372,7 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 		vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbufCreateInfo, nullptr, &fbufferInfo.frameBuffers[0]);
         //Check if we want to resize the framebuffer
         //At the moment the implementation isn't flexible 
-        if(bufferInfo->resizable == true)
+        if(fbufferInfo.resizable == true)
         {
             resizableFramebuffers.push_back(bufferName);
             swapDeletionQueue.PushFunction([=]() {
@@ -371,13 +384,11 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
                 vkDestroyFramebuffer(VkDeviceManager::GetDevice(), fbufferInfo.frameBuffers[0], nullptr);
             });  
         }
-        std::vector<AllocatedImage> imageDeletionQueue;
-        imageDeletionQueue = fbufferInfo.images;
         mainDeletionQueue.PushFunction([=]() {
             for(int i = 0; i < attachments.size(); i++)
             {
                 vkDestroyImageView(VkDeviceManager::GetDevice(), attachments[i],nullptr);
-                vmaDestroyImage(VkDeviceManager::GetAllocator(), imageDeletionQueue[i].image,  imageDeletionQueue[i].allocation);
+                vmaDestroyImage(VkDeviceManager::GetAllocator(), fbufferInfo.images[i].image,  fbufferInfo.images[i].allocation);
             }
         }); 
     }

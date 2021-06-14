@@ -9,7 +9,6 @@
 
 
 
-
 #include "vk_commandbuffer.h"
 #include "vk_pipelinebuilder.h"
 #include "vk_types.h"
@@ -53,10 +52,10 @@ struct VkFrameBufferAdditionalInfo
     uint32_t height;
     bool resizable; 
     std::vector<AllocatedImage> images;
-
-    std::string imageSampler;
+    std::vector<VkFormat> imageFormats  = {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_D16_UNORM};
 
     std::vector<VkFramebuffer> frameBuffers;
+    std::vector<VkAttachmentReference> attachmentRefs = {{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},{ 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL}};
 };
 
 struct VkRenderPassInfo 
@@ -81,8 +80,7 @@ public:
 
     static void CleanUpVulkan(FunctionQueuer* p_additionalDeletion);
 
-    static void CreateRenderpass(const std::string& passName);
-    static void CreateFramebuffer(const std::string& bufferName, std::unique_ptr<VkFrameBufferAdditionalInfo> bufferInfo);
+    static void CreateFramebuffer(const std::string& bufferName, std::unique_ptr<VkFrameBufferAdditionalInfo> p_bufferInfo);
     
 
     static void CreateDescriptorSetLayoutBinding(DescripotrSetLayoutBindingInfo layoutBindingInfo);
