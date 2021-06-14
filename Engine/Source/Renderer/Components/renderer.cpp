@@ -121,6 +121,14 @@ void Renderer::WriteShaderImage(const std::string& name, const std::string& layo
     }
 }
 
+void Renderer::WriteShaderFrameBufferImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::string& bufferName)
+{
+    if(currentBackend == AvailableBackends::Vulkan)
+    {
+        VulkanContext::CreateDescriptorSetFrameBufferImage(name, layoutName, binding, sampler, bufferName); 
+    }
+}
+
 
 void Renderer::RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap)
 {

@@ -101,6 +101,8 @@ public:
 
     static void CreateDescriptorSetImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views,const VkFormat& imageFormat = VK_FORMAT_R8G8B8A8_SRGB);
 
+    static void CreateDescriptorSetFrameBufferImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::string& bufferName);
+
     static void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap);
 
     static void BindGraphicsPipeline(const std::string& shaderName);

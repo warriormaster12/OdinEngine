@@ -36,7 +36,7 @@ struct ObjectManager
 
     static void PushObjectToQueue(RenderObject& object);
 
-    static void RenderObjects();
+    static void RenderObjects(const bool& bindMaterials = true);
 
     static void Destroy();
 };

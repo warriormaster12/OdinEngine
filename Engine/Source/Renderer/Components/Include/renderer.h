@@ -204,6 +204,7 @@ namespace Renderer
     void CreateShaderUniformBuffer(const std::string& bufferName, const bool& frameOverlap,const BufferCreateFlags& bufferUsage, const size_t& dataSize, const size_t& dataRange = 0);
     void WriteShaderUniform(const std::string& name, const std::string& layoutName,const uint32_t& binding ,const bool& frameOverlap, const std::string& bufferName, const size_t& byteOffset =0);
     void WriteShaderImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::vector<VkImageView>& views);
+    void WriteShaderFrameBufferImage(const std::string& name, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::string& bufferName);
     void RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap);
     //Bind the shader before drawing
     void BindShader(const std::string& shaderName);

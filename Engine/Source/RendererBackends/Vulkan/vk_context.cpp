@@ -36,7 +36,6 @@ vkcomponent::DescriptorAllocator descriptorAllocator;
 vkcomponent::DescriptorLayoutCache descriptorLayoutCache;
 
 std::unordered_map<std::string, DescriptorSetLayoutInfo> descriptorSetLayout;
-std::vector<std::string> descriptorLayoutNames;
 
 std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
 
@@ -69,7 +68,7 @@ void VulkanContext::InitVulkan()
 
     mainDeletionQueue.PushFunction([=]() {
         descriptorAllocator.CleanUp();
-        //descriptorLayoutCache.CleanUp();
+        descriptorLayoutCache.CleanUp();
         VkCommandbufferManager::CleanUpCommands();
         VkDeviceManager::DestroyDevice();
     });
@@ -150,10 +149,6 @@ void VulkanContext::CleanUpVulkan(FunctionQueuer* p_additionalDeletion)
 {
     vkDeviceWaitIdle(VkDeviceManager::GetDevice());
     p_additionalDeletion->Flush();
-    for(int i = 0; i < descriptorLayoutNames.size(); i++)
-    {
-        vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(descriptorLayoutNames[i], descriptorSetLayout)->layout, nullptr);
-    }
     swapDeletionQueue.Flush();
     mainDeletionQueue.Flush();
     
@@ -240,10 +235,10 @@ void VulkanContext::CreateRenderpass(const std::string& passName)
             attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             attachmentDescriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
         }
-        attachmentDescriptions[0].format = VK_FORMAT_R8G8B8A8_UNORM;
+        attachmentDescriptions[0].format = VkSwapChainManager::GetSwapchainImageFormat();
         attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        attachmentDescriptions[1].format = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+        attachmentDescriptions[1].format = VkSwapChainManager::GetSwapchainDepthFormat();
         attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 
@@ -322,38 +317,37 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
     }
     else {
         frameBuffers[bufferName];
-        FindUnorderdMap(bufferName,frameBuffers);
-
         auto& fbufferInfo = *FindUnorderdMap(bufferName,frameBuffers);
         fbufferInfo.width = bufferInfo->width;
         fbufferInfo.height = bufferInfo->height;
+        fbufferInfo.images = bufferInfo->images;
         fbufferInfo.frameBuffers.resize(1);
         
         //create images for buffer
         VkExtent3D extent3D;
-        extent3D.width = bufferInfo->width;
-        extent3D.height = bufferInfo->height;
+        extent3D.width = fbufferInfo.width;
+        extent3D.height = fbufferInfo.height;
         extent3D.depth = 1.0f;
-        VkImageCreateInfo imageInfo = vkinit::ImageCreateInfo(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, extent3D);
+        VkImageCreateInfo imageInfo = vkinit::ImageCreateInfo(VkSwapChainManager::GetSwapchainImageFormat(), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, extent3D);
 
         VmaAllocationCreateInfo dimg_allocinfo = {};
         dimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &bufferInfo->images[0].image, &bufferInfo->images[0].allocation, nullptr);
-        imageInfo.format = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+        vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &fbufferInfo.images[0].image, &fbufferInfo.images[0].allocation, nullptr);
+        imageInfo.format = VkSwapChainManager::GetSwapchainDepthFormat();
         imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &bufferInfo->images[1].image, &bufferInfo->images[1].allocation, nullptr);
+        vmaCreateImage(VkDeviceManager::GetAllocator(),&imageInfo, &dimg_allocinfo, &fbufferInfo.images[1].image, &fbufferInfo.images[1].allocation, nullptr);
 
-        VkImageViewCreateInfo imageViewInfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_UNORM, bufferInfo->images[0].image, VK_IMAGE_ASPECT_COLOR_BIT);
-        vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &bufferInfo->images[0].defaultView);
-        imageViewInfo.image = bufferInfo->images[1].image;
-        imageViewInfo.format = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+        VkImageViewCreateInfo imageViewInfo = vkinit::ImageViewCreateInfo(VkSwapChainManager::GetSwapchainImageFormat(), fbufferInfo.images[0].image, VK_IMAGE_ASPECT_COLOR_BIT);
+        vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &fbufferInfo.images[0].defaultView);
+        imageViewInfo.image = fbufferInfo.images[1].image;
+        imageViewInfo.format = VkSwapChainManager::GetSwapchainDepthFormat();
         imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-        vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &bufferInfo->images[1].defaultView);
+        vkCreateImageView(VkDeviceManager::GetDevice(), &imageViewInfo, nullptr, &fbufferInfo.images[1].defaultView);
 
         std::vector <VkImageView> attachments;
-        attachments.resize(bufferInfo->images.size());
-		attachments[0] = bufferInfo->images[0].defaultView;
-		attachments[1] = bufferInfo->images[1].defaultView;
+        attachments.resize(fbufferInfo.images.size());
+		attachments[0] = fbufferInfo.images[0].defaultView;
+		attachments[1] = fbufferInfo.images[1].defaultView;
         VkExtent2D extent = {};
         extent.height = extent3D.height;
         extent.width = extent3D.width;
@@ -378,7 +372,7 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
             });  
         }
         std::vector<AllocatedImage> imageDeletionQueue;
-        imageDeletionQueue = bufferInfo->images;
+        imageDeletionQueue = fbufferInfo.images;
         mainDeletionQueue.PushFunction([=]() {
             for(int i = 0; i < attachments.size(); i++)
             {
@@ -404,20 +398,20 @@ void VulkanContext::CreateDescriptorSetLayout(const std::string& layoutName)
     FindUnorderdMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
     descriptorSetLayoutBindings.clear();
 
-    descriptorLayoutNames.push_back(layoutName);
+    // mainDeletionQueue.PushFunction([=]{
+    //     if(FindUnorderdMap(layoutName, descriptorSetLayout) != nullptr)
+    //     {
+    //         vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
+    //         ENGINE_CORE_ERROR(layoutName);
+    //         descriptorSetLayout.erase(layoutName);
+    //     }
+    // });
+
 }
 
 void VulkanContext::RemoveDescriptorSetLayout(const std::string& layoutName)
 {
     vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
-    for(int i = 0; i < descriptorLayoutNames.size(); i++)
-    {
-        if(descriptorLayoutNames[i] == layoutName)
-        {
-            descriptorLayoutNames.erase(descriptorLayoutNames.begin() + i);
-            descriptorLayoutNames.shrink_to_fit();
-        }
-    }
     ENGINE_CORE_INFO("descriptor set layout {0} destroyed", layoutName);
     descriptorSetLayout.erase(layoutName);
 }
@@ -455,6 +449,29 @@ void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, 
         info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.push_back(info);
     }
+    auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
+    
+    if(binding == 0)
+    {
+        descriptorSets[descriptorName];
+        descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
+    }
+    VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
+    vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
+}
+
+void VulkanContext::CreateDescriptorSetFrameBufferImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::string& bufferName)
+{
+    std::vector<VkDescriptorImageInfo> imageInfo;
+    // for(int i = 0; i < FindUnorderdMap(bufferName, frameBuffers)->images.size()-1; i++)
+    // {
+        
+    // }
+    VkDescriptorImageInfo info{};
+    info.sampler = *FindUnorderdMap(sampler, samplers);
+    info.imageView = FindUnorderdMap(bufferName, frameBuffers)->images[0].defaultView;
+    info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.push_back(info);
     auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
     
     if(binding == 0)
@@ -588,7 +605,6 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
             vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputBuffer, 0, nullptr);
         }
     }
-    
 }
 
 void VulkanContext::RemoveAllocatedBuffer(const std::string& bufferName, const bool& frameOverlap)
