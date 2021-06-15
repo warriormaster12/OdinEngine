@@ -56,7 +56,6 @@ void GeometryPipeline::Init()
 
     Renderer::WriteShaderImage("cube map texture", "Cube texture layout", 0, "cube map sampler", {skyboxCubemap.imageView});
 
-    skybox.p_mesh = std::make_shared<Mesh>();
     skybox.p_mesh->LoadFromObj("EngineAssets/Meshes/cube.obj");
     skybox.p_mesh->CreateMesh();
     skybox.material = "cube";

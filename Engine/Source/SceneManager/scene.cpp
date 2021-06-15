@@ -3,23 +3,31 @@
 
 #include <vector>
 #include <unordered_map>
-#include <vector>
 
 #include "unordered_finder.h"
 #include "logger.h"
 
-static std::unordered_map<std::string, std::shared_ptr<Entity>> entities;
+static std::unordered_map<std::string, Entity> entities;
 static std::vector<std::string> entityNames;
 
 
-void Scene::AddEntity(std::unique_ptr<Entity> p_entity,const std::string& name)
+void Scene::AddEntity(const std::string& name)
 {
     entities[name];
-
     entityNames.push_back(name);
+}
 
-    auto& currentEntity = *FindUnorderedMap(name, entities);
-    currentEntity = std::move(p_entity);
+Entity* Scene::GetEntity(const std::string& name)
+{
+    if(FindUnorderedMap(name,entities) != nullptr)
+    {
+        return FindUnorderedMap(name,entities); 
+    }
+    else {
+        ENGINE_CORE_WARN("couldn't find entity by the name {0}", name);
+        return nullptr;
+    }
+    
 }
 
 void Scene::UpdateEntities(const float& deltaTime)
@@ -27,6 +35,6 @@ void Scene::UpdateEntities(const float& deltaTime)
     for(auto& currentName : entityNames)
     {
         auto& currentEntity = *FindUnorderedMap(currentName, entities);
-        currentEntity->Update(deltaTime);
+        currentEntity.Update(deltaTime);
     }
 }

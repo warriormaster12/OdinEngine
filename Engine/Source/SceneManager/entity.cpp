@@ -23,7 +23,6 @@ void Entity::Update(const float& deltaTime)
 {
     for(auto& currentName : componentNames)
     {
-        ENGINE_CORE_TRACE(currentName);
         auto& currentComponent = *FindUnorderedMap(currentName, components);
         currentComponent->Update(deltaTime);
     }

@@ -21,7 +21,7 @@
 
 //temp 
 #include "scene.h"
-#include "test_component.h"
+#include "mesh_component.h"
 
 
 bool isInitialized{ false };
@@ -35,10 +35,13 @@ void Core::CoreInit()
 {
     Logger::Init();
 
-    std::unique_ptr<Entity> entity = std::make_unique<Entity>();
-    entity->AddComponent(std::make_unique<Test>(), "test");
-    scene1.AddEntity(std::move(entity), "entity");
-    scene1.AddEntity(std::move(entity), "entity2");
+    MeshComponent mesh;
+
+   
+    scene1.AddEntity("entity");
+    scene1.AddEntity("entity2");
+
+    scene1.GetEntity("entity")->AddComponent(std::make_unique<MeshComponent>(mesh), "test");
     
 	windowHandler.CreateWindow(1920,1080);
     Renderer::InitRenderer(BACKEND_VULKAN);
@@ -77,6 +80,10 @@ void Core::CoreInit()
 
     CameraManager::GetCamera("camera").position = glm::vec3(0.0f, 0.0f, 5.0f);
     CameraManager::GetCamera("camera2").position = glm::vec3(0.0f, 5.0f, 5.0f);
+
+    MaterialManager::CreateMaterial("Test");
+
+    mesh.AddMesh("EngineAssets/Meshes/Barrel.obj");
 
     //everything went fine
     isInitialized = true;
