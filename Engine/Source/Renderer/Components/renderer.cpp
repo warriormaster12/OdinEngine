@@ -40,6 +40,13 @@ void Renderer::CreateFramebuffer(ObjectType type, const std::string& bufferName 
                     bufferInfo->width = p_additionalInfo->width;
                     bufferInfo->renderPass = p_additionalInfo->renderPassName;
                     bufferInfo->resizable = p_additionalInfo->resiziable;
+                    bufferInfo->imageFormats.resize(p_additionalInfo->colorFormats.size());
+                    for(int i = 0;i < p_additionalInfo->colorFormats.size(); i++)
+                    {
+                        bufferInfo->imageFormats[i] = (VkFormat)p_additionalInfo->colorFormats[i];
+                        bufferInfo->attachmentRefs[i].attachment = i;
+                        bufferInfo->attachmentRefs[i].layout = (VkImageLayout)p_additionalInfo->imageLayouts[i];
+                    }
                     bufferInfo->images.resize(p_additionalInfo->imageCount);
                     VulkanContext::CreateFramebuffer(bufferName, std::move(bufferInfo));
                 }

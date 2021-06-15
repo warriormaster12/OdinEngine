@@ -16,6 +16,8 @@ void CompositionPipeline::Init()
     bufferInfo->resiziable = false;
     bufferInfo->renderPassName = "test pass";
     bufferInfo->imageCount = 2;
+    bufferInfo->imageLayouts = {IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+    bufferInfo->colorFormats = {UNORMRGB8, {}};
     Renderer::CreateFramebuffer(FRAMEBUFFER_OFFSCREEN, "test offscreen", std::move(bufferInfo));
 
     ShaderDescriptions descriptionInfo;

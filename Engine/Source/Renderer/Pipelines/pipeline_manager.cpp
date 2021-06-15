@@ -8,7 +8,7 @@
 
 std::vector <std::shared_ptr<RendererPipeline>> rPipelines;
 
-int currentIndex = -1;
+static int currentIndex = -1;
 
 
 void PipelineManager::AddRendererPipeline(std::unique_ptr<RendererPipeline> inputPipeline)

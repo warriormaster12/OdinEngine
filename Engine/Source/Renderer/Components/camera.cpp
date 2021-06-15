@@ -37,7 +37,7 @@ void CameraManager::Init()
 
 void CameraManager::AddCamera(const std::string& cameraName)
 {
-	if(FindUnorderdMap(cameraName, cameraList) == nullptr)
+	if(FindUnorderedMap(cameraName, cameraList) == nullptr)
 	{
 		cameraList[cameraName];
 		cameraNameList.push_back(cameraName);
@@ -46,7 +46,7 @@ void CameraManager::AddCamera(const std::string& cameraName)
 
 Camera& CameraManager::GetCamera(const std::string& cameraName)
 {
-	return *FindUnorderdMap(cameraName, cameraList);
+	return *FindUnorderedMap(cameraName, cameraList);
 }
 
 Camera& CameraManager::GetActiveCamera()
@@ -54,12 +54,12 @@ Camera& CameraManager::GetActiveCamera()
 	std::string currentActiveCamera;
 	for(int i = 0; i < cameraNameList.size(); i++)
 	{
-		if(FindUnorderdMap(cameraNameList[i], cameraList)->GetIsActive() == true)
+		if(FindUnorderedMap(cameraNameList[i], cameraList)->GetIsActive() == true)
 		{
 			currentActiveCamera = cameraNameList[i];
 		}
 	}
-	return *FindUnorderdMap(currentActiveCamera, cameraList);
+	return *FindUnorderedMap(currentActiveCamera, cameraList);
 }
 
 void CameraManager::Render()
@@ -67,7 +67,7 @@ void CameraManager::Render()
 	std::vector<std::string> activeCameras;
 	for(int i = 0; i < cameraNameList.size(); i++)
 	{
-		auto& currentCamera = *FindUnorderdMap(cameraNameList[i], cameraList);
+		auto& currentCamera = *FindUnorderedMap(cameraNameList[i], cameraList);
 		if(currentCamera.GetIsActive() == true)
 		{
 			activeCameras.push_back(cameraNameList[i]);
@@ -77,7 +77,7 @@ void CameraManager::Render()
 	{
 		for(int i = activeCameras.size()-1; i > 0; i--)
 		{
-			auto& currentCamera = *FindUnorderdMap(activeCameras[i], cameraList);
+			auto& currentCamera = *FindUnorderedMap(activeCameras[i], cameraList);
 			if(i == activeCameras.size() -1)
 			{
 				currentCamera.RenderCamera();
@@ -90,7 +90,7 @@ void CameraManager::Render()
 		}
 	}
 	else {
-		auto& currentCamera = *FindUnorderdMap(activeCameras[0], cameraList);
+		auto& currentCamera = *FindUnorderedMap(activeCameras[0], cameraList);
 		currentCamera.RenderCamera();
 	}
 }
@@ -100,7 +100,7 @@ void CameraManager::UpdateInput(const float& deltaTime)
 	std::vector<std::string> activeCameras;
 	for(int i = 0; i < cameraNameList.size(); i++)
 	{
-		auto& currentCamera = *FindUnorderdMap(cameraNameList[i], cameraList);
+		auto& currentCamera = *FindUnorderedMap(cameraNameList[i], cameraList);
 		if(currentCamera.GetIsActive() == true)
 		{
 			activeCameras.push_back(cameraNameList[i]);
@@ -110,7 +110,7 @@ void CameraManager::UpdateInput(const float& deltaTime)
 	{
 		for(int i = activeCameras.size()-1; i > 0; i--)
 		{
-			auto& currentCamera = *FindUnorderdMap(activeCameras[i], cameraList);
+			auto& currentCamera = *FindUnorderedMap(activeCameras[i], cameraList);
 			if(i == activeCameras.size() -1)
 			{
 				currentCamera.UpdateCamera(deltaTime);
@@ -123,7 +123,7 @@ void CameraManager::UpdateInput(const float& deltaTime)
 		}
 	}
 	else {
-		auto& currentCamera = *FindUnorderdMap(activeCameras[0], cameraList);
+		auto& currentCamera = *FindUnorderedMap(activeCameras[0], cameraList);
 		currentCamera.UpdateCamera(deltaTime);
 	}
 }

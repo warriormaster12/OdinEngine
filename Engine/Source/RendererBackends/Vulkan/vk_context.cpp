@@ -50,7 +50,7 @@ std::string currentlyBoundShader;
 VkRenderPass& VulkanContext::GetRenderpass()
 {
     
-    return *FindUnorderdMap("main pass", renderPass);
+    return *FindUnorderedMap("main pass", renderPass);
 }
 
 
@@ -106,18 +106,18 @@ void VulkanContext::UpdateDraw()
     VkCommandbufferManager::BeginCommands(ResizeWindow);
     for(int i = renderPassNames.size()-1; i > -1;i--)
     {
-        auto& currentPass = *FindUnorderdMap(renderPassNames[i], renderPassInfo);
-        auto& currentBuffer = *FindUnorderdMap(FindUnorderdMap(renderPassNames[i], renderPassInfo)->frameBufferName, frameBuffers);
+        auto& currentPass = *FindUnorderedMap(renderPassNames[i], renderPassInfo);
+        auto& currentBuffer = *FindUnorderedMap(FindUnorderedMap(renderPassNames[i], renderPassInfo)->frameBufferName, frameBuffers);
         VkRenderPassBeginInfo rpInfo = {};
         if(currentPass.frameBufferName != "main framebuffer" && renderPassNames[i] != "main pass")
         {
             for(int j = 0; j < currentBuffer.frameBuffers.size(); j++)
             {
-                rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(renderPassNames[i], renderPass), {currentBuffer.width, currentBuffer.height}, currentBuffer.frameBuffers[j]);
+                rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderedMap(renderPassNames[i], renderPass), {currentBuffer.width, currentBuffer.height}, currentBuffer.frameBuffers[j]);
             }
         }
         else {
-            rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderdMap(renderPassNames[i], renderPass), VkSwapChainManager::GetSwapchainExtent(), currentBuffer.frameBuffers[VkCommandbufferManager::GetImageIndex()]);
+            rpInfo = vkinit::RenderpassBeginInfo(*FindUnorderedMap(renderPassNames[i], renderPass), VkSwapChainManager::GetSwapchainExtent(), currentBuffer.frameBuffers[VkCommandbufferManager::GetImageIndex()]);
         }
         rpInfo.clearValueCount = currentPass.clearValues.size();
 
@@ -157,7 +157,7 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 {
     if(p_bufferInfo == nullptr && bufferName == "")
     {
-        if(FindUnorderdMap("main pass", renderPass) == nullptr)
+        if(FindUnorderedMap("main pass", renderPass) == nullptr)
         {
             //we define an attachment description for our main color image
             //the attachment is loaded as "clear" when renderpass start
@@ -217,25 +217,25 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
             
             renderPass["main pass"];
             renderPassNames.push_back("main pass");
-            VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap("main pass", renderPass)));
+            VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderedMap("main pass", renderPass)));
             
             mainDeletionQueue.PushFunction([=]() {
-                vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap("main pass", renderPass), nullptr);
+                vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderedMap("main pass", renderPass), nullptr);
             });
         }
 
-        if(FindUnorderdMap("main framebuffer",frameBuffers) == nullptr)
+        if(FindUnorderedMap("main framebuffer",frameBuffers) == nullptr)
         {
             resizableFramebuffers.push_back(bufferName);
             frameBuffers["main framebuffer"];
         }
-        FindUnorderdMap("main framebuffer",frameBuffers)->frameBuffers.resize(VkSwapChainManager::GetSwapchainImageViews().size());
-        auto& bufferInfo = *FindUnorderdMap("main framebuffer",frameBuffers);
+        FindUnorderedMap("main framebuffer",frameBuffers)->frameBuffers.resize(VkSwapChainManager::GetSwapchainImageViews().size());
+        auto& bufferInfo = *FindUnorderedMap("main framebuffer",frameBuffers);
         bufferInfo.width = VkSwapChainManager::GetSwapchainExtent().width;
         bufferInfo.height = VkSwapChainManager::GetSwapchainExtent().height;
         for (int i = 0; i < bufferInfo.frameBuffers.size(); i++) {
             std::vector <VkImageView> attachments = {VkSwapChainManager::GetSwapchainImageViews()[i], VkSwapChainManager::GetSwapchainDepthView()};
-            VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent());
+            VkFramebufferCreateInfo fbInfo = vkinit::FramebufferCreateInfo(*FindUnorderedMap("main pass", renderPass), VkSwapChainManager::GetSwapchainExtent());
             fbInfo.attachmentCount = attachments.size();
             fbInfo.pAttachments = attachments.data();
             vkCreateFramebuffer(VkDeviceManager::GetDevice(), &fbInfo, nullptr, &bufferInfo.frameBuffers[i]);
@@ -248,10 +248,10 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
     else {
 
         frameBuffers[bufferName];
-        auto& fbufferInfo = *FindUnorderdMap(bufferName,frameBuffers);
+        auto& fbufferInfo = *FindUnorderedMap(bufferName,frameBuffers);
         fbufferInfo = *p_bufferInfo;
         fbufferInfo.frameBuffers.resize(1);
-        if(FindUnorderdMap(fbufferInfo.renderPass, renderPass) == nullptr)
+        if(FindUnorderedMap(fbufferInfo.renderPass, renderPass) == nullptr)
         {
             //for now a lot of stuff is hard coded
             std::vector<VkAttachmentDescription> attachmentDescriptions = {};
@@ -287,11 +287,12 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
 
             VkSubpassDescription subpassDescription = {};
             subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-            subpassDescription.colorAttachmentCount = 1;
+            std::array<VkSubpassDependency, 2> dependencies;
             for(int i = 0; i < attachmentRefs.size(); i++)
             {
-                if(i == 0)
+                if(attachmentRefs[i].layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
                 {
+                    subpassDescription.colorAttachmentCount += 1;
                     subpassDescription.pColorAttachments = &attachmentRefs[i];
                 }
                 else {
@@ -300,23 +301,44 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
             }
 
             // Use subpass dependencies for layout transitions
-            std::array<VkSubpassDependency, 2> dependencies;
+            if(attachmentRefs.size() > 1)
+            {
+                dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+                dependencies[0].dstSubpass = 0;
+                dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-            dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-            dependencies[0].dstSubpass = 0;
-            dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-            dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+                dependencies[1].srcSubpass = 0;
+                dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+                dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+            }
+            else {
+                if(attachmentRefs[0].layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+                {
+                    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+                    dependencies[0].dstSubpass = 0;
+                    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+                    dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                    dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                    dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-            dependencies[1].srcSubpass = 0;
-            dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-            dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-            dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+                    dependencies[1].srcSubpass = 0;
+                    dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+                    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+                    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                    dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                    dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                    dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+                }
+            }
 
             // Create the actual renderpass
             VkRenderPassCreateInfo renderPassInfo = {};
@@ -329,10 +351,10 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
             renderPassInfo.pDependencies = dependencies.data();
             renderPass[fbufferInfo.renderPass];
             renderPassNames.push_back(fbufferInfo.renderPass);
-            VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderdMap(fbufferInfo.renderPass, renderPass)));
+            VK_CHECK(vkCreateRenderPass(VkDeviceManager::GetDevice(), &renderPassInfo, nullptr, FindUnorderedMap(fbufferInfo.renderPass, renderPass)));
             ENGINE_CORE_INFO("{0} renderpass created", fbufferInfo.renderPass);
             mainDeletionQueue.PushFunction([=]() {
-                vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderdMap(fbufferInfo.renderPass, renderPass), nullptr);
+                vkDestroyRenderPass(VkDeviceManager::GetDevice(), *FindUnorderedMap(fbufferInfo.renderPass, renderPass), nullptr);
             });
         }
         
@@ -371,7 +393,7 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
         VkExtent2D extent = {};
         extent.height = extent3D.height;
         extent.width = extent3D.width;
-		VkFramebufferCreateInfo fbufCreateInfo = vkinit::FramebufferCreateInfo(*FindUnorderdMap(fbufferInfo.renderPass, renderPass), extent);
+		VkFramebufferCreateInfo fbufCreateInfo = vkinit::FramebufferCreateInfo(*FindUnorderedMap(fbufferInfo.renderPass, renderPass), extent);
 		fbufCreateInfo.attachmentCount = attachments.size();
 		fbufCreateInfo.pAttachments = attachments.data();
 		fbufCreateInfo.layers = 1;
@@ -412,14 +434,14 @@ void VulkanContext::CreateDescriptorSetLayout(const std::string& layoutName)
     descriptorSetLayout[layoutName];
     VkDescriptorSetLayoutCreateInfo set = vkinit::DescriptorLayoutInfo(descriptorSetLayoutBindings);
     
-    FindUnorderdMap(layoutName, descriptorSetLayout)->layout = descriptorLayoutCache.CreateDescriptorLayout(&set);
-    FindUnorderdMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
+    FindUnorderedMap(layoutName, descriptorSetLayout)->layout = descriptorLayoutCache.CreateDescriptorLayout(&set);
+    FindUnorderedMap(layoutName, descriptorSetLayout)->bindings = descriptorSetLayoutBindings;
     descriptorSetLayoutBindings.clear();
 
     // mainDeletionQueue.PushFunction([=]{
-    //     if(FindUnorderdMap(layoutName, descriptorSetLayout) != nullptr)
+    //     if(FindUnorderedMap(layoutName, descriptorSetLayout) != nullptr)
     //     {
-    //         vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
+    //         vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderedMap(layoutName, descriptorSetLayout)->layout, nullptr);
     //         ENGINE_CORE_ERROR(layoutName);
     //         descriptorSetLayout.erase(layoutName);
     //     }
@@ -429,14 +451,14 @@ void VulkanContext::CreateDescriptorSetLayout(const std::string& layoutName)
 
 void VulkanContext::RemoveDescriptorSetLayout(const std::string& layoutName)
 {
-    vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderdMap(layoutName, descriptorSetLayout)->layout, nullptr);
+    vkDestroyDescriptorSetLayout(VkDeviceManager::GetDevice(), FindUnorderedMap(layoutName, descriptorSetLayout)->layout, nullptr);
     ENGINE_CORE_INFO("descriptor set layout {0} destroyed", layoutName);
     descriptorSetLayout.erase(layoutName);
 }
 
 void VulkanContext::CreateSampler(const std::string& samplerName, const VkFilter& samplerFilter, const VkSamplerAddressMode& samplerAddressMode)
 {
-    if(FindUnorderdMap(samplerName, samplers) == nullptr)
+    if(FindUnorderedMap(samplerName, samplers) == nullptr)
     {
         VkSamplerCreateInfo samplerInfo = vkinit::SamplerCreateInfo(samplerFilter, samplerAddressMode);
 
@@ -449,9 +471,9 @@ void VulkanContext::CreateSampler(const std::string& samplerName, const VkFilter
 
 void VulkanContext::DestroySampler(const std::string& samplerName)
 {
-    if(FindUnorderdMap(samplerName, samplers) != nullptr)
+    if(FindUnorderedMap(samplerName, samplers) != nullptr)
     {
-        vkDestroySampler(VkDeviceManager::GetDevice(), *FindUnorderdMap(samplerName, samplers), nullptr);
+        vkDestroySampler(VkDeviceManager::GetDevice(), *FindUnorderedMap(samplerName, samplers), nullptr);
         samplers.erase(samplerName);
     }
 }
@@ -462,45 +484,45 @@ void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, 
     for(int i = 0; i < views.size(); i++)
     {
         VkDescriptorImageInfo info{};
-        info.sampler = *FindUnorderdMap(sampler, samplers);
+        info.sampler = *FindUnorderedMap(sampler, samplers);
         info.imageView = views[i];
         info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.push_back(info);
     }
-    auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
+    auto& bindings = FindUnorderedMap(layoutName, descriptorSetLayout)->bindings;
     
     if(binding == 0)
     {
         descriptorSets[descriptorName];
-        descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
+        descriptorAllocator.Allocate(&FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderedMap(layoutName, descriptorSetLayout)->layout);
     }
-    VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
+    VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
     vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
 }
 
 void VulkanContext::CreateDescriptorSetFrameBufferImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::string& bufferName)
 {
     std::vector<VkDescriptorImageInfo> imageInfo;
-    for(int i = 0; i < FindUnorderdMap(bufferName, frameBuffers)->images.size(); i++)
+    for(int i = 0; i < FindUnorderedMap(bufferName, frameBuffers)->images.size(); i++)
     {
-        if(FindUnorderdMap(bufferName, frameBuffers)->attachmentRefs[i].layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && FindUnorderdMap(bufferName, frameBuffers)->images.size() > 1)
+        if(FindUnorderedMap(bufferName, frameBuffers)->attachmentRefs[i].layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && FindUnorderedMap(bufferName, frameBuffers)->images.size() > 1)
         {
             VkDescriptorImageInfo info{};
-            info.sampler = *FindUnorderdMap(sampler, samplers);
-            info.imageView = FindUnorderdMap(bufferName, frameBuffers)->images[i].defaultView;
+            info.sampler = *FindUnorderedMap(sampler, samplers);
+            info.imageView = FindUnorderedMap(bufferName, frameBuffers)->images[i].defaultView;
             info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             imageInfo.push_back(info);
         }
     }
     
-    auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
+    auto& bindings = FindUnorderedMap(layoutName, descriptorSetLayout)->bindings;
     
     if(binding == 0)
     {
         descriptorSets[descriptorName];
-        descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
+        descriptorAllocator.Allocate(&FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderedMap(layoutName, descriptorSetLayout)->layout);
     }
-    VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
+    VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
     vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);
 }
 
@@ -511,7 +533,7 @@ void VulkanContext::CreateUniformBufferInfo(const std::string& bufferName, const
         for(int i = 0; i < FRAME_OVERLAP; i++)
         {
             VkCommandbufferManager::GetFrames(i).allocatedBuffer[bufferName];
-            auto& allocatedBuffer = *FindUnorderdMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer);
+            auto& allocatedBuffer = *FindUnorderedMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer);
             allocatedBuffer.bufferUsage = bufferUsage;
             allocatedBuffer.dataSize = dataSize;
             allocatedBuffer.dataRange = dataRange;
@@ -520,7 +542,7 @@ void VulkanContext::CreateUniformBufferInfo(const std::string& bufferName, const
     else
     {
         allocatedBuffers[bufferName];
-        auto& allocatedBuffer = *FindUnorderdMap(bufferName, allocatedBuffers);
+        auto& allocatedBuffer = *FindUnorderedMap(bufferName, allocatedBuffers);
         allocatedBuffer.bufferUsage = bufferUsage;
         allocatedBuffer.dataSize = dataSize;
         allocatedBuffer.dataRange = dataRange;
@@ -532,7 +554,7 @@ void VulkanContext::CreateUniformBufferInfo(const std::string& bufferName, const
 
 void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding, const bool& frameOverlap ,const std::string& bufferName, const size_t& byteOffset)
 {
-    auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
+    auto& bindings = FindUnorderedMap(layoutName, descriptorSetLayout)->bindings;
 
     VkDescriptorBufferInfo bufferInfo;
     if(frameOverlap == true)
@@ -541,11 +563,11 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
         for(int i = 0; i < FRAME_OVERLAP; i++)
         {
             auto& frame = VkCommandbufferManager::GetFrames(i);
-            auto& buffer = *FindUnorderdMap(bufferName, frame.allocatedBuffer);
-            if(FindUnorderdMap(descriptorName, frame.descriptorSets) == nullptr)
+            auto& buffer = *FindUnorderedMap(bufferName, frame.allocatedBuffer);
+            if(FindUnorderedMap(descriptorName, frame.descriptorSets) == nullptr)
             {
                 frame.descriptorSets[descriptorName];
-                descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, frame.descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
+                descriptorAllocator.Allocate(&FindUnorderedMap(descriptorName, frame.descriptorSets)->descriptorSet ,FindUnorderedMap(layoutName, descriptorSetLayout)->layout);
 
                 if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
                 {
@@ -556,8 +578,8 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
                     bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset, buffer.dataRange);
                 }
 
-                VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, frame.descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
-                FindUnorderdMap(descriptorName,frame.descriptorSets)->type = bindings[binding].descriptorType;
+                VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderedMap(descriptorName, frame.descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
+                FindUnorderedMap(descriptorName,frame.descriptorSets)->type = bindings[binding].descriptorType;
                 vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputBuffer, 0, nullptr);
             }
             else {
@@ -570,12 +592,12 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
                     bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset, buffer.dataRange);
                 }
 
-                VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, frame.descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
+                VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderedMap(descriptorName, frame.descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
                 for(int i = 0; i < bindings.size(); i++)
                 {
                     if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
                     {
-                        FindUnorderdMap(descriptorName,frame.descriptorSets)->type = bindings[binding].descriptorType;
+                        FindUnorderedMap(descriptorName,frame.descriptorSets)->type = bindings[binding].descriptorType;
                     }
                 }
                 vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputBuffer, 0, nullptr);
@@ -586,11 +608,11 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
     else
     {
         //without frame overlap
-        auto& buffer =  *FindUnorderdMap(bufferName, allocatedBuffers);
-        if(FindUnorderdMap(descriptorName, descriptorSets) == nullptr)
+        auto& buffer =  *FindUnorderedMap(bufferName, allocatedBuffers);
+        if(FindUnorderedMap(descriptorName, descriptorSets) == nullptr)
         {
             descriptorSets[descriptorName];
-            descriptorAllocator.Allocate(&FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderdMap(layoutName, descriptorSetLayout)->layout);
+            descriptorAllocator.Allocate(&FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderedMap(layoutName, descriptorSetLayout)->layout);
 
             if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
             {
@@ -601,8 +623,8 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
                 bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset, buffer.dataRange);
             }
 
-            VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
-            FindUnorderdMap(descriptorName,descriptorSets)->type = bindings[binding].descriptorType;
+            VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
+            FindUnorderedMap(descriptorName,descriptorSets)->type = bindings[binding].descriptorType;
             vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputBuffer, 0, nullptr);
         }
         else {
@@ -615,12 +637,12 @@ void VulkanContext::CreateDescriptorSet(const std::string& descriptorName, const
                 bufferInfo = CreateDescriptorBuffer(buffer, buffer.dataSize, byteOffset, buffer.dataRange);
             }
 
-            VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
+            VkWriteDescriptorSet outputBuffer = vkinit::WriteDescriptorBuffer(bindings[binding].descriptorType, FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, &bufferInfo, bindings[binding].binding);
             for(int i = 0; i < bindings.size(); i++)
             {
                 if(bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || bindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
                 {
-                    FindUnorderdMap(descriptorName,descriptorSets)->type = bindings[binding].descriptorType;
+                    FindUnorderedMap(descriptorName,descriptorSets)->type = bindings[binding].descriptorType;
                 }
             }
             vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputBuffer, 0, nullptr);
@@ -635,18 +657,18 @@ void VulkanContext::RemoveAllocatedBuffer(const std::string& bufferName, const b
         for(int i = 0; i < FRAME_OVERLAP; i++)
         {
             auto& allocatedBuffer= VkCommandbufferManager::GetFrames(i).allocatedBuffer;
-            if( FindUnorderdMap(bufferName, allocatedBuffer) != nullptr)
+            if( FindUnorderedMap(bufferName, allocatedBuffer) != nullptr)
             {
-                vmaDestroyBuffer(VkDeviceManager::GetAllocator(), FindUnorderdMap(bufferName, allocatedBuffer)->buffer, FindUnorderdMap(bufferName, allocatedBuffer)->allocation);
+                vmaDestroyBuffer(VkDeviceManager::GetAllocator(), FindUnorderedMap(bufferName, allocatedBuffer)->buffer, FindUnorderedMap(bufferName, allocatedBuffer)->allocation);
                 allocatedBuffer.erase(bufferName);
             }
         }
     }
     else
     {
-        if(FindUnorderdMap(bufferName, allocatedBuffers) != nullptr)
+        if(FindUnorderedMap(bufferName, allocatedBuffers) != nullptr)
         {
-            vmaDestroyBuffer(VkDeviceManager::GetAllocator(), FindUnorderdMap(bufferName, allocatedBuffers)->buffer, FindUnorderdMap(bufferName, allocatedBuffers)->allocation);
+            vmaDestroyBuffer(VkDeviceManager::GetAllocator(), FindUnorderedMap(bufferName, allocatedBuffers)->buffer, FindUnorderedMap(bufferName, allocatedBuffers)->allocation);
             allocatedBuffers.erase(bufferName);
         }
     }
@@ -670,7 +692,7 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
     std::vector<VkDescriptorSetLayout> layouts;
     for(int i = 0; i < layoutNames.size(); i++)
     {
-        layouts.push_back(FindUnorderdMap(layoutNames[i], descriptorSetLayout)->layout);
+        layouts.push_back(FindUnorderedMap(layoutNames[i], descriptorSetLayout)->layout);
     }
     VkPushConstantRange pushConstantRange = {};
     if(descriptions.p_pushConstant != nullptr)
@@ -725,7 +747,7 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
 
     //build the pipeline
     vkcomponent::ShaderPass shaderPass;
-    shaderPass = vkcomponent::BuildShader(*FindUnorderdMap(descriptions.renderPassName, renderPass), pipelineBuilder, shaderEffect);
+    shaderPass = vkcomponent::BuildShader(*FindUnorderedMap(descriptions.renderPassName, renderPass), pipelineBuilder, shaderEffect);
 
     shaderProgram[shaderName].pass = shaderPass;
 
@@ -738,37 +760,37 @@ void VulkanContext::CreateGraphicsPipeline(std::vector<std::string>& shaderPaths
 void VulkanContext::BindGraphicsPipeline(const std::string& shaderName)
 {
     currentlyBoundShader = shaderName;
-    if(FindUnorderdMap(currentlyBoundShader, shaderProgram) == nullptr)
+    if(FindUnorderedMap(currentlyBoundShader, shaderProgram) == nullptr)
     {
         ENGINE_CORE_ERROR("Currently bound shader {0} does not exist");
     }
     else {
-        vkCmdBindPipeline(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.pipeline);
+        vkCmdBindPipeline(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.pipeline);
     }
 }
 void VulkanContext::PushConstants(const VkShaderStageFlags& shaderStage, const uint32_t& offset, const uint32_t& dataSize, const void* data)
 {
-    vkCmdPushConstants(VkCommandbufferManager::GetCommandBuffer(), FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, shaderStage, offset, dataSize, data);
+    vkCmdPushConstants(VkCommandbufferManager::GetCommandBuffer(), FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, shaderStage, offset, dataSize, data);
 }
 void VulkanContext::BindDescriptorSet(const std::string& descriptorName, const uint32_t& set, const uint32_t& dynamicOffset, const bool& frameOverlap)
 {
     if(frameOverlap == true)
     {
-        if(FindUnorderdMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || FindUnorderdMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+        if(FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
         {
-            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderdMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->descriptorSet, 1,&dynamicOffset);
+            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->descriptorSet, 1,&dynamicOffset);
         }
         else {
-            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderdMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->descriptorSet, 0, 0);
+            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->descriptorSet, 0, 0);
         }
     }
     else {
-        if(FindUnorderdMap(descriptorName, descriptorSets)->type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || FindUnorderdMap(descriptorName, descriptorSets)->type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+        if(FindUnorderedMap(descriptorName, descriptorSets)->type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || FindUnorderedMap(descriptorName, descriptorSets)->type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
         {
-            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, 1,&dynamicOffset);
+            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, 1,&dynamicOffset);
         }
         else {
-            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderdMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderdMap(descriptorName, descriptorSets)->descriptorSet, 0, 0);
+            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, 0, 0);
         }
     }
 }
@@ -811,14 +833,14 @@ void VulkanContext::UploadIndirectDraw(const uint32_t& objectCount, const std::v
 
     }
 
-	UploadVectorData(FindUnorderdMap("indirect draw", VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, commands);
+	UploadVectorData(FindUnorderedMap("indirect draw", VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->allocation, commands);
 }
 
 void VulkanContext::DrawIndexedIndirect(const uint32_t& drawCount, const uint32_t& drawIndex)
 {
     uint32_t stride = sizeof(VkDrawIndexedIndirectCommand);
 	uint32_t offset = drawIndex * stride;
-    vkCmdDrawIndexedIndirect(VkCommandbufferManager::GetCommandBuffer(), FindUnorderdMap("indirect draw", VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->buffer, offset, drawCount, stride);
+    vkCmdDrawIndexedIndirect(VkCommandbufferManager::GetCommandBuffer(), FindUnorderedMap("indirect draw", VkCommandbufferManager::GetCurrentFrame().allocatedBuffer)->buffer, offset, drawCount, stride);
 }
 
 void VulkanContext::Draw(const uint32_t& vertices, const uint32_t& instanceCount, const uint32_t& firstVertex, const uint32_t& firstInstance)
@@ -833,7 +855,7 @@ void VulkanContext::DrawIndexed(std::vector<std::uint32_t>& indices, const uint3
 
 void VulkanContext::PrepareRenderpassForDraw(const float& clearValueCount, const float clearColor[4], const float& depth, const std::string& passName /*="main pass"*/, const std::string& frameBufferName /*="main framebuffer"*/)
 {
-    if(FindUnorderdMap(passName, renderPassInfo) == nullptr)
+    if(FindUnorderedMap(passName, renderPassInfo) == nullptr)
     {
         renderPassInfo[passName];
         VkClearValue clearValue;
@@ -843,13 +865,13 @@ void VulkanContext::PrepareRenderpassForDraw(const float& clearValueCount, const
         VkClearValue depthClear;
         depthClear.depthStencil.depth = depth;
 
-        FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(clearValue);
+        FindUnorderedMap(passName, renderPassInfo)->clearValues.push_back(clearValue);
         if(clearValueCount > 1)
         {
-            FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(depthClear);
+            FindUnorderedMap(passName, renderPassInfo)->clearValues.push_back(depthClear);
         }
         
-        FindUnorderdMap(passName, renderPassInfo)->frameBufferName = frameBufferName;
+        FindUnorderedMap(passName, renderPassInfo)->frameBufferName = frameBufferName;
     }
     else {
         VkClearValue clearValue;
@@ -859,23 +881,23 @@ void VulkanContext::PrepareRenderpassForDraw(const float& clearValueCount, const
         VkClearValue depthClear;
         depthClear.depthStencil.depth = depth;
 
-        FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(clearValue);
+        FindUnorderedMap(passName, renderPassInfo)->clearValues.push_back(clearValue);
         if(clearValueCount > 1)
         {
-            FindUnorderdMap(passName, renderPassInfo)->clearValues.push_back(depthClear);
+            FindUnorderedMap(passName, renderPassInfo)->clearValues.push_back(depthClear);
         }
         
         //start the main renderpass. 
         //We will use the clear color from above, and the framebuffer of the index the swapchain gave us
         
 
-        FindUnorderdMap(passName, renderPassInfo)->frameBufferName = frameBufferName;
+        FindUnorderedMap(passName, renderPassInfo)->frameBufferName = frameBufferName;
     }
     
 }
 void VulkanContext::AddDrawToRenderpassQueue(std::function<void()>&& drawCalls, const std::string& passName /*="main pass"*/)
 {
-    auto& pass = *FindUnorderdMap(passName, renderPassInfo);
+    auto& pass = *FindUnorderedMap(passName, renderPassInfo);
     pass.passQueue.PushFunction([=]{
         drawCalls();
     });

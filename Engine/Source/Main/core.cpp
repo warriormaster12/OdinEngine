@@ -19,17 +19,26 @@
 #include "statistics.h"
 #include <memory>
 
+//temp 
+#include "scene.h"
+#include "test_component.h"
+
 
 bool isInitialized{ false };
 
 FunctionQueuer additionalDeletion;
-
+Scene scene1;
 
 
 
 void Core::CoreInit()
 {
     Logger::Init();
+
+    std::unique_ptr<Entity> entity = std::make_unique<Entity>();
+    entity->AddComponent(std::make_unique<Test>(), "test");
+    scene1.AddEntity(std::move(entity), "entity");
+    scene1.AddEntity(std::move(entity), "entity2");
     
 	windowHandler.CreateWindow(1920,1080);
     Renderer::InitRenderer(BACKEND_VULKAN);
@@ -104,6 +113,7 @@ void Core::CoreUpdate()
 		Renderer::UpdateRenderer();
         Statistics::End();
         CameraManager::UpdateInput(Statistics::GetDeltaTime());
+        scene1.UpdateEntities(Statistics::GetDeltaTime());
     }
 }
 

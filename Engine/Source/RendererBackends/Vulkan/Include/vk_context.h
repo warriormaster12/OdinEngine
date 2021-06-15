@@ -131,12 +131,12 @@ public:
         {
             for(int i = 0; i < FRAME_OVERLAP; i++)
             {
-                UploadSingleData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer)->allocation, data, byteOffset);
+                UploadSingleData(FindUnorderedMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer)->allocation, data, byteOffset);
             }
         }
         else
         {
-            UploadSingleData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data, byteOffset);
+            UploadSingleData(FindUnorderedMap(bufferName, allocatedBuffers)->allocation, data, byteOffset);
         }
         
         
@@ -148,13 +148,13 @@ public:
         {
             for(int i = 0; i < FRAME_OVERLAP; i++)
             {
-                UploadVectorData(FindUnorderdMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer)->allocation, data);
+                UploadVectorData(FindUnorderedMap(bufferName, VkCommandbufferManager::GetFrames(i).allocatedBuffer)->allocation, data);
             }
             
         }
         else
         {
-            UploadVectorData(FindUnorderdMap(bufferName, allocatedBuffers)->allocation, data);
+            UploadVectorData(FindUnorderedMap(bufferName, allocatedBuffers)->allocation, data);
         }
         
         

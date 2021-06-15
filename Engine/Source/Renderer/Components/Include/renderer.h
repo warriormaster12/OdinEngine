@@ -77,6 +77,7 @@ typedef enum ColorFormat
     SRGB32 = 106,
     SRG32 = 103,
     SRGB8 = 43,
+    UNORMRGB8 = 37,
 } ColorFormat;
 typedef enum CompareOp {
     COMPARE_OP_NEVER = 0,
@@ -138,6 +139,10 @@ struct ShaderDescriptions
     std::string renderPassName = "main pass";
 
 };
+typedef enum ImageLayout {
+    IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL = 2,
+    IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL = 3
+} ImageLayout;
 
 struct FrameBufferInfo 
 {
@@ -150,6 +155,9 @@ struct FrameBufferInfo
     bool resiziable = false;
 
     uint32_t imageCount = 1;
+
+    std::vector<ColorFormat> colorFormats = {};
+    std::vector<ImageLayout> imageLayouts = {};
     
 };
 
