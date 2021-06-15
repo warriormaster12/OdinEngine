@@ -275,7 +275,14 @@ void VulkanContext::CreateFramebuffer(const std::string& bufferName, std::unique
                 }
                 attachmentRefs[i].attachment = i;
                 attachmentRefs[i].layout = fbufferInfo.attachmentRefs[i].layout;
-                attachmentDescriptions[i].format = fbufferInfo.imageFormats[i];
+                if(fbufferInfo.imageFormats[i] == VK_FORMAT_UNDEFINED && fbufferInfo.attachmentRefs[i].layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+                {
+                    fbufferInfo.imageFormats[i] = vkinit::GetSupportedDepthFormat(VkDeviceManager::GetPhysicalDevice());
+                    attachmentDescriptions[i].format = fbufferInfo.imageFormats[i];
+                }
+                else {
+                    attachmentDescriptions[i].format = fbufferInfo.imageFormats[i];
+                }
             }
 
             VkSubpassDescription subpassDescription = {};
@@ -474,15 +481,18 @@ void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, 
 void VulkanContext::CreateDescriptorSetFrameBufferImage(const std::string& descriptorName, const std::string& layoutName, const uint32_t& binding,const std::string& sampler,const std::string& bufferName)
 {
     std::vector<VkDescriptorImageInfo> imageInfo;
-    // for(int i = 0; i < FindUnorderdMap(bufferName, frameBuffers)->images.size()-1; i++)
-    // {
-        
-    // }
-    VkDescriptorImageInfo info{};
-    info.sampler = *FindUnorderdMap(sampler, samplers);
-    info.imageView = FindUnorderdMap(bufferName, frameBuffers)->images[0].defaultView;
-    info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfo.push_back(info);
+    for(int i = 0; i < FindUnorderdMap(bufferName, frameBuffers)->images.size(); i++)
+    {
+        if(FindUnorderdMap(bufferName, frameBuffers)->attachmentRefs[i].layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && FindUnorderdMap(bufferName, frameBuffers)->images.size() > 1)
+        {
+            VkDescriptorImageInfo info{};
+            info.sampler = *FindUnorderdMap(sampler, samplers);
+            info.imageView = FindUnorderdMap(bufferName, frameBuffers)->images[i].defaultView;
+            info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.push_back(info);
+        }
+    }
+    
     auto& bindings = FindUnorderdMap(layoutName, descriptorSetLayout)->bindings;
     
     if(binding == 0)

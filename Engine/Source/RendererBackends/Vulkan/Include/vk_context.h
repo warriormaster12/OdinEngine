@@ -52,7 +52,7 @@ struct VkFrameBufferAdditionalInfo
     uint32_t height;
     bool resizable; 
     std::vector<AllocatedImage> images;
-    std::vector<VkFormat> imageFormats  = {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_D16_UNORM};
+    std::vector<VkFormat> imageFormats  = {VK_FORMAT_R8G8B8A8_UNORM, {}};
 
     std::vector<VkFramebuffer> frameBuffers;
     std::vector<VkAttachmentReference> attachmentRefs = {{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},{ 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL}};
