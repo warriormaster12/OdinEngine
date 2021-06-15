@@ -37,7 +37,7 @@ $ cmake .. -DGLFW_USE_WAYLAND=ON
 $ make
 
 (with multithreading)
-$ make -j 
+$ make -j4 
 ```
 #### Windows 
 ```
