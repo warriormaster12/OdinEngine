@@ -82,7 +82,7 @@ void Core::CoreInit()
     MaterialManager::CreateMaterial("Test");
 
     std::vector<std::string> names;
-    scene1.GetEntity("entity")->GetComponents(&names);
+    names = scene1.GetEntity("entity")->GetComponents();
     for(int i = 0; i < names.size(); i++)
     {
         ENGINE_CORE_TRACE(names[i]);

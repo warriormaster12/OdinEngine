@@ -17,7 +17,7 @@ public:
 
     Component& GetComponent(const std::string& name);
 
-    void GetComponents(std::vector<std::string>* outputName);
+    std::vector<std::string>& GetComponents();
     
     void Update(const float& deltaTime);
 

@@ -8,13 +8,16 @@
 
 void Entity::AddComponent(std::unique_ptr<Component> p_component, const std::string& name)
 {
-    components[name];
+    if(FindUnorderedMap(name, components) == nullptr)
+    {
+        components[name];
 
-    componentNames.push_back(name);
+        componentNames.push_back(name);
 
-    auto& currentComponent = *FindUnorderedMap(name, components);
-    currentComponent = std::move(p_component);
-    currentComponent->Start();
+        auto& currentComponent = *FindUnorderedMap(name, components);
+        currentComponent = std::move(p_component);
+        currentComponent->Start();
+    }
 }
 
 Component& Entity::GetComponent(const std::string& name)
@@ -23,12 +26,9 @@ Component& Entity::GetComponent(const std::string& name)
     return *currentComponent;
 }
 
-void Entity::GetComponents(std::vector<std::string>* outputName)
+std::vector<std::string>&  Entity::GetComponents()
 {
-    for(auto& currentName : componentNames)
-    {
-        outputName->push_back(currentName);
-    }
+    return componentNames;
 }
 
 void Entity::Update(const float& deltaTime)

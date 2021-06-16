@@ -2,7 +2,9 @@
 
 #include "imgui.h"
 
+#include "logger.h"
 #include "scene_manager.h"
+#include "Include/properties_panel.h"
 #include <vector>
 
 
@@ -14,7 +16,12 @@ void SceneGraph::ShowSceneGraphWindow()
 
     std::vector<std::string> entities = SceneManager::GetScene("scene").GetEntities();
 
+    static std::string clickedEntity;
+
+    static bool showProperties = false;
+
     int uniqueIndex = 0;
+    int clickedNode = -1;
     for(auto& currentEntity : entities)
     {
         ImGui::PushID(uniqueIndex);
@@ -27,7 +34,20 @@ void SceneGraph::ShowSceneGraphWindow()
             ImGui::TreePop();
         }
         uniqueIndex ++;
+        if (ImGui::IsItemClicked())
+        {
+            clickedEntity = currentEntity;
+            showProperties = true;
+        }
     }
 
+
     ImGui::End();
+    if(showProperties == true)
+    {
+        if(clickedEntity != "")
+        {
+            PropertiesPanel::ShowPropertiesPanelWindow(*SceneManager::GetScene("scene").GetEntity(clickedEntity), clickedEntity);
+        }
+    }
 }
