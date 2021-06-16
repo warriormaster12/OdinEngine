@@ -20,6 +20,4 @@ public:
 
     void ReAddMesh(RenderObject& object);
 
-    std::vector<RenderObject>& GetMeshes();
-
 };

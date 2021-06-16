@@ -23,6 +23,8 @@
 #include "scene_manager.h"
 #include "mesh_component.h"
 
+#include "project_manager.h"
+
 
 bool isInitialized{ false };
 
@@ -33,6 +35,8 @@ FunctionQueuer additionalDeletion;
 void Core::CoreInit()
 {
     Logger::Init();
+
+    ProjectManager::CreateProject("test", "Test/");
 
     SceneManager::CreateScene("scene");
     auto& scene1 = SceneManager::GetScene("scene");
@@ -83,10 +87,6 @@ void Core::CoreInit()
 
     std::vector<std::string> names;
     names = scene1.GetEntity("entity")->GetComponents();
-    for(int i = 0; i < names.size(); i++)
-    {
-        ENGINE_CORE_TRACE(names[i]);
-    }
     static_cast<MeshComponent&>(scene1.GetEntity("entity")->GetComponent("Mesh")).AddMesh("EngineAssets/Meshes/Barrel.obj");
 
     //everything went fine

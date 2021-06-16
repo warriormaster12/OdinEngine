@@ -26,6 +26,7 @@ target_include_directories(OdinEngine PUBLIC
     Engine/Source/Editor/Include/
     Engine/Source/SceneManager/Include/
     Engine/Source/SceneManager/Components/Include/
+    Engine/Source/IO/Include/
     
     Engine/Source/Third-Party/catch2/
     Engine/Source/Third-Party/imgui/Include/

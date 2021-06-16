@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "logger.h"
 #include "mesh_component.h"
+#include "project_manager.h"
 #include <memory>
 
 
@@ -33,23 +34,14 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                 if(ImGui::BeginMenu("Meshes"))
                 {
                     auto& meshComponent = static_cast<MeshComponent&>(entity.GetComponent(currentComponent));
-                    auto& meshes = static_cast<MeshComponent&>(entity.GetComponent(currentComponent)).GetMeshes();
-                    for(int i = 1; i < static_cast<MeshComponent&>(entity.GetComponent(currentComponent)).GetMeshes().size(); i++)
+                    for(auto& currentMesh : ProjectManager::ListMeshes())
                     {
-                        if(ImGui::MenuItem(meshes[i].meshName.c_str()))
+                        if(ImGui::MenuItem(currentMesh.c_str()))
                         {
-                            meshComponent.ReAddMesh(meshes[i]);
+                            meshComponent.AddMesh(ProjectManager::GetMesh(currentMesh));
                         } 
                     }
-                   
-                    
                     ImGui::EndMenu();
-                }
-                ImGui::InputText("file path", filePath.data(), filePath.size());
-                if(ImGui::Button("Apply"))
-                {
-                    static_cast<MeshComponent&>(entity.GetComponent(currentComponent)).AddMesh(filePath);
-                    filePath = "";
                 }
                 ImGui::EndChild();
             }

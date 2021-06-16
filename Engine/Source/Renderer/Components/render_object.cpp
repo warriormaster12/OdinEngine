@@ -25,23 +25,6 @@ void ObjectManager::PushObjectToQueue(RenderObject& object)
     objects.push_back(object);
 }
 
-std::vector<RenderObject>& ObjectManager::GetObjects()
-{
-    return objects;
-}
-
-RenderObject& ObjectManager::GetObject(const std::string& name)
-{
-    static int index = 0;
-    for(int i = 0; i < objects.size(); i++)
-    {
-        if(objects[i].meshName == name)
-        {
-            index = i;
-        }
-    }
-    return objects[index];
-}
 
 void ObjectManager::RenderObjects(const bool& bindMaterials /*= true*/)
 {
