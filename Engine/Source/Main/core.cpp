@@ -35,13 +35,10 @@ void Core::CoreInit()
 {
     Logger::Init();
 
-    MeshComponent mesh;
-
-   
     scene1.AddEntity("entity");
     scene1.AddEntity("entity2");
 
-    scene1.GetEntity("entity")->AddComponent(std::make_unique<MeshComponent>(mesh), "test");
+    scene1.GetEntity("entity")->AddComponent(std::make_unique<MeshComponent>(), "test");
     
 	windowHandler.CreateWindow(1920,1080);
     Renderer::InitRenderer(BACKEND_VULKAN);
@@ -83,7 +80,9 @@ void Core::CoreInit()
 
     MaterialManager::CreateMaterial("Test");
 
-    mesh.AddMesh("EngineAssets/Meshes/Barrel.obj");
+    
+
+    //static_cast<MeshComponent&>(scene1.GetEntity("entity")->GetComponent("test")).AddMesh("EngineAssets/Meshes/Barrel.obj");
 
     //everything went fine
     isInitialized = true;

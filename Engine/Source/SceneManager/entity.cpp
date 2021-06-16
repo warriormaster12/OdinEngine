@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "unordered_finder.h"
+#include "mesh_component.h"
 #include "logger.h"
 
 static std::unordered_map<std::string, std::shared_ptr<Component>> components;
@@ -17,6 +18,12 @@ void Entity::AddComponent(std::unique_ptr<Component> p_component, const std::str
     auto& currentComponent = *FindUnorderedMap(name, components);
     currentComponent = std::move(p_component);
     currentComponent->Start();
+}
+
+Component& Entity::GetComponent(const std::string& name)
+{
+    auto& currentComponent = *FindUnorderedMap(name, components);
+    return *currentComponent;
 }
 
 void Entity::Update(const float& deltaTime)

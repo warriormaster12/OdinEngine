@@ -10,6 +10,8 @@
 struct Entity 
 {
     void AddComponent(std::unique_ptr<Component> p_component, const std::string& name);
+
+    Component& GetComponent(const std::string& name);
     
     void Update(const float& deltaTime);
 
