@@ -20,14 +20,13 @@
 #include <memory>
 
 //temp 
-#include "scene.h"
+#include "scene_manager.h"
 #include "mesh_component.h"
 
 
 bool isInitialized{ false };
 
 FunctionQueuer additionalDeletion;
-Scene scene1;
 
 
 
@@ -35,10 +34,12 @@ void Core::CoreInit()
 {
     Logger::Init();
 
+    SceneManager::CreateScene("scene");
+    auto& scene1 = SceneManager::GetScene("scene");
     scene1.AddEntity("entity");
     scene1.AddEntity("entity2");
 
-    scene1.GetEntity("entity")->AddComponent(std::make_unique<MeshComponent>(), "test");
+    scene1.GetEntity("entity")->AddComponent(std::make_unique<MeshComponent>(), "Mesh");
     
 	windowHandler.CreateWindow(1920,1080);
     Renderer::InitRenderer(BACKEND_VULKAN);
@@ -80,9 +81,13 @@ void Core::CoreInit()
 
     MaterialManager::CreateMaterial("Test");
 
-    
-
-    //static_cast<MeshComponent&>(scene1.GetEntity("entity")->GetComponent("test")).AddMesh("EngineAssets/Meshes/Barrel.obj");
+    std::vector<std::string> names;
+    scene1.GetEntity("entity")->GetComponents(&names);
+    for(int i = 0; i < names.size(); i++)
+    {
+        ENGINE_CORE_TRACE(names[i]);
+    }
+    static_cast<MeshComponent&>(scene1.GetEntity("entity")->GetComponent("Mesh")).AddMesh("EngineAssets/Meshes/Barrel.obj");
 
     //everything went fine
     isInitialized = true;
@@ -119,6 +124,7 @@ void Core::CoreUpdate()
 		Renderer::UpdateRenderer();
         Statistics::End();
         CameraManager::UpdateInput(Statistics::GetDeltaTime());
+        auto& scene1 = SceneManager::GetScene("scene");
         scene1.UpdateEntities(Statistics::GetDeltaTime());
     }
 }

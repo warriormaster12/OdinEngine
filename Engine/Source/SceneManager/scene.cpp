@@ -24,10 +24,15 @@ Entity* Scene::GetEntity(const std::string& name)
         return FindUnorderedMap(name,entities); 
     }
     else {
-        ENGINE_CORE_WARN("couldn't find entity by the name {0}", name);
+        ENGINE_CORE_ERROR("couldn't find entity by the name {0}", name);
         return nullptr;
     }
     
+}
+
+std::vector<std::string>& Scene::GetEntities()
+{
+    return entityNames;
 }
 
 void Scene::UpdateEntities(const float& deltaTime)

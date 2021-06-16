@@ -3,17 +3,26 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
+
 
 #include "component.h"
 
 
-struct Entity 
+class Entity 
 {
+public:
     void AddComponent(std::unique_ptr<Component> p_component, const std::string& name);
 
     Component& GetComponent(const std::string& name);
+
+    void GetComponents(std::vector<std::string>* outputName);
     
     void Update(const float& deltaTime);
 
     void Destroy();
+private: 
+    std::unordered_map<std::string, std::shared_ptr<Component>> components;
+    std::vector<std::string> componentNames;
 };

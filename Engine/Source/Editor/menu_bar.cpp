@@ -14,6 +14,7 @@
 #include "Include/material_editor.h"
 #include "Include/light_adder.h"
 #include "Include/stats.h"
+#include "Include/scene_graph.h"
 
 
 void MenuBar::ShowMenuBar()
@@ -73,9 +74,7 @@ void MenuBar::ShowMenuBar()
         }
         if(showMeshAdder)
         {
-            MeshAdder::ShowMeshAdderWindow();
-            MaterialEditor::ShowMaterialWindow();
-            LightAdder::ShowLightAdderWindow();
+            SceneGraph::ShowSceneGraphWindow();
         }
         if(showStats)
         {
