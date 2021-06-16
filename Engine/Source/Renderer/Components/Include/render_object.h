@@ -12,6 +12,7 @@ struct RenderObject
 {
     std::shared_ptr<Mesh> p_mesh = std::make_shared<Mesh>();
     std::string material;
+    std::string meshName;
 
     glm::mat4 transformMatrix;
 };
@@ -35,6 +36,10 @@ struct ObjectManager
     static void Init();
 
     static void PushObjectToQueue(RenderObject& object);
+
+    static std::vector<RenderObject>& GetObjects();
+
+    static RenderObject& GetObject(const std::string& name);
 
     static void RenderObjects(const bool& bindMaterials = true);
 

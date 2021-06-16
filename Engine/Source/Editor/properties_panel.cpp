@@ -27,9 +27,24 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
         {
             if(currentComponent == "Mesh")
             {
-                std::string filePath;
+                static std::string filePath;
                 filePath.resize(64);
                 ImGui::BeginChild(currentComponent.c_str(), ImVec2(0, 0), true);
+                if(ImGui::BeginMenu("Meshes"))
+                {
+                    auto& meshComponent = static_cast<MeshComponent&>(entity.GetComponent(currentComponent));
+                    auto& meshes = static_cast<MeshComponent&>(entity.GetComponent(currentComponent)).GetMeshes();
+                    for(int i = 1; i < static_cast<MeshComponent&>(entity.GetComponent(currentComponent)).GetMeshes().size(); i++)
+                    {
+                        if(ImGui::MenuItem(meshes[i].meshName.c_str()))
+                        {
+                            meshComponent.ReAddMesh(meshes[i]);
+                        } 
+                    }
+                   
+                    
+                    ImGui::EndMenu();
+                }
                 ImGui::InputText("file path", filePath.data(), filePath.size());
                 if(ImGui::Button("Apply"))
                 {
