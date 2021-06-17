@@ -85,10 +85,6 @@ void Core::CoreInit()
 
     MaterialManager::CreateMaterial("Test");
 
-    std::vector<std::string> names;
-    names = scene1.GetEntity("entity")->GetComponents();
-    static_cast<MeshComponent&>(scene1.GetEntity("entity")->GetComponent("Mesh")).AddMesh("EngineAssets/Meshes/Barrel.obj");
-
     //everything went fine
     isInitialized = true;
 }
