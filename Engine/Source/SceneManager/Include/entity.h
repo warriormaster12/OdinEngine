@@ -15,7 +15,7 @@ class Entity
 public:
     void AddComponent(std::unique_ptr<Component> p_component, const std::string& name);
 
-    Component& GetComponent(const std::string& name);
+    Component* GetComponent(const std::string& name);
 
     std::vector<std::string>& GetComponents();
     

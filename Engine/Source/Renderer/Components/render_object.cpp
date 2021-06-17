@@ -5,10 +5,13 @@
 #include "logger.h"
 #include <memory>
 
-#include <glm/glm.hpp>
+#include <unordered_map>
+
+#include "unordered_finder.h"
 
 
-std::vector<RenderObject> objects;
+std::unordered_map<std::string, RenderObject> objects;
+std::vector<std::string> objectOwnerNames;
 
 
 void ObjectManager::Init()
@@ -20,20 +23,31 @@ void ObjectManager::Init()
     //Renderer::PrepareIndirectDraw(1000);
 }
 
-void ObjectManager::PushObjectToQueue(RenderObject& object)
+void ObjectManager::PushObjectToQueue(RenderObject& object, const std::string& owner)
 {
-    objects.push_back(object);
+    if(FindUnorderedMap(owner, objects) == nullptr)
+    {
+        objects[owner];
+        *FindUnorderedMap(owner, objects) = object;
+        objectOwnerNames.push_back(owner);
+    }
+}
+
+RenderObject* ObjectManager::GetRenderObject(const std::string& owner)
+{
+    return FindUnorderedMap(owner, objects);
 }
 
 
 void ObjectManager::RenderObjects(const bool& bindMaterials /*= true*/)
 {
-    if(objects.size() != 0)
+    if(objectOwnerNames.size() != 0)
     {
         std::vector<GPUObjectData> objectData;
-        objectData.reserve(objects.size());
-        for(const RenderObject& obj : objects)
+        objectData.reserve(objectOwnerNames.size());
+        for(auto& currentObject : objectOwnerNames)
         {
+            auto& obj = *FindUnorderedMap(currentObject, objects);
             GPUObjectData objData;
             objData.modelMatrix = obj.transformMatrix;
             objectData.push_back(objData);
@@ -57,23 +71,24 @@ void ObjectManager::RenderObjects(const bool& bindMaterials /*= true*/)
         // Renderer::UploadIndirectDraw(objects.size(), objIndicesSize, 0);
 
         
-        for (size_t i = 0; i < objects.size(); ++i)
+        for (size_t i = 0; i < objectOwnerNames.size(); ++i)
         {
-            bool isSameMesh = objects[i].p_mesh == pLastMesh;
-            bool isSameMaterial = &objects[i].material == pLastMaterial;
+            auto& currentObject = *FindUnorderedMap(objectOwnerNames[i], objects);
+            bool isSameMesh = currentObject.p_mesh == pLastMesh;
+            bool isSameMaterial = &currentObject.material == pLastMaterial;
 
             if (i == 0 || !isSameMesh || !isSameMaterial) {
                 DrawCall dc;
-                dc.p_mesh = objects[i].p_mesh;
-                dc.p_material = &objects[i].material;
-                dc.transformMatrix = objects[0].transformMatrix;
+                dc.p_mesh = currentObject.p_mesh;
+                dc.p_material = &currentObject.material;
+                dc.transformMatrix = FindUnorderedMap(objectOwnerNames[0], objects)->transformMatrix;
                 dc.index = i;
                 dc.count = 1;
                 dc.descriptorSetCount += 1;
                 batch.push_back(dc);
 
-                pLastMesh = objects[i].p_mesh;
-                pLastMaterial = &objects[i].material;
+                pLastMesh = currentObject.p_mesh;
+                pLastMaterial = &currentObject.material;
 
             } else {
                 ++batch.back().count;
@@ -130,12 +145,13 @@ void ObjectManager::Destroy()
     MaterialManager::DeleteAllMaterials();
 
     std::shared_ptr<Mesh> p_lastMesh;
-    for(int i = 0; i < objects.size(); i++)
+    for(int i = 0; i < objectOwnerNames.size(); i++)
     {
-        if(p_lastMesh != objects[i].p_mesh)
+        auto& currentObject = *FindUnorderedMap(objectOwnerNames[i], objects);
+        if(p_lastMesh != currentObject.p_mesh)
         {
-            objects[i].p_mesh->DestroyMesh();
-            p_lastMesh = objects[i].p_mesh;
+            currentObject.p_mesh->DestroyMesh();
+            p_lastMesh = currentObject.p_mesh;
         }
     }
 }

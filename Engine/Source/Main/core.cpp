@@ -36,7 +36,7 @@ void Core::CoreInit()
 {
     Logger::Init();
 
-    ProjectManager::CreateProject("test", "Test/");
+    ProjectManager::CreateProject("test", "EngineAssets/");
 
     SceneManager::CreateScene("scene");
     auto& scene1 = SceneManager::GetScene("scene");

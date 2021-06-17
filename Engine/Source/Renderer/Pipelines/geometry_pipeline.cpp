@@ -61,7 +61,7 @@ void GeometryPipeline::Init()
     skybox.material = "cube";
     skybox.transformMatrix = glm::translate(glm::vec3(0));
 
-    ObjectManager::PushObjectToQueue(skybox);
+    ObjectManager::PushObjectToQueue(skybox, "skyBox");
 
     ENGINE_CORE_INFO("geometry pipeline created");
 }

@@ -18,11 +18,8 @@ public:
 
     virtual void Destroy() override;
 
-    void AddMesh(const std::string& path, const std::string& materialName ="", Transform3D* p_transfrom = nullptr);
+    void AddMesh(const std::string& path, const std::string& entity, const std::string& materialName ="", Transform3D* p_transfrom = nullptr);
 
-    void ReAddMesh(RenderObject& object);
-private: 
-
-    //RenderObject object;
+    void UpdateCurrentMesh(const std::string& entity, const std::string& materialName ="", Transform3D* p_transfrom = nullptr);
 
 };

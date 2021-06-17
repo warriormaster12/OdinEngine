@@ -20,10 +20,15 @@ void Entity::AddComponent(std::unique_ptr<Component> p_component, const std::str
     }
 }
 
-Component& Entity::GetComponent(const std::string& name)
+Component* Entity::GetComponent(const std::string& name)
 {
-    auto& currentComponent = *FindUnorderedMap(name, components);
-    return *currentComponent;
+    if(FindUnorderedMap(name, components) != nullptr)
+    {
+        return std::move(FindUnorderedMap(name, components))->get();
+    }
+    else {
+        return nullptr;
+    }
 }
 
 std::vector<std::string>&  Entity::GetComponents()

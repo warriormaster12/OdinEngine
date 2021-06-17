@@ -39,7 +39,7 @@ void MeshAdder::ShowMeshAdderWindow()
         currentRenderObj.material = materialBuffer;
         currentRenderObj.transformMatrix = glm::translate(translation);
 
-        ObjectManager::PushObjectToQueue(currentRenderObj);
+        //ObjectManager::PushObjectToQueue(currentRenderObj);
     }
     ImGui::End();
 }

@@ -43,8 +43,12 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                 ImGui::InputFloat("z", &translation.z);
                 if(translation != lastTranslation)
                 {
-                    static_cast<Transform3D&>(entity.GetComponent(currentComponent)).UpdateTranslation(translation);
+                    static_cast<Transform3D&>(*entity.GetComponent(currentComponent)).UpdateTranslation(translation);
                     lastTranslation = translation;
+                    if(static_cast<MeshComponent*>(entity.GetComponent("Mesh")) != nullptr)
+                    {
+                        static_cast<MeshComponent&>(*entity.GetComponent("Mesh")).UpdateCurrentMesh(entityName, "", &static_cast<Transform3D&>(*entity.GetComponent("Transform3D")));
+                    }
                 }
             }
             if(currentComponent == "Mesh")
@@ -54,21 +58,18 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                 ImGui::BeginChild(currentComponent.c_str(), ImVec2(0, 0), true);
                 if(ImGui::BeginMenu("Meshes"))
                 {
-                    auto& meshComponent = static_cast<MeshComponent&>(entity.GetComponent(currentComponent));
+                    auto& meshComponent = static_cast<MeshComponent&>(*entity.GetComponent(currentComponent));
                     for(auto& currentMesh : ProjectManager::ListMeshes())
                     {
                         if(ImGui::MenuItem(currentMesh.c_str()))
                         {
-                            for(auto& cComponent : components)
+                            if(static_cast<Transform3D*>(entity.GetComponent("Transform3D")) != nullptr)
                             {
-                                if(cComponent == "Transform3D")
-                                {
-                                    meshComponent.AddMesh(ProjectManager::GetMesh(currentMesh), "", &static_cast<Transform3D&>(entity.GetComponent(cComponent)));
-                                    
-                                }
-                                else {
-                                    meshComponent.AddMesh(ProjectManager::GetMesh(currentMesh));
-                                }
+                                meshComponent.AddMesh(ProjectManager::GetMesh(currentMesh), entityName,"", &static_cast<Transform3D&>(*entity.GetComponent("Transform3D")));
+                                
+                            }
+                            else {
+                                meshComponent.AddMesh(ProjectManager::GetMesh(currentMesh), entityName);
                             }
                         } 
                     }

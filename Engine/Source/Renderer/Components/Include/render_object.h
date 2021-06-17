@@ -34,7 +34,9 @@ struct ObjectManager
 {
     static void Init();
 
-    static void PushObjectToQueue(RenderObject& object);
+    static void PushObjectToQueue(RenderObject& object, const std::string& owner);
+
+    static RenderObject* GetRenderObject(const std::string& owner);
 
     static void RenderObjects(const bool& bindMaterials = true);
 
