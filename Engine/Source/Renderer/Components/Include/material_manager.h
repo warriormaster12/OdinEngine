@@ -56,6 +56,7 @@ struct MaterialManager
     static void Init();
     static void CreateMaterial(const std::string& materialName, const std::string& samplerName = "default sampler");
     static Material& GetMaterial(const std::string& materialName);
+    static std::vector<std::string>& GetMaterials();
     static void AddTextures(const std::string& materialName, const std::string& samplerName = "default sampler");
     static void BindMaterial(const std::string& materialName);
     static void DeleteMaterial(const std::string& materialName);

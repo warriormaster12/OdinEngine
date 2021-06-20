@@ -17,8 +17,8 @@ std::vector<uint32_t> deletedOffsets;
 struct GPUMaterialData
 {
     glm::vec4 albedo; //vec3
-    glm::vec4 metallic = glm::vec4(1.0f); //float
-    glm::vec4 roughness = glm::vec4(0.3f); //float
+    glm::vec4 metallic = glm::vec4(0.5f); //float
+    glm::vec4 roughness = glm::vec4(0.5f); //float
     glm::vec4 ao = glm::vec4(1.0f); //float
 
     glm::vec4 repeateCount;
@@ -29,12 +29,12 @@ void MaterialManager::Init()
 {
     Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, PadUniformBufferSize(sizeof(GPUMaterialData))* maxMaterial, sizeof(GPUMaterialData));
     Renderer::WriteShaderUniform("object data", "per object layout",1,false,"material buffer");
-    
+
+    CreateMaterial("default material");
 }
 
 void MaterialManager::CreateMaterial(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
-    //TODO: figure out a way how to add offset without overwriting existing material
     if(FindUnorderedMap(materialName, materials) == nullptr)
     {
         materials[materialName];
@@ -58,7 +58,7 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
     }
 }
 
-void  MaterialManager::AddTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
+void MaterialManager::AddTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
     FindUnorderedMap(materialName, materials)->textureObjects.resize(FindUnorderedMap(materialName, materials)->GetTextures().size());
     std::vector<VkImageView> views;
@@ -73,6 +73,11 @@ void  MaterialManager::AddTextures(const std::string& materialName, const std::s
 Material& MaterialManager::GetMaterial(const std::string& materialName)
 {
     return *FindUnorderedMap(materialName, materials);
+}
+
+std::vector<std::string>& MaterialManager::GetMaterials()
+{
+    return materialNameList;
 }
 
 void MaterialManager::BindMaterial(const std::string& materialName)

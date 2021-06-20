@@ -75,15 +75,13 @@ void Core::CoreInit()
 
     PipelineManager::AddRendererPipeline(std::make_unique<CompositionPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
-    PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
+    //PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
     
 
 
     CameraManager::GetCamera("camera").position = glm::vec3(0.0f, 0.0f, 5.0f);
     CameraManager::GetCamera("camera2").position = glm::vec3(0.0f, 5.0f, 5.0f);
-
-    MaterialManager::CreateMaterial("Test");
 
     //everything went fine
     isInitialized = true;

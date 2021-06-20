@@ -9,8 +9,8 @@
 namespace
 {  
     //find unordered_map
-    template<typename T>
-    T* FindUnorderedMap(const std::string& name, std::unordered_map<std::string, T>& data)
+    template<typename M, typename G,typename T>
+    T* FindUnorderedMap(const M& name, std::unordered_map<G, T>& data)
     {
         //search for the object, and return nullpointer if not found
         auto it = data.find(name);

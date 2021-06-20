@@ -22,10 +22,16 @@ void MeshComponent::AddMesh(const std::string& path, const std::string& entity,c
         RenderObject object = {};
         object.p_mesh->LoadFromObj(path);
         object.p_mesh->CreateMesh();
-        object.material = "Test";
+        if(materialName == "")
+        {
+            object.material = "default material";
+        }
+        else {
+            object.material = materialName;
+        }
         if(p_transfrom != nullptr)
         {
-            object.transformMatrix = glm::translate(p_transfrom->GetTranslation());
+            object.transformMatrix = p_transfrom->GetTransform();
         }
         else {
             object.transformMatrix = glm::translate(glm::vec3(0));
@@ -38,13 +44,24 @@ void MeshComponent::AddMesh(const std::string& path, const std::string& entity,c
 
 void MeshComponent::UpdateCurrentMesh(const std::string& entity, const std::string& materialName /*=""*/, Transform3D* p_transfrom /*= nullptr*/)
 {
-    RenderObject& object = *ObjectManager::GetRenderObject(entity);
-    if(p_transfrom != nullptr)
+    RenderObject* object = ObjectManager::GetRenderObject(entity);
+    if(object != nullptr)
     {
-        object.transformMatrix = glm::translate(p_transfrom->GetTranslation());
-    }
-    else {
-        object.transformMatrix = glm::translate(glm::vec3(0));
+        if(p_transfrom != nullptr)
+        {
+            object->transformMatrix = p_transfrom->GetTransform();
+        }
+        else {
+            object->transformMatrix = glm::translate(glm::vec3(0));
+        }
+
+        if(materialName == "")
+        {
+            object->material = "default material";
+        }
+        else {
+            object->material = materialName;
+        }
     }
 }
 

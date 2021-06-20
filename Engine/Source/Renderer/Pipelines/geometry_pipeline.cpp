@@ -69,7 +69,7 @@ void GeometryPipeline::Init()
 void GeometryPipeline::Update()
 {
     Renderer::PrepareRenderpassForDraw(2, {0.0f, 0.0f, 0.0f, 1.0f}, 1.0f);
-    //Renderer::AddDrawToRenderpassQueue([=] {ObjectManager::RenderObjects();});
+    Renderer::AddDrawToRenderpassQueue([=] {ObjectManager::RenderObjects();});
 }
 
 void GeometryPipeline::Destroy()

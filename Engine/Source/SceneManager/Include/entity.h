@@ -10,7 +10,7 @@
 #include "component.h"
 
 
-class Entity 
+class Entity
 {
 public:
     void AddComponent(std::unique_ptr<Component> p_component, const std::string& name);
