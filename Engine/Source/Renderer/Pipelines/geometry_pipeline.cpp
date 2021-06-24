@@ -17,7 +17,36 @@ Texture skyboxCubemap;
 void GeometryPipeline::Init()
 {
 
+    ShaderDescriptions descriptionInfo;
+    descriptionInfo.vertexLocations = {
+        {SRGB32,offsetof(Vertex, position)},
+        {SRG32, offsetof(Vertex, uv)},
+        {SRGB32,offsetof(Vertex, normal)}
+    };
+    descriptionInfo.cullMode = CULL_MODE_BACK_BIT;
+    descriptionInfo.depthTesting = true;
+    descriptionInfo.depthCompareType = COMPARE_OP_LESS;
+    //descriptionInfo.renderPassName = "test pass";
+
+    descriptionInfo.p_pushConstant = std::make_unique<PushConstant>();
+    descriptionInfo.p_pushConstant->dataSize = sizeof(TextureCheck);
+    descriptionInfo.p_pushConstant->offset = 0;
+    descriptionInfo.p_pushConstant->shaderStage = SHADER_STAGE_FRAGMENT_BIT;
     
+    Renderer::CreateShader({"EngineAssets/Shaders/defaultTexturedWorld.frag", "EngineAssets/Shaders/pbr_vert.vert"}, "default textured world", {"per frame layout", "per object layout", "texture data layout"},&descriptionInfo);
+
+    ShaderDescriptions descriptionInfo2;
+    descriptionInfo2.vertexLocations = {
+        {SRGB32,offsetof(Vertex, position)},
+        {SRG32, offsetof(Vertex, uv)},
+        {SRGB32,offsetof(Vertex, normal)}
+    };
+    descriptionInfo2.cullMode = CULL_MODE_BACK_BIT;
+    descriptionInfo2.depthTesting = true;
+    descriptionInfo2.depthCompareType = COMPARE_OP_LESS;
+    //descriptionInfo2.renderPassName = "test pass";
+
+    Renderer::CreateShader({"EngineAssets/Shaders/defaultWorld.frag", "EngineAssets/Shaders/pbr_vert.vert"}, "default world", {"per frame layout", "per object layout"},&descriptionInfo2);
 
     ShaderDescriptions descriptionInfo3;
     descriptionInfo3.vertexLocations = {
@@ -26,7 +55,7 @@ void GeometryPipeline::Init()
     descriptionInfo3.cullMode = CULL_MODE_FRONT_BIT;
     descriptionInfo3.depthTesting = true;
     descriptionInfo3.depthCompareType = COMPARE_OP_LESS_OR_EQUAL;
-    descriptionInfo3.renderPassName = "test pass";
+    //descriptionInfo3.renderPassName = "test pass";
 
     Renderer::CreateShaderUniformLayoutBinding(UniformType::UNIFORM_TYPE_UNIFORM_BUFFER, SHADER_STAGE_VERTEX_BIT, 0);
     Renderer::CreateShaderUniformLayout("camera layout");

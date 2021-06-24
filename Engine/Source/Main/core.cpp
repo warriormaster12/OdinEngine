@@ -73,13 +73,14 @@ void Core::CoreInit()
     CameraManager::AddCamera("camera2");
     CameraManager::GetCamera("camera2").SetIsActive(false);
 
-    PipelineManager::AddRendererPipeline(std::make_unique<CompositionPipeline>());
+    //PipelineManager::AddRendererPipeline(std::make_unique<CompositionPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<GeometryPipeline>());
     //PipelineManager::AddRendererPipeline(std::make_unique<DebugPipeline>());
     PipelineManager::AddRendererPipeline(std::make_unique<EditorPipeline>());
     
 
 
+    LightManager::AddLight(glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(1.0f));
     CameraManager::GetCamera("camera").position = glm::vec3(0.0f, 0.0f, 5.0f);
     CameraManager::GetCamera("camera2").position = glm::vec3(0.0f, 5.0f, 5.0f);
 

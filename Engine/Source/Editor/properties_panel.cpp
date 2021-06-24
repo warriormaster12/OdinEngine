@@ -3,6 +3,7 @@
 
 #include "imgui.h"
 #include "logger.h"
+#include "material_manager.h"
 #include "mesh_component.h"
 #include "material_component.h"
 #include "transform_component.h"
@@ -16,6 +17,7 @@ static std::vector<std::string> components;
 struct MaterialProperties
 {
     float albedo[4]  = {1.0f,1.0f,1.0f,1.0f};
+    std::string albedoTexture;
 };
 static std::unordered_map<Material*, MaterialProperties> materials;
 void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string& entityName)
@@ -191,6 +193,13 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     if(ImGui::ColorEdit4("albedo", mat.albedo))
                     {
                         currentMat.SetColor(glm::vec4(mat.albedo[0], mat.albedo[1],mat.albedo[2],mat.albedo[3]));
+                    }
+                    mat.albedoTexture.resize(32);
+                    if(ImGui::InputText("albedo texture", mat.albedoTexture.data(), mat.albedoTexture.size(), ImGuiInputTextFlags_EnterReturnsTrue))
+                    {
+                        MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[0] = 1;
+                        currentMat.SetTextures({mat.albedoTexture, "", "", "", ""});
+                        MaterialManager::AddTextures(editMaterialName);
                     }
                     ImGui::EndChild();
                 }

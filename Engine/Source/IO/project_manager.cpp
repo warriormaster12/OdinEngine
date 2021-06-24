@@ -27,17 +27,9 @@ void ProjectManager::CreateProject(const std::string& projectName, const std::st
         std::filesystem::path path = directory;
         cProject.fullPath = std::filesystem::absolute(directory);
         currentProjectName = projectName;
+
+        
     }
-}
-
-
-std::string& ProjectManager::GetMesh(const std::string& name)
-{
-    return *FindUnorderedMap(name, uniqueMeshId);
-}
-
-std::vector<std::string>& ProjectManager::ListMeshes()
-{
     auto& cProject = *FindUnorderedMap(currentProjectName, projects);
     for(auto& p : std::filesystem::recursive_directory_iterator(cProject.fullPath))
     {
@@ -49,5 +41,15 @@ std::vector<std::string>& ProjectManager::ListMeshes()
             meshList.push_back(p.path().stem().string());
         }
     }
+}
+
+
+std::string& ProjectManager::GetMesh(const std::string& name)
+{
+    return *FindUnorderedMap(name, uniqueMeshId);
+}
+
+std::vector<std::string>& ProjectManager::ListMeshes()
+{
     return meshList;
 }
