@@ -9,7 +9,9 @@
 std::unordered_map<std::string, Project> projects;
 
 std::unordered_map<std::string, std::string> uniqueMeshId;
+std::unordered_map<std::string, std::string> uniqueTextureId;
 std::vector<std::string> meshList;
+std::vector<std::string> textureList;
 
 std::string currentProjectName; 
 
@@ -40,6 +42,16 @@ void ProjectManager::CreateProject(const std::string& projectName, const std::st
             uniqueMeshId[p.path().stem().string()] = p.path().string();
             meshList.push_back(p.path().stem().string());
         }
+        for(auto& currentImageExtension : cProject.supportedImageExtensions)
+        {
+            if(p.path().extension() == currentImageExtension && FindUnorderedMap(p.path().stem().string(), uniqueTextureId) == nullptr)
+            {
+                //we store the name of a file as a unique id
+                //uniqueTextureId will contain a full path to the file
+                uniqueTextureId[p.path().stem().string()] = p.path().string();
+                textureList.push_back(p.path().stem().string());
+            }
+        }
     }
 }
 
@@ -47,6 +59,15 @@ void ProjectManager::CreateProject(const std::string& projectName, const std::st
 std::string& ProjectManager::GetMesh(const std::string& name)
 {
     return *FindUnorderedMap(name, uniqueMeshId);
+}
+std::string& ProjectManager::GetTexture(const std::string& name)
+{
+    return *FindUnorderedMap(name, uniqueTextureId);
+}
+
+std::vector<std::string>& ProjectManager::ListTextures()
+{
+    return textureList;
 }
 
 std::vector<std::string>& ProjectManager::ListMeshes()

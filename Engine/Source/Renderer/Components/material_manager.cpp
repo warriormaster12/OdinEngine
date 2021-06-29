@@ -2,6 +2,7 @@
 #include "Include/renderer.h"
 #include "glm/fwd.hpp"
 #include "logger.h"
+#include "vk_device.h"
 #include "vk_utils.h"
 #include "unordered_finder.h"
 
@@ -60,6 +61,7 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
 
 void MaterialManager::AddTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
+    FindUnorderedMap(materialName, materials)->UpdateTextures(true);
     FindUnorderedMap(materialName, materials)->textureObjects.resize(FindUnorderedMap(materialName, materials)->GetTextures().size());
     std::vector<VkImageView> views;
     for(int i = 0; i < FindUnorderedMap(materialName, materials)->GetTextures().size(); i++)
@@ -87,6 +89,9 @@ void MaterialManager::BindMaterial(const std::string& materialName)
     if(FindUnorderedMap(materialName, materials)->isUpdated())
     {
         materialData.albedo = FindUnorderedMap(materialName, materials)->GetColor();
+        materialData.roughness = glm::vec4(FindUnorderedMap(materialName, materials)->GetRoughness());
+        materialData.metallic = glm::vec4(FindUnorderedMap(materialName, materials)->GetMetallic());
+        materialData.ao = glm::vec4(FindUnorderedMap(materialName, materials)->GetAo());
         materialData.repeateCount = glm::vec4(FindUnorderedMap(materialName, materials)->GetRepeateCount());
         FindUnorderedMap(materialName, materials)->ResetUpdate();
         Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, offset);
@@ -94,8 +99,11 @@ void MaterialManager::BindMaterial(const std::string& materialName)
 
     if(FindUnorderedMap(materialName, materials)->textureObjects.size() != 0)
     {
-        Renderer::BindUniforms(materialName,2,offset);
-        Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderedMap(materialName, materials)->textureCheck);
+        if(FindUnorderedMap(materialName, materials)->GetTextureUpdate() == false)
+        {
+            Renderer::BindUniforms(materialName,2,offset);
+            Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderedMap(materialName, materials)->textureCheck);
+        }
     } 
 }
 

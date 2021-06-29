@@ -5,13 +5,18 @@
 #include "vk_init.h"
 #include "vk_device.h"
 #include "renderer.h"
-#include <vulkan/vulkan_core.h>
+
 
 
 void Texture::CreateTexture(const std::string& filepath)
 {
     if(Renderer::GetActiveAPI() == AvailableBackends::Vulkan)
     {
+        if(image.image != VK_NULL_HANDLE || image.defaultView != VK_NULL_HANDLE)
+        {
+            vkDestroyImageView(VkDeviceManager::GetDevice(), imageView, nullptr);
+            vmaDestroyImage(VkDeviceManager::GetAllocator(), image.image, image.allocation);
+        }
         vkcomponent::LoadImageFromFile(filepath, image);
 
         VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;

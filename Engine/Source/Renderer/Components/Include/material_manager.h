@@ -37,18 +37,36 @@ public:
         updated = true;
     }
 
+    void SetAo(const float& input){ao = input; updated = true;}
+    float GetAo() {return ao;}
+
+    void SetRoughness(const float& input){roughness = input; updated = true;}
+    float GetRoughness() {return roughness;}
+
+    void SetMetallic(const float& input){metallic = input; updated = true;}
+    float GetMetallic() {return metallic;}
+
     void ResetUpdate() {updated = false;}
     bool isUpdated() { return updated;}
+
+    bool& GetTextureUpdate() {return textureUpdate;}
+    void UpdateTextures(const bool& input) {textureUpdate = input;}
     
     std::vector<Texture> textureObjects;
     uint32_t offset = 0;
 private:
     glm::vec4 color = glm::vec4(1.0f);
+
+    float roughness = 0.5f;
+    float metallic = 0.5f;
+    float ao = 1.0f;
     
     std::vector<std::string> textures;
     int repeateCount = 1;
 
     bool updated = false;
+
+    bool textureUpdate = false;
 };
 
 struct MaterialManager

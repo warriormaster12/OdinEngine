@@ -9,6 +9,7 @@
 #include "transform_component.h"
 #include "project_manager.h"
 #include "unordered_finder.h"
+#include "function_queuer.h"
 #include <memory>
 #include <unordered_map>
 
@@ -17,6 +18,9 @@ static std::vector<std::string> components;
 struct MaterialProperties
 {
     float albedo[4]  = {1.0f,1.0f,1.0f,1.0f};
+    float roughness = 0.5f;
+    float metallic = 0.5f;
+    float ao = 1.0f;
     std::string albedoTexture;
 };
 static std::unordered_map<Material*, MaterialProperties> materials;
@@ -77,6 +81,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                         }
                         else {
                             static_cast<MeshComponent&>(*entity.GetComponent("Mesh")).UpdateCurrentMesh(entityName, "");
+                            
                         }
                     }
                     
@@ -93,19 +98,22 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                 {
                     for(auto& currentMat : static_cast<MaterialComponent&>(*entity.GetComponent("Material")).GetMaterials())
                     {
-                        if(ImGui::MenuItem(currentMat.c_str()))
+                        if(currentMat != "default material")
                         {
-                            auto& meshComponent = static_cast<MeshComponent&>(*entity.GetComponent(currentComponent));
-                            
-                            if(static_cast<MaterialComponent*>(entity.GetComponent("Material")) != nullptr)
+                            if(ImGui::MenuItem(currentMat.c_str()))
                             {
+                                auto& meshComponent = static_cast<MeshComponent&>(*entity.GetComponent(currentComponent));
                                 
-                                if(static_cast<Transform3D*>(entity.GetComponent("Transform3D")) != nullptr)
+                                if(static_cast<MaterialComponent*>(entity.GetComponent("Material")) != nullptr)
                                 {
-                                    meshComponent.UpdateCurrentMesh(entityName, currentMat, static_cast<Transform3D*>(entity.GetComponent("Transform3D")));
-                                }
-                                else {
-                                    meshComponent.UpdateCurrentMesh(entityName, currentMat);
+                                    
+                                    if(static_cast<Transform3D*>(entity.GetComponent("Transform3D")) != nullptr)
+                                    {
+                                        meshComponent.UpdateCurrentMesh(entityName, currentMat, static_cast<Transform3D*>(entity.GetComponent("Transform3D")));
+                                    }
+                                    else {
+                                        meshComponent.UpdateCurrentMesh(entityName, currentMat);
+                                    }
                                 }
                             }
                         }
@@ -190,18 +198,100 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     auto& currentMat = static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName);
                     ImGui::BeginChild(editMaterialName.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth(), 256), true);
                     auto& mat = *FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName), materials); 
+                    static std::vector<std::string> textures;
+                    static bool addTextures = false;
+                    textures.resize(5);
                     if(ImGui::ColorEdit4("albedo", mat.albedo))
                     {
                         currentMat.SetColor(glm::vec4(mat.albedo[0], mat.albedo[1],mat.albedo[2],mat.albedo[3]));
                     }
-                    mat.albedoTexture.resize(32);
-                    if(ImGui::InputText("albedo texture", mat.albedoTexture.data(), mat.albedoTexture.size(), ImGuiInputTextFlags_EnterReturnsTrue))
+                    if(ImGui::DragFloat("ao", &mat.ao, 0.1f, 0.1f, 1.0f))
                     {
-                        MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[0] = 1;
-                        currentMat.SetTextures({mat.albedoTexture, "", "", "", ""});
-                        MaterialManager::AddTextures(editMaterialName);
+                        currentMat.SetAo(mat.ao);
                     }
+                    if(ImGui::DragFloat("roughness", &mat.roughness, 0.1f, 0.1f, 1.0f))
+                    {
+                        currentMat.SetRoughness(mat.roughness);
+                    }
+                    if(ImGui::DragFloat("metallic", &mat.metallic, 0.1f, 0.1f, 1.0f))
+                    {
+                        currentMat.SetMetallic(mat.metallic);
+                    }
+                    mat.albedoTexture.resize(32);
+                    if(ImGui::BeginMenu("albedo texture"))
+                    {
+                        for(auto& currentTexture : ProjectManager::ListTextures())
+                        {
+                            if(ImGui::MenuItem(currentTexture.c_str()))
+                            {
+                                textures[0] = ProjectManager::GetTexture(currentTexture);
+                                currentMat.SetTextures(textures);
+                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[0] = 1;
+                                MaterialManager::AddTextures(editMaterialName); 
+                                addTextures = true;
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if(ImGui::BeginMenu("normal texture"))
+                    {
+                        for(auto& currentTexture : ProjectManager::ListTextures())
+                        {
+                            if(ImGui::MenuItem(currentTexture.c_str()))
+                            {
+                                textures[4] = ProjectManager::GetTexture(currentTexture);
+                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[4] = 1;
+                                addTextures = true;
+                            }
+                        }
+                        ImGui::EndMenu();
+                    } 
+                    if(ImGui::BeginMenu("metallic texture"))
+                    {
+                        for(auto& currentTexture : ProjectManager::ListTextures())
+                        {
+                            if(ImGui::MenuItem(currentTexture.c_str()))
+                            {
+                                textures[1] = ProjectManager::GetTexture(currentTexture);
+                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[1] = 1;
+                                addTextures = true;
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if(ImGui::BeginMenu("roughness texture"))
+                    {
+                        for(auto& currentTexture : ProjectManager::ListTextures())
+                        {
+                            if(ImGui::MenuItem(currentTexture.c_str()))
+                            {
+                                textures[2] = ProjectManager::GetTexture(currentTexture);
+                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[2] = 1;
+                                addTextures = true;
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if(ImGui::BeginMenu("ao texture"))
+                    {
+                        for(auto& currentTexture : ProjectManager::ListTextures())
+                        {
+                            if(ImGui::MenuItem(currentTexture.c_str()))
+                            {
+                                textures[3] = ProjectManager::GetTexture(currentTexture);
+                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[3] = 1;
+                                addTextures = true;
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }   
                     ImGui::EndChild();
+                    if(addTextures)
+                    {
+                        currentMat.SetTextures(textures);
+                        MaterialManager::AddTextures(editMaterialName);
+                        addTextures = false;
+                    }
                 }
                 ImGui::EndChild();
             }

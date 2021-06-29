@@ -18,6 +18,8 @@ class ProjectManager
 public:
     static void CreateProject(const std::string& projectName, const std::string& directory);
     static std::vector<std::string>& ListMeshes();
+    static std::vector<std::string>& ListTextures();
     static std::string& GetMesh(const std::string& name);
+    static std::string& GetTexture(const std::string& name);
 
 };

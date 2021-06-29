@@ -8,6 +8,8 @@
 #include <unordered_map>
 
 #include "unordered_finder.h"
+#include "vk_commandbuffer.h"
+#include "vk_device.h"
 
 
 std::unordered_map<std::string, RenderObject> objects;
@@ -112,7 +114,13 @@ void ObjectManager::RenderObjects(const bool& bindMaterials /*= true*/)
                 else {
                     if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextures().size() != 0)
                     {
-                        Renderer::BindShader("default textured world");
+                        if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextureUpdate() == true)
+                        {
+                            Renderer::BindShader("default world");
+                        }
+                        else {
+                            Renderer::BindShader("default textured world");
+                        } 
                     }
                     else 
                     {
@@ -125,6 +133,10 @@ void ObjectManager::RenderObjects(const bool& bindMaterials /*= true*/)
                     Renderer::BindIndexBuffer(currentDc.p_mesh->indexBuffer);
 
                     Renderer::DrawIndexed(currentDc.p_mesh->indices, currentDc.index);
+                    if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextureUpdate() == true)
+                    {
+                        MaterialManager::GetMaterial(*currentDc.p_material).UpdateTextures(false);
+                    }
                 }
             }
             else {
