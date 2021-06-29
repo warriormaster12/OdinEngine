@@ -18,6 +18,8 @@ static std::vector<std::string> components;
 struct MaterialProperties
 {
     float albedo[4]  = {1.0f,1.0f,1.0f,1.0f};
+    float emission[4]  = {1.0f,1.0f,1.0f,1.0f};
+    float emissionPower = 0.0f;
     float roughness = 0.5f;
     float metallic = 0.5f;
     float ao = 1.0f;
@@ -200,10 +202,18 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     auto& mat = *FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName), materials); 
                     static std::vector<std::string> textures;
                     static bool addTextures = false;
-                    textures.resize(5);
+                    textures.resize(6);
                     if(ImGui::ColorEdit4("albedo", mat.albedo))
                     {
                         currentMat.SetColor(glm::vec4(mat.albedo[0], mat.albedo[1],mat.albedo[2],mat.albedo[3]));
+                    }
+                    if(ImGui::ColorEdit4("emission", mat.emission))
+                    {
+                        currentMat.SetEmission(glm::vec4(mat.emission[0], mat.emission[1],mat.emission[2],mat.emission[3]));
+                    }
+                    if(ImGui::DragFloat("emission power", &mat.emissionPower, 0.1f, 0.0f, 16.0f))
+                    {
+                        currentMat.SetEmissionPower(mat.emissionPower);
                     }
                     if(ImGui::DragFloat("ao", &mat.ao, 0.1f, 0.1f, 1.0f))
                     {
@@ -227,6 +237,21 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                                 textures[0] = ProjectManager::GetTexture(currentTexture);
                                 currentMat.SetTextures(textures);
                                 MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[0] = 1;
+                                MaterialManager::AddTextures(editMaterialName); 
+                                addTextures = true;
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if(ImGui::BeginMenu("emission texture"))
+                    {
+                        for(auto& currentTexture : ProjectManager::ListTextures())
+                        {
+                            if(ImGui::MenuItem(currentTexture.c_str()))
+                            {
+                                textures[5] = ProjectManager::GetTexture(currentTexture);
+                                currentMat.SetTextures(textures);
+                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[5] = 1;
                                 MaterialManager::AddTextures(editMaterialName); 
                                 addTextures = true;
                             }

@@ -18,9 +18,12 @@ std::vector<uint32_t> deletedOffsets;
 struct GPUMaterialData
 {
     glm::vec4 albedo; //vec3
-    glm::vec4 metallic = glm::vec4(0.5f); //float
-    glm::vec4 roughness = glm::vec4(0.5f); //float
-    glm::vec4 ao = glm::vec4(1.0f); //float
+    glm::vec4 emission; //vec3
+
+    glm::vec4 emissionPower; //float
+    glm::vec4 metallic; //float
+    glm::vec4 roughness; //float
+    glm::vec4 ao; //float
 
     glm::vec4 repeateCount;
 }materialData;
@@ -49,8 +52,7 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
             FindUnorderedMap(materialName, materials)->offset = currentIndex * PadUniformBufferSize(sizeof(GPUMaterialData));
         }
         
-        FindUnorderedMap(materialName, materials)->SetColor(glm::vec4(1.0));
-        FindUnorderedMap(materialName, materials)->SetRepeateCount(1);
+        FindUnorderedMap(materialName, materials)->UpdateMaterial();
         materialNameList.push_back(materialName);
         ENGINE_CORE_INFO("material by name {0} created", materialName);
     }
@@ -92,6 +94,8 @@ void MaterialManager::BindMaterial(const std::string& materialName)
         materialData.roughness = glm::vec4(FindUnorderedMap(materialName, materials)->GetRoughness());
         materialData.metallic = glm::vec4(FindUnorderedMap(materialName, materials)->GetMetallic());
         materialData.ao = glm::vec4(FindUnorderedMap(materialName, materials)->GetAo());
+        materialData.emission = glm::vec4(FindUnorderedMap(materialName, materials)->GetEmission());
+        materialData.emissionPower = glm::vec4(FindUnorderedMap(materialName, materials)->GetEmissionPower());
         materialData.repeateCount = glm::vec4(FindUnorderedMap(materialName, materials)->GetRepeateCount());
         FindUnorderedMap(materialName, materials)->ResetUpdate();
         Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, offset);

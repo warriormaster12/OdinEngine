@@ -5,11 +5,12 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#include "glm/fwd.hpp"
 #include "texture.h"
 
 struct TextureCheck
 {
-    int textures[5];
+    int textures[6];
 };
 
 class Material 
@@ -37,6 +38,12 @@ public:
         updated = true;
     }
 
+    void SetEmission(const glm::vec4& input){emission = input; updated = true;}
+    glm::vec4 GetEmission() {return emission;}
+
+    void SetEmissionPower(const float& input){emissionPower = input; updated = true;}
+    float GetEmissionPower() {return emissionPower;}
+
     void SetAo(const float& input){ao = input; updated = true;}
     float GetAo() {return ao;}
 
@@ -47,6 +54,7 @@ public:
     float GetMetallic() {return metallic;}
 
     void ResetUpdate() {updated = false;}
+    void UpdateMaterial() {updated = true;}
     bool isUpdated() { return updated;}
 
     bool& GetTextureUpdate() {return textureUpdate;}
@@ -56,7 +64,9 @@ public:
     uint32_t offset = 0;
 private:
     glm::vec4 color = glm::vec4(1.0f);
+    glm::vec4 emission = glm::vec4(1.0f);
 
+    float emissionPower = 0.0f;
     float roughness = 0.5f;
     float metallic = 0.5f;
     float ao = 1.0f;

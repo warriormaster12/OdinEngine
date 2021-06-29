@@ -13,6 +13,8 @@ layout (location = 0) out vec4 outFragColor;
 layout(set = 1, binding = 1) uniform MaterialData
 {
     vec4 albedo; //vec3
+    vec4 emission; //vec3
+    vec4 emissionPower; //float
     vec4 metallic; //float
     vec4 roughness; //float
     vec4 ao; //float
@@ -35,6 +37,7 @@ layout(std430, set = 0, binding = 1) buffer LightData
 
 void main()
 {
+    vec3 emission = vec3(materialData.emission) * float(materialData.emissionPower);
     vec3 N = normalize(inNormal);
     vec3 V = normalize(vec3(lightData.camPos) - inPosition);
 
@@ -85,7 +88,7 @@ void main()
     // this ambient lighting with environment lighting).
     vec3 ambient = vec3(0.03) * vec3(materialData.albedo) * float(materialData.ao);
 
-    vec3 color = ambient + Lo;
+    vec3 color = ambient + Lo + emission;
 
     // gamma correct
     color = pow(color, vec3(1.0/2.2)); 
