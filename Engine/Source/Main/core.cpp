@@ -40,10 +40,8 @@ void Core::CoreInit()
 
     SceneManager::CreateScene("scene");
     auto& scene1 = SceneManager::GetScene("scene");
-    scene1.AddEntity("entity");
-    scene1.AddEntity("entity2");
 
-    scene1.GetEntity("entity")->AddComponent(std::make_unique<MeshComponent>(), "Mesh");
+    //scene1.GetEntity("entity")->AddComponent(std::make_unique<MeshComponent>(), "Mesh");
     
 	windowHandler.CreateWindow(1920,1080);
     Renderer::InitRenderer(BACKEND_VULKAN);

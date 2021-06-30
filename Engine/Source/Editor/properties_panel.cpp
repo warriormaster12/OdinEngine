@@ -178,8 +178,21 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     if(inputText)
                     {
                         static std::string materialName;
-                        materialName.resize(32);
+                        materialName.resize(64);
                         if(ImGui::InputText("material name", materialName.data(), materialName.size(), ImGuiInputTextFlags_EnterReturnsTrue))
+                        {
+                            inputText = false;
+                            static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).CreateMaterial(materialName);
+                            if(FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName), materials) == nullptr)
+                            {
+                                materials[&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName)];
+                            }
+                            editMaterialName = materialName;
+                            static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).SetMaterialName(editMaterialName);
+                            editMaterial = true;
+                            materialName = "";
+                        }
+                        if(ImGui::Button("Apply"))
                         {
                             inputText = false;
                             static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).CreateMaterial(materialName);
