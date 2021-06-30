@@ -25,7 +25,14 @@ struct MaterialProperties
     float ao = 1.0f;
     std::string albedoTexture;
 };
+struct TransformProperties
+{
+    float vec3T[3];
+    float vec3R[3];
+    float vec3S[3] = {1.0f, 1.0f, 1.0f};
+};
 static std::unordered_map<Material*, MaterialProperties> materials;
+static std::unordered_map<std::string, TransformProperties> transforms;
 void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string& entityName)
 {
     static bool isActive = false;
@@ -58,19 +65,22 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
             {
                 ImGui::BeginChild(currentComponent.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth(), 256), true);
                 ImGui::Text("Transform");
-                //for some reason I need to supply vec4
-                static float vec3T[3];
-                static float vec3R[3];
-                static float vec3S[3] = {1.0f, 1.0f, 1.0f};
+
+                
                 static glm::mat4 transform;
                 static glm::mat4 lastTransform;
-                ImGui::DragFloat3("translation", vec3T, 0.2f, -FLT_MAX, FLT_MAX);
-                ImGui::DragFloat3("rotation", vec3R, 0.2f, -360, 360);
-                ImGui::DragFloat3("scale", vec3S, 0.2f, -FLT_MAX, FLT_MAX);
+                if(FindUnorderedMap(entityName, transforms) == nullptr)
+                {
+                    transforms[entityName];
+                }
+                auto& currentTransformProperty = *FindUnorderedMap(entityName, transforms);
+                ImGui::DragFloat3("translation", currentTransformProperty.vec3T, 0.2f, -FLT_MAX, FLT_MAX);
+                ImGui::DragFloat3("rotation", currentTransformProperty.vec3R, 0.2f, -360, 360);
+                ImGui::DragFloat3("scale", currentTransformProperty.vec3S, 0.2f, -FLT_MAX, FLT_MAX);
                 auto* transformComponent = static_cast<Transform3D*>(entity.GetComponent(currentComponent));
-                transformComponent->UpdateTranslation(glm::vec3(vec3T[0], vec3T[1], vec3T[2]));
-                transformComponent->UpdateRotation(glm::vec3(glm::radians(vec3R[0]), glm::radians(vec3R[1]), glm::radians(vec3R[2])));
-                transformComponent->UpdateScale(glm::vec3(vec3S[0], vec3S[1], vec3S[2]));
+                transformComponent->UpdateTranslation(glm::vec3(currentTransformProperty.vec3T[0], currentTransformProperty.vec3T[1], currentTransformProperty.vec3T[2]));
+                transformComponent->UpdateRotation(glm::vec3(glm::radians(currentTransformProperty.vec3R[0]), glm::radians(currentTransformProperty.vec3R[1]), glm::radians(currentTransformProperty.vec3R[2])));
+                transformComponent->UpdateScale(glm::vec3(currentTransformProperty.vec3S[0], currentTransformProperty.vec3S[1], currentTransformProperty.vec3S[2]));
                 transformComponent->UpdateTransform();
                 transform = transformComponent->GetTransform();
                 if(transform != lastTransform)
@@ -82,7 +92,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                             static_cast<MeshComponent&>(*entity.GetComponent("Mesh")).UpdateCurrentMesh(entityName, static_cast<MaterialComponent&>(*entity.GetComponent("Material")).GetMaterialName(), transformComponent);
                         }
                         else {
-                            static_cast<MeshComponent&>(*entity.GetComponent("Mesh")).UpdateCurrentMesh(entityName, "");
+                            static_cast<MeshComponent&>(*entity.GetComponent("Mesh")).UpdateCurrentMesh(entityName, "", transformComponent);
                             
                         }
                     }
