@@ -776,21 +776,33 @@ void VulkanContext::BindDescriptorSet(const std::string& descriptorName, const u
 {
     if(frameOverlap == true)
     {
-        if(FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+        if(FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets) != nullptr)
         {
-            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->descriptorSet, 1,&dynamicOffset);
+            if(FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+            {
+                vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->descriptorSet, 1,&dynamicOffset);
+            }
+            else {
+                vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->descriptorSet, 0, 0);
+            }
         }
         else {
-            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, VkCommandbufferManager::GetCurrentFrame().descriptorSets)->descriptorSet, 0, 0);
+            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1,VK_NULL_HANDLE, 0, 0);
         }
     }
     else {
-        if(FindUnorderedMap(descriptorName, descriptorSets)->type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || FindUnorderedMap(descriptorName, descriptorSets)->type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+        if(FindUnorderedMap(descriptorName, descriptorSets) != nullptr)
         {
-            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, 1,&dynamicOffset);
+            if(FindUnorderedMap(descriptorName, descriptorSets)->type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || FindUnorderedMap(descriptorName, descriptorSets)->type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+            {
+                vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, 1,&dynamicOffset);
+            }
+            else {
+                vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, 0, 0);
+            }
         }
         else {
-            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1, &FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, 0, 0);
+            vkCmdBindDescriptorSets(VkCommandbufferManager::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,FindUnorderedMap(currentlyBoundShader, shaderProgram)->pass.layout, set, 1,VK_NULL_HANDLE, 0, 0);
         }
     }
 }

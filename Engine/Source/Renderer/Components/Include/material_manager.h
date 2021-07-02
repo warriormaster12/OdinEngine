@@ -5,7 +5,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "glm/fwd.hpp"
 #include "texture.h"
 
 struct TextureCheck
@@ -26,11 +25,14 @@ public:
     int GetRepeateCount() {return repeateCount;}
     std::vector<std::string> GetTextures() {return textures;}
 
-    void SetTextures(const std::vector<std::string>& inputs)
+    void SetTextures(const std::vector<std::string>& inputs, const std::vector<ColorFormat>& formats)
     {
         textures = inputs;
+        textureFormats = formats;
         updated = true;
     };
+
+    std::vector<ColorFormat>& GetFormats() {return textureFormats;}
 
     void SetRepeateCount(const int& input)
     {
@@ -74,6 +76,7 @@ private:
     float ao = 1.0f;
     
     std::vector<std::string> textures;
+    std::vector<ColorFormat> textureFormats;
     int repeateCount = 1;
 
     bool updated = false;
@@ -84,7 +87,7 @@ private:
 struct MaterialManager
 {
     static void Init();
-    static void CreateMaterial(const std::string& materialName, const std::string& samplerName = "default sampler");
+    static void CreateMaterial(const std::string& materialName);
     static Material& GetMaterial(const std::string& materialName);
     static std::vector<std::string>& GetMaterials();
     static void AddTextures(const std::string& materialName, const std::string& samplerName = "default sampler");

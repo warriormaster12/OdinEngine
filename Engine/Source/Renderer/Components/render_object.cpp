@@ -117,7 +117,6 @@ void ObjectManager::RenderObjects(const bool& bindMaterials /*= true*/)
                         MaterialManager::GetMaterial(*currentDc.p_material).GetTextureUpdate() = false; 
                     }
                     else {
-                    
                         if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextures().size() != 0)
                         {
                             Renderer::BindShader("default textured world");

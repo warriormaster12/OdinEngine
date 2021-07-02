@@ -1,6 +1,4 @@
 #include "Include/material_manager.h"
-#include "Include/renderer.h"
-#include "glm/fwd.hpp"
 #include "logger.h"
 #include "vk_device.h"
 #include "vk_utils.h"
@@ -41,7 +39,7 @@ void MaterialManager::Init()
     CreateMaterial("default material");
 }
 
-void MaterialManager::CreateMaterial(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
+void MaterialManager::CreateMaterial(const std::string& materialName)
 {
     if(FindUnorderedMap(materialName, materials) == nullptr)
     {
@@ -80,7 +78,7 @@ void MaterialManager::AddTextures(const std::string& materialName, const std::st
         for(int i = 0; i < FindUnorderedMap(materialName, materials)->GetTextures().size(); i++)
         {
             FindUnorderedMap(materialName, materials)->textureCheck.textures[i] = 0;
-            FindUnorderedMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderedMap(materialName, materials)->GetTextures()[i]);
+            FindUnorderedMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderedMap(materialName, materials)->GetTextures()[i], FindUnorderedMap(materialName, materials)->GetFormats()[i]);
             imageViews.push_back(FindUnorderedMap(materialName, materials)->textureObjects[i].imageView);
             if(FindUnorderedMap(materialName, materials)->GetTextures()[i] != "")
             {
@@ -120,10 +118,9 @@ void MaterialManager::BindMaterial(const std::string& materialName)
 
     if(FindUnorderedMap(materialName, materials)->textureObjects.size() != 0)
     {
-        Renderer::BindUniforms(materialName,2,offset);
-        Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderedMap(materialName, materials)->textureCheck);
-        FindUnorderedMap(materialName, materials)->GetTextureUpdate() = false;
-    } 
+        Renderer::BindUniforms(materialName,2);
+        Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderedMap(materialName, materials)->textureCheck); 
+    }
 }
 
 void MaterialManager::DeleteMaterial(const std::string& materialName)

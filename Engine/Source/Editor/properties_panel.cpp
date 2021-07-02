@@ -3,6 +3,7 @@
 
 #include "imgui.h"
 #include "logger.h"
+#include "renderer.h"
 #include "material_manager.h"
 #include "mesh_component.h"
 #include "material_component.h"
@@ -23,8 +24,8 @@ struct MaterialProperties
     float roughness = 0.5f;
     float metallic = 0.5f;
     float ao = 1.0f;
-    std::string albedoTexture;
     std::vector<std::string> textures;
+    std::vector<ColorFormat> textureFormats;
 };
 struct TransformProperties
 {
@@ -226,6 +227,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     auto& mat = *FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName), materials); 
                     static bool addTextures = false;
                     mat.textures.resize(6);
+                    mat.textureFormats.resize(6);
                     if(ImGui::ColorEdit4("albedo", mat.albedo))
                     {
                         currentMat.SetColor(glm::vec4(mat.albedo[0], mat.albedo[1],mat.albedo[2],mat.albedo[3]));
@@ -250,7 +252,6 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     {
                         currentMat.SetMetallic(mat.metallic);
                     }
-                    mat.albedoTexture.resize(32);
                     if(ImGui::BeginMenu("albedo texture"))
                     {
                         for(auto& currentTexture : ProjectManager::ListTextures())
@@ -258,7 +259,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
                                 mat.textures[0] = ProjectManager::GetTexture(currentTexture);
-                                currentMat.SetTextures(mat.textures);
+                                mat.textureFormats[0] = SRGB8;
                                 addTextures = true;
                             }
                         }
@@ -271,7 +272,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
                                 mat.textures[5] = ProjectManager::GetTexture(currentTexture);
-                                currentMat.SetTextures(mat.textures);
+                                mat.textureFormats[5] = SRGB8;
                                 addTextures = true;
                             }
                         }
@@ -284,6 +285,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
                                 mat.textures[4] = ProjectManager::GetTexture(currentTexture);
+                                mat.textureFormats[4] = UNORMRGB8;
                                 addTextures = true;
                             }
                         }
@@ -296,6 +298,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
                                 mat.textures[1] = ProjectManager::GetTexture(currentTexture);
+                                mat.textureFormats[1] = UNORMRGB8;
                                 addTextures = true;
                             }
                         }
@@ -308,6 +311,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
                                 mat.textures[2] = ProjectManager::GetTexture(currentTexture);
+                                mat.textureFormats[2] = UNORMRGB8;
                                 addTextures = true;
                             }
                         }
@@ -320,6 +324,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
                                 mat.textures[3] = ProjectManager::GetTexture(currentTexture);
+                                mat.textureFormats[3] = UNORMRGB8;
                                 addTextures = true;
                             }
                         }
@@ -328,7 +333,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     ImGui::EndChild();
                     if(addTextures)
                     {
-                        currentMat.SetTextures(mat.textures);
+                        currentMat.SetTextures(mat.textures, mat.textureFormats);
                         MaterialManager::AddTextures(editMaterialName);
                         addTextures = false;
                     }

@@ -14,7 +14,7 @@
 
 static AllocatedImage oldImage;
 static VkImageView oldImageView;
-void Texture::CreateTexture(const std::string& filepath)
+void Texture::CreateTexture(const std::string& filepath, const ColorFormat& imageFormat)
 {
     if(Renderer::GetActiveAPI() == AvailableBackends::Vulkan)
     {
@@ -22,10 +22,9 @@ void Texture::CreateTexture(const std::string& filepath)
         {
             if(image.image == VK_NULL_HANDLE)
             {
-                vkcomponent::LoadImageFromFile(filepath, image);
+                vkcomponent::LoadImageFromFile(filepath, image, (VkFormat)imageFormat);
 
-                VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
-                VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo(imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+                VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo((VkFormat)imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
                 vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
             }
             else {
@@ -33,9 +32,8 @@ void Texture::CreateTexture(const std::string& filepath)
                 oldImage = image;
                 oldImageView = imageView;
 
-                vkcomponent::LoadImageFromFile(filepath, image);
-                VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
-                VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo(imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+                vkcomponent::LoadImageFromFile(filepath, image, (VkFormat)imageFormat);
+                VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo((VkFormat)imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
                 vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
 
                 vkDestroyImageView(VkDeviceManager::GetDevice(), oldImageView, nullptr);
