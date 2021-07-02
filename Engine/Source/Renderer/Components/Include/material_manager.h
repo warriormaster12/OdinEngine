@@ -59,6 +59,8 @@ public:
 
     bool& GetTextureUpdate() {return textureUpdate;}
     void UpdateTextures(const bool& input) {textureUpdate = input;}
+
+    void ExecuteTextures();
     
     std::vector<Texture> textureObjects;
     uint32_t offset = 0;

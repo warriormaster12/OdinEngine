@@ -1,28 +1,48 @@
 #include "Include/texture.h"
 #include "asset_builder.h"
 
+#include "logger.h"
 #include "vk_texture.h"
 #include "vk_init.h"
 #include "vk_device.h"
 #include "renderer.h"
 
+#include "unordered_finder.h"
+#include <unordered_map>
 
 
+
+static AllocatedImage oldImage;
+static VkImageView oldImageView;
 void Texture::CreateTexture(const std::string& filepath)
 {
     if(Renderer::GetActiveAPI() == AvailableBackends::Vulkan)
     {
-        if(image.image != VK_NULL_HANDLE || image.defaultView != VK_NULL_HANDLE)
+        if(filepath != "")
         {
-            vkDestroyImageView(VkDeviceManager::GetDevice(), imageView, nullptr);
-            vmaDestroyImage(VkDeviceManager::GetAllocator(), image.image, image.allocation);
-        }
-        vkcomponent::LoadImageFromFile(filepath, image);
+            if(image.image == VK_NULL_HANDLE)
+            {
+                vkcomponent::LoadImageFromFile(filepath, image);
 
-        VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
-        VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo(imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+                VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+                VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo(imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+                vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
+            }
+            else {
+                //we store old loaded image first so that we can safely delete it after loading a new one
+                oldImage = image;
+                oldImageView = imageView;
 
-        vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
+                vkcomponent::LoadImageFromFile(filepath, image);
+                VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+                VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo(imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+                vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
+
+                vkDestroyImageView(VkDeviceManager::GetDevice(), oldImageView, nullptr);
+                vmaDestroyImage(VkDeviceManager::GetAllocator(), oldImage.image, oldImage.allocation);
+
+            }  
+        }      
     }
 }
 
@@ -47,7 +67,10 @@ void Texture::DestroyTexture()
 {
     if(Renderer::GetActiveAPI() == AvailableBackends::Vulkan)
     {
-        vkDestroyImageView(VkDeviceManager::GetDevice(), imageView, nullptr);
-        vmaDestroyImage(VkDeviceManager::GetAllocator(), image.image, image.allocation);
+        if(image.image != VK_NULL_HANDLE)
+        {
+            vkDestroyImageView(VkDeviceManager::GetDevice(), imageView, nullptr);
+            vmaDestroyImage(VkDeviceManager::GetAllocator(), image.image, image.allocation);
+        }
     }
 }

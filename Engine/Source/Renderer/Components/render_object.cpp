@@ -11,7 +11,6 @@
 #include "vk_commandbuffer.h"
 #include "vk_device.h"
 
-
 std::unordered_map<std::string, RenderObject> objects;
 std::vector<std::string> objectOwnerNames;
 
@@ -112,30 +111,28 @@ void ObjectManager::RenderObjects(const bool& bindMaterials /*= true*/)
                     Renderer::DrawIndexed(currentDc.p_mesh->indices, currentDc.index);
                 }
                 else {
-                    if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextures().size() != 0)
+                    if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextureUpdate() == true)
                     {
-                        if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextureUpdate() == true)
+                        MaterialManager::GetMaterial(*currentDc.p_material).ExecuteTextures();
+                        MaterialManager::GetMaterial(*currentDc.p_material).GetTextureUpdate() = false; 
+                    }
+                    else {
+                    
+                        if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextures().size() != 0)
+                        {
+                            Renderer::BindShader("default textured world");
+                        }
+                        else 
                         {
                             Renderer::BindShader("default world");
                         }
-                        else {
-                            Renderer::BindShader("default textured world");
-                        } 
-                    }
-                    else 
-                    {
-                        Renderer::BindShader("default world");
-                    }
-                    MaterialManager::BindMaterial(*currentDc.p_material);
-                    Renderer::BindUniforms("camera data", 0, 0, true);
-                    Renderer::BindUniforms("object data", 1, MaterialManager::GetMaterial(*currentDc.p_material).offset);
-                    Renderer::BindVertexBuffer(currentDc.p_mesh->vertexBuffer);
-                    Renderer::BindIndexBuffer(currentDc.p_mesh->indexBuffer);
+                        MaterialManager::BindMaterial(*currentDc.p_material);
+                        Renderer::BindUniforms("camera data", 0, 0, true);
+                        Renderer::BindUniforms("object data", 1, MaterialManager::GetMaterial(*currentDc.p_material).offset);
+                        Renderer::BindVertexBuffer(currentDc.p_mesh->vertexBuffer);
+                        Renderer::BindIndexBuffer(currentDc.p_mesh->indexBuffer);
 
-                    Renderer::DrawIndexed(currentDc.p_mesh->indices, currentDc.index);
-                    if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextureUpdate() == true)
-                    {
-                        MaterialManager::GetMaterial(*currentDc.p_material).UpdateTextures(false);
+                        Renderer::DrawIndexed(currentDc.p_mesh->indices, currentDc.index);
                     }
                 }
             }

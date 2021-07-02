@@ -24,6 +24,7 @@ struct MaterialProperties
     float metallic = 0.5f;
     float ao = 1.0f;
     std::string albedoTexture;
+    std::vector<std::string> textures;
 };
 struct TransformProperties
 {
@@ -223,9 +224,8 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     auto& currentMat = static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName);
                     ImGui::BeginChild(editMaterialName.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth(), 256), true);
                     auto& mat = *FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName), materials); 
-                    static std::vector<std::string> textures;
                     static bool addTextures = false;
-                    textures.resize(6);
+                    mat.textures.resize(6);
                     if(ImGui::ColorEdit4("albedo", mat.albedo))
                     {
                         currentMat.SetColor(glm::vec4(mat.albedo[0], mat.albedo[1],mat.albedo[2],mat.albedo[3]));
@@ -257,10 +257,8 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                         {
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
-                                textures[0] = ProjectManager::GetTexture(currentTexture);
-                                currentMat.SetTextures(textures);
-                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[0] = 1;
-                                MaterialManager::AddTextures(editMaterialName); 
+                                mat.textures[0] = ProjectManager::GetTexture(currentTexture);
+                                currentMat.SetTextures(mat.textures);
                                 addTextures = true;
                             }
                         }
@@ -272,10 +270,8 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                         {
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
-                                textures[5] = ProjectManager::GetTexture(currentTexture);
-                                currentMat.SetTextures(textures);
-                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[5] = 1;
-                                MaterialManager::AddTextures(editMaterialName); 
+                                mat.textures[5] = ProjectManager::GetTexture(currentTexture);
+                                currentMat.SetTextures(mat.textures);
                                 addTextures = true;
                             }
                         }
@@ -287,8 +283,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                         {
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
-                                textures[4] = ProjectManager::GetTexture(currentTexture);
-                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[4] = 1;
+                                mat.textures[4] = ProjectManager::GetTexture(currentTexture);
                                 addTextures = true;
                             }
                         }
@@ -300,8 +295,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                         {
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
-                                textures[1] = ProjectManager::GetTexture(currentTexture);
-                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[1] = 1;
+                                mat.textures[1] = ProjectManager::GetTexture(currentTexture);
                                 addTextures = true;
                             }
                         }
@@ -313,8 +307,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                         {
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
-                                textures[2] = ProjectManager::GetTexture(currentTexture);
-                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[2] = 1;
+                                mat.textures[2] = ProjectManager::GetTexture(currentTexture);
                                 addTextures = true;
                             }
                         }
@@ -326,8 +319,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                         {
                             if(ImGui::MenuItem(currentTexture.c_str()))
                             {
-                                textures[3] = ProjectManager::GetTexture(currentTexture);
-                                MaterialManager::GetMaterial(editMaterialName).textureCheck.textures[3] = 1;
+                                mat.textures[3] = ProjectManager::GetTexture(currentTexture);
                                 addTextures = true;
                             }
                         }
@@ -336,7 +328,7 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
                     ImGui::EndChild();
                     if(addTextures)
                     {
-                        currentMat.SetTextures(textures);
+                        currentMat.SetTextures(mat.textures);
                         MaterialManager::AddTextures(editMaterialName);
                         addTextures = false;
                     }

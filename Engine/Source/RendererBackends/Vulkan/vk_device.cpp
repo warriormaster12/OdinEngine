@@ -51,20 +51,20 @@ void VkDeviceManager::InitDevice()
 	feats.samplerAnisotropy = true;
 	
 
-	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-	descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+	// VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+	// descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 
-	descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-	descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
-	descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
-	descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+	// descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+	// descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+	// descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+	// descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 
 	VkPhysicalDeviceRobustness2FeaturesEXT robustness2{};
     robustness2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
 	robustness2.nullDescriptor = true;
 
 	selector.set_required_features(feats);
-	selector.add_desired_extensions({VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,VK_EXT_ROBUSTNESS_2_EXTENSION_NAME});
+	selector.add_desired_extensions({VK_EXT_ROBUSTNESS_2_EXTENSION_NAME});
 	vkb::PhysicalDevice physicalDevice = selector
 		.set_minimum_version(1, 1)
 		.set_surface(surface)
@@ -73,7 +73,7 @@ void VkDeviceManager::InitDevice()
 	//create the final vulkan device
 
 	vkb::DeviceBuilder deviceBuilder{ physicalDevice };
-	vkb::Device vkbDevice = deviceBuilder.add_pNext(&descriptorIndexingFeatures).add_pNext(&robustness2).build().value();
+	vkb::Device vkbDevice = deviceBuilder.add_pNext(&robustness2).build().value();
 	// Get the VkDevice handle used in the rest of a vulkan application
 	device = vkbDevice.device;
 	volkLoadDevice(device);

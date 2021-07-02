@@ -494,7 +494,7 @@ void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, 
     if(binding == 0)
     {
         descriptorSets[descriptorName];
-        descriptorAllocator.Allocate(&FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet ,FindUnorderedMap(layoutName, descriptorSetLayout)->layout);
+        descriptorAllocator.Allocate(&FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, FindUnorderedMap(layoutName, descriptorSetLayout)->layout);
     }
     VkWriteDescriptorSet outputTexture = vkinit::WriteDescriptorImage(bindings[binding].descriptorType, FindUnorderedMap(descriptorName, descriptorSets)->descriptorSet, imageInfo.data(), bindings[binding].binding, bindings[binding].descriptorCount);
     vkUpdateDescriptorSets(VkDeviceManager::GetDevice(), 1, &outputTexture, 0, nullptr);

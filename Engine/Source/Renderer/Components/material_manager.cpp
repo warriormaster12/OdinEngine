@@ -5,6 +5,7 @@
 #include "vk_device.h"
 #include "vk_utils.h"
 #include "unordered_finder.h"
+#include "function_queuer.h"
 
 #include <unordered_map>
 #include <vector>
@@ -13,6 +14,8 @@ std::unordered_map<std::string, Material> materials;
 
 std::vector<std::string> materialNameList;
 std::vector<uint32_t> deletedOffsets;
+
+
 
 
 struct GPUMaterialData
@@ -29,6 +32,7 @@ struct GPUMaterialData
 }materialData;
 
 const int maxMaterial = 30;
+static FunctionQueuer textureQueuer;
 void MaterialManager::Init()
 {
     Renderer::CreateShaderUniformBuffer("material buffer", false, BUFFER_USAGE_UNIFORM_BUFFER_BIT, PadUniformBufferSize(sizeof(GPUMaterialData))* maxMaterial, sizeof(GPUMaterialData));
@@ -61,17 +65,30 @@ void MaterialManager::CreateMaterial(const std::string& materialName, const std:
     }
 }
 
+void Material::ExecuteTextures()
+{
+    textureQueuer.Flush();
+    textureUpdate = false;
+}
+
 void MaterialManager::AddTextures(const std::string& materialName, const std::string& samplerName /*= "default sampler"*/)
 {
     FindUnorderedMap(materialName, materials)->UpdateTextures(true);
     FindUnorderedMap(materialName, materials)->textureObjects.resize(FindUnorderedMap(materialName, materials)->GetTextures().size());
-    std::vector<VkImageView> views;
-    for(int i = 0; i < FindUnorderedMap(materialName, materials)->GetTextures().size(); i++)
-    {
-        FindUnorderedMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderedMap(materialName, materials)->GetTextures()[i]);
-        views.push_back(FindUnorderedMap(materialName, materials)->textureObjects[i].imageView);
-    }
-    Renderer::WriteShaderImage(materialName, "texture data layout", 0, samplerName, views);
+    textureQueuer.PushFunction([=]{
+        std::vector<VkImageView> imageViews;
+        for(int i = 0; i < FindUnorderedMap(materialName, materials)->GetTextures().size(); i++)
+        {
+            FindUnorderedMap(materialName, materials)->textureCheck.textures[i] = 0;
+            FindUnorderedMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderedMap(materialName, materials)->GetTextures()[i]);
+            imageViews.push_back(FindUnorderedMap(materialName, materials)->textureObjects[i].imageView);
+            if(FindUnorderedMap(materialName, materials)->GetTextures()[i] != "")
+            {
+                FindUnorderedMap(materialName, materials)->textureCheck.textures[i] = 1;
+            }
+        }
+        Renderer::WriteShaderImage(materialName, "texture data layout", 0, samplerName, imageViews);
+    });
 };
 
 Material& MaterialManager::GetMaterial(const std::string& materialName)
@@ -103,11 +120,9 @@ void MaterialManager::BindMaterial(const std::string& materialName)
 
     if(FindUnorderedMap(materialName, materials)->textureObjects.size() != 0)
     {
-        if(FindUnorderedMap(materialName, materials)->GetTextureUpdate() == false)
-        {
-            Renderer::BindUniforms(materialName,2,offset);
-            Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderedMap(materialName, materials)->textureCheck);
-        }
+        Renderer::BindUniforms(materialName,2,offset);
+        Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderedMap(materialName, materials)->textureCheck);
+        FindUnorderedMap(materialName, materials)->GetTextureUpdate() = false;
     } 
 }
 
