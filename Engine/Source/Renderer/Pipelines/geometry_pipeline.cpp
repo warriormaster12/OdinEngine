@@ -83,7 +83,7 @@ void GeometryPipeline::Init()
 
     Renderer::WriteShaderUniform("camera cube data", "camera layout",0,true,CameraManager::GetActiveCamera().GetCameraBuffer());
 
-    Renderer::WriteShaderImage("cube map texture", "Cube texture layout", 0, "cube map sampler", {skyboxCubemap.imageView});
+    Renderer::WriteShaderImage("cube map texture", "Cube texture layout", 0, "cube map sampler", {skyboxCubemap.image.defaultView});
 
     skybox.p_mesh->LoadFromObj("EngineAssets/Meshes/cube.obj");
     skybox.p_mesh->CreateMesh();

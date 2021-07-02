@@ -106,8 +106,6 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
             if(currentComponent == "Mesh")
             {
                 ImGui::BeginChild(currentComponent.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth(), 256), true);
-                static std::string filePath;
-                filePath.resize(64);
                 if(ImGui::BeginMenu("Select material"))
                 {
                     for(auto& currentMat : static_cast<MaterialComponent&>(*entity.GetComponent("Material")).GetMaterials())

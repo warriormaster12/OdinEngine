@@ -79,7 +79,7 @@ void MaterialManager::AddTextures(const std::string& materialName, const std::st
         {
             FindUnorderedMap(materialName, materials)->textureCheck.textures[i] = 0;
             FindUnorderedMap(materialName, materials)->textureObjects[i].CreateTexture(FindUnorderedMap(materialName, materials)->GetTextures()[i], FindUnorderedMap(materialName, materials)->GetFormats()[i]);
-            imageViews.push_back(FindUnorderedMap(materialName, materials)->textureObjects[i].imageView);
+            imageViews.push_back(FindUnorderedMap(materialName, materials)->textureObjects[i].image.defaultView);
             if(FindUnorderedMap(materialName, materials)->GetTextures()[i] != "")
             {
                 FindUnorderedMap(materialName, materials)->textureCheck.textures[i] = 1;

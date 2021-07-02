@@ -13,7 +13,6 @@
 
 
 static AllocatedImage oldImage;
-static VkImageView oldImageView;
 void Texture::CreateTexture(const std::string& filepath, const ColorFormat& imageFormat)
 {
     if(Renderer::GetActiveAPI() == AvailableBackends::Vulkan)
@@ -25,18 +24,17 @@ void Texture::CreateTexture(const std::string& filepath, const ColorFormat& imag
                 vkcomponent::LoadImageFromFile(filepath, image, (VkFormat)imageFormat);
 
                 VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo((VkFormat)imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
-                vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
+                vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &image.defaultView);
             }
             else {
                 //we store old loaded image first so that we can safely delete it after loading a new one
                 oldImage = image;
-                oldImageView = imageView;
 
                 vkcomponent::LoadImageFromFile(filepath, image, (VkFormat)imageFormat);
                 VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo((VkFormat)imageFormat, image.image, VK_IMAGE_ASPECT_COLOR_BIT);
-                vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
+                vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &image.defaultView);
 
-                vkDestroyImageView(VkDeviceManager::GetDevice(), oldImageView, nullptr);
+                vkDestroyImageView(VkDeviceManager::GetDevice(), oldImage.defaultView, nullptr);
                 vmaDestroyImage(VkDeviceManager::GetAllocator(), oldImage.image, oldImage.allocation);
 
             }  
@@ -57,7 +55,7 @@ void Texture::CreateCubeMapTexture(const std::vector<std::string>& filepaths)
         imageInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
         imageInfo.subresourceRange.layerCount = 6;
 
-        vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &imageView);
+        vkCreateImageView(VkDeviceManager::GetDevice(), &imageInfo, nullptr, &image.defaultView);
     }
 }
 
@@ -67,7 +65,7 @@ void Texture::DestroyTexture()
     {
         if(image.image != VK_NULL_HANDLE)
         {
-            vkDestroyImageView(VkDeviceManager::GetDevice(), imageView, nullptr);
+            vkDestroyImageView(VkDeviceManager::GetDevice(), image.defaultView, nullptr);
             vmaDestroyImage(VkDeviceManager::GetAllocator(), image.image, image.allocation);
         }
     }
