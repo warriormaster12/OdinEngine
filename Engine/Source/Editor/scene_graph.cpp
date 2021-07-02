@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "scene_manager.h"
 #include "Include/properties_panel.h"
+#include <memory>
 #include <vector>
 
 
@@ -15,6 +16,8 @@ void SceneGraph::ShowSceneGraphWindow()
     ImGui::Begin("Scene Graph", &isActive, ImGuiWindowFlags_NoCollapse);
 
     static bool showAddOptions = false;
+    static bool showMesh = false;
+    static bool showEmpty = false;
     if(ImGui::Button("Add"))
     {
         if(showAddOptions == false)
@@ -30,21 +33,50 @@ void SceneGraph::ShowSceneGraphWindow()
     {
         if(ImGui::BeginMenu("select entity type"))
         {
-            static std::string name;
-            name.resize(32);
-            if(ImGui::InputText("entity name", name.data(), name.size(), ImGuiInputTextFlags_EnterReturnsTrue))
+            if(ImGui::MenuItem("empty"))
             {
-                SceneManager::GetScene("scene").AddEntity(name);
-                name = "";
-                showAddOptions = false;
+                showEmpty = true;
             }
-            if(ImGui::Button("Apply"))
+            if(ImGui::MenuItem("mesh"))
             {
-                SceneManager::GetScene("scene").AddEntity(name);
-                name = "";
-                showAddOptions = false;
+                showMesh = true;
             }
+            if(ImGui::MenuItem("light source"))
+            {
+
+            }
+            if(ImGui::MenuItem("camera"))
+            {
+                
+            }
+            
             ImGui::EndMenu();
+        }
+        static std::string name;
+        name.resize(32);
+        if(showEmpty)
+        {
+            if(ImGui::InputText("entity name", name.data(), name.size(), ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Apply") && name != "")
+            {
+                SceneManager::GetScene("scene").AddEntity(name);
+                SceneManager::GetScene("scene").GetEntity(name)->AddComponent(std::make_unique<Transform3D>(), "Transform3D");
+                name = "";
+                showAddOptions = false;
+                showEmpty = false;
+            }
+        }
+        if(showMesh)
+        {
+            if(ImGui::InputText("entity name", name.data(), name.size(), ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Apply") && name != "")
+            {
+                SceneManager::GetScene("scene").AddEntity(name);
+                SceneManager::GetScene("scene").GetEntity(name)->AddComponent(std::make_unique<Transform3D>(), "Transform3D");
+                SceneManager::GetScene("scene").GetEntity(name)->AddComponent(std::make_unique<MeshComponent>(), "Mesh");
+                SceneManager::GetScene("scene").GetEntity(name)->AddComponent(std::make_unique<MaterialComponent>(), "Material");
+                name = "";
+                showAddOptions = false;
+                showMesh = false;
+            }
         }
     }
 
