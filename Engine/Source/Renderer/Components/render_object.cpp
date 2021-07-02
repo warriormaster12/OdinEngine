@@ -117,14 +117,7 @@ void ObjectManager::RenderObjects(const bool& bindMaterials /*= true*/)
                         MaterialManager::GetMaterial(*currentDc.p_material).GetTextureUpdate() = false; 
                     }
                     else {
-                        if(MaterialManager::GetMaterial(*currentDc.p_material).GetTextures().size() != 0)
-                        {
-                            Renderer::BindShader("default textured world");
-                        }
-                        else 
-                        {
-                            Renderer::BindShader("default world");
-                        }
+                        Renderer::BindShader("default textured world");
                         MaterialManager::BindMaterial(*currentDc.p_material);
                         Renderer::BindUniforms("camera data", 0, 0, true);
                         Renderer::BindUniforms("object data", 1, MaterialManager::GetMaterial(*currentDc.p_material).offset);

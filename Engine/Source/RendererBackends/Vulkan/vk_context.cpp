@@ -484,7 +484,17 @@ void VulkanContext::CreateDescriptorSetImage(const std::string& descriptorName, 
     for(int i = 0; i < views.size(); i++)
     {
         VkDescriptorImageInfo info{};
-        info.sampler = *FindUnorderedMap(sampler, samplers);
+        if(FindUnorderedMap(sampler, samplers) != nullptr)
+        {
+            info.sampler = *FindUnorderedMap(sampler, samplers);
+        }
+        else {
+            CreateSampler("",VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT);
+            info.sampler = *FindUnorderedMap("", samplers);
+            mainDeletionQueue.PushFunction([=]{
+                vkDestroySampler(VkDeviceManager::GetDevice(), *FindUnorderedMap("", samplers), nullptr);
+            });
+        }
         info.imageView = views[i];
         info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.push_back(info);

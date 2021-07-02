@@ -26,6 +26,9 @@ struct GPUMaterialData
     glm::vec4 roughness; //float
     glm::vec4 ao; //float
 
+    glm::vec4 metallicChannelIndex; //int
+    glm::vec4 roughnessChannelIndex; //int
+
     glm::vec4 repeateCount;
 }materialData;
 
@@ -56,6 +59,9 @@ void MaterialManager::CreateMaterial(const std::string& materialName)
         
         FindUnorderedMap(materialName, materials)->UpdateMaterial();
         materialNameList.push_back(materialName);
+        std::vector<VkImageView> imageViews;
+        imageViews.resize(6);
+        Renderer::WriteShaderImage(materialName, "texture data layout", 0, "", imageViews);
         ENGINE_CORE_INFO("material by name {0} created", materialName);
     }
     else {
@@ -112,15 +118,13 @@ void MaterialManager::BindMaterial(const std::string& materialName)
         materialData.emission = glm::vec4(FindUnorderedMap(materialName, materials)->GetEmission());
         materialData.emissionPower = glm::vec4(FindUnorderedMap(materialName, materials)->GetEmissionPower());
         materialData.repeateCount = glm::vec4(FindUnorderedMap(materialName, materials)->GetRepeateCount());
+        materialData.metallicChannelIndex = glm::vec4(FindUnorderedMap(materialName, materials)->GetMetallicColorChannel());
+        materialData.roughnessChannelIndex = glm::vec4(FindUnorderedMap(materialName, materials)->GetRoughnessColorChannel());
         FindUnorderedMap(materialName, materials)->ResetUpdate();
         Renderer::UploadSingleUniformDataToShader("material buffer",materialData, false, offset);
     }
-
-    if(FindUnorderedMap(materialName, materials)->textureObjects.size() != 0)
-    {
-        Renderer::BindUniforms(materialName,2);
-        Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderedMap(materialName, materials)->textureCheck); 
-    }
+    Renderer::BindUniforms(materialName,2);
+    Renderer::BindPushConstants(SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(TextureCheck), &FindUnorderedMap(materialName, materials)->textureCheck);
 }
 
 void MaterialManager::DeleteMaterial(const std::string& materialName)

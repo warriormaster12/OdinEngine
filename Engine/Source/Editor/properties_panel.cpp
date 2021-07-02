@@ -23,6 +23,8 @@ struct MaterialProperties
     float emissionPower = 0.0f;
     float roughness = 0.5f;
     float metallic = 0.5f;
+    int metallicColorChannel = 0;
+    int roughnessColorChannel = 0;
     float ao = 1.0f;
     std::vector<std::string> textures;
     std::vector<ColorFormat> textureFormats;
@@ -161,182 +163,227 @@ void PropertiesPanel::ShowPropertiesPanelWindow(Entity& entity,const std::string
             }
             if(currentComponent == "Material")
             {
-                ImGui::BeginChild(currentComponent.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth(), 256), true);
-                static std::string filePath;
-                static bool editMaterial = false;
-                static std::string editMaterialName;
-                filePath.resize(64);
-                if(ImGui::BeginMenu("materials"))
+                ImGui::BeginChild(currentComponent.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth(), 570), true , ImGuiWindowFlags_NoScrollbar);
                 {
-                    static bool inputText = false;
-                    for(auto& currentMaterial : static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterials())
+                    static std::string filePath;
+                    static bool editMaterial = false;
+                    static std::string editMaterialName;
+                    filePath.resize(64);
+                    if(ImGui::BeginMenu("materials"))
                     {
-                        if(currentMaterial != "default material")
+                        static bool inputText = false;
+                        for(auto& currentMaterial : static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterials())
                         {
-                            if(ImGui::MenuItem(currentMaterial.c_str()))
+                            if(currentMaterial != "default material")
                             {
-                                editMaterial = true;
-                                editMaterialName = currentMaterial;
+                                if(ImGui::MenuItem(currentMaterial.c_str()))
+                                {
+                                    editMaterial = true;
+                                    editMaterialName = currentMaterial;
+                                    static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).SetMaterialName(editMaterialName);
+                                }
+                            }
+                        }
+                        if(ImGui::Button("create new"))
+                        {
+                            inputText = true;
+                        }
+                        if(inputText)
+                        {
+                            static std::string materialName;
+                            materialName.resize(64);
+                            if(ImGui::InputText("material name", materialName.data(), materialName.size(), ImGuiInputTextFlags_EnterReturnsTrue))
+                            {
+                                inputText = false;
+                                static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).CreateMaterial(materialName);
+                                if(FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName), materials) == nullptr)
+                                {
+                                    materials[&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName)];
+                                }
+                                editMaterialName = materialName;
                                 static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).SetMaterialName(editMaterialName);
+                                editMaterial = true;
+                                materialName = "";
                             }
-                        }
-                    }
-                    if(ImGui::Button("create new"))
-                    {
-                        inputText = true;
-                    }
-                    if(inputText)
-                    {
-                        static std::string materialName;
-                        materialName.resize(64);
-                        if(ImGui::InputText("material name", materialName.data(), materialName.size(), ImGuiInputTextFlags_EnterReturnsTrue))
-                        {
-                            inputText = false;
-                            static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).CreateMaterial(materialName);
-                            if(FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName), materials) == nullptr)
+                            if(ImGui::Button("Apply"))
                             {
-                                materials[&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName)];
-                            }
-                            editMaterialName = materialName;
-                            static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).SetMaterialName(editMaterialName);
-                            editMaterial = true;
-                            materialName = "";
-                        }
-                        if(ImGui::Button("Apply"))
-                        {
-                            inputText = false;
-                            static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).CreateMaterial(materialName);
-                            if(FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName), materials) == nullptr)
-                            {
-                                materials[&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName)];
-                            }
-                            editMaterialName = materialName;
-                            static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).SetMaterialName(editMaterialName);
-                            editMaterial = true;
-                            materialName = "";
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-                if(editMaterial)
-                {
-                    auto& currentMat = static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName);
-                    ImGui::BeginChild(editMaterialName.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth(), 256), true);
-                    auto& mat = *FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName), materials); 
-                    static bool addTextures = false;
-                    mat.textures.resize(6);
-                    mat.textureFormats.resize(6);
-                    if(ImGui::ColorEdit4("albedo", mat.albedo))
-                    {
-                        currentMat.SetColor(glm::vec4(mat.albedo[0], mat.albedo[1],mat.albedo[2],mat.albedo[3]));
-                    }
-                    if(ImGui::ColorEdit4("emission", mat.emission))
-                    {
-                        currentMat.SetEmission(glm::vec4(mat.emission[0], mat.emission[1],mat.emission[2],mat.emission[3]));
-                    }
-                    if(ImGui::DragFloat("emission power", &mat.emissionPower, 0.1f, 0.0f, 16.0f))
-                    {
-                        currentMat.SetEmissionPower(mat.emissionPower);
-                    }
-                    if(ImGui::DragFloat("ao", &mat.ao, 0.1f, 0.1f, 1.0f))
-                    {
-                        currentMat.SetAo(mat.ao);
-                    }
-                    if(ImGui::DragFloat("roughness", &mat.roughness, 0.1f, 0.1f, 1.0f))
-                    {
-                        currentMat.SetRoughness(mat.roughness);
-                    }
-                    if(ImGui::DragFloat("metallic", &mat.metallic, 0.1f, 0.1f, 1.0f))
-                    {
-                        currentMat.SetMetallic(mat.metallic);
-                    }
-                    if(ImGui::BeginMenu("albedo texture"))
-                    {
-                        for(auto& currentTexture : ProjectManager::ListTextures())
-                        {
-                            if(ImGui::MenuItem(currentTexture.c_str()))
-                            {
-                                mat.textures[0] = ProjectManager::GetTexture(currentTexture);
-                                mat.textureFormats[0] = SRGB8;
-                                addTextures = true;
+                                inputText = false;
+                                static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).CreateMaterial(materialName);
+                                if(FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName), materials) == nullptr)
+                                {
+                                    materials[&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(materialName)];
+                                }
+                                editMaterialName = materialName;
+                                static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).SetMaterialName(editMaterialName);
+                                editMaterial = true;
+                                materialName = "";
                             }
                         }
                         ImGui::EndMenu();
                     }
-                    if(ImGui::BeginMenu("emission texture"))
+                    if(editMaterial)
                     {
-                        for(auto& currentTexture : ProjectManager::ListTextures())
+                        auto& currentMat = static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName);
+                        ImGui::BeginChild(editMaterialName.c_str(), ImVec2(ImGui::GetWindowContentRegionWidth(), 540), true, ImGuiWindowFlags_NoScrollbar);
                         {
-                            if(ImGui::MenuItem(currentTexture.c_str()))
+                            auto& mat = *FindUnorderedMap(&static_cast<MaterialComponent&>(*entity.GetComponent(currentComponent)).GetMaterial(editMaterialName), materials); 
+                            static bool addTextures = false;
+                            mat.textures.resize(6);
+                            mat.textureFormats.resize(6);
+                            
+                            
+                            ImGui::BeginChild("albedo",ImVec2(ImGui::GetWindowContentRegionWidth(), 85), true, ImGuiWindowFlags_NoScrollbar);
                             {
-                                mat.textures[5] = ProjectManager::GetTexture(currentTexture);
-                                mat.textureFormats[5] = SRGB8;
-                                addTextures = true;
+                                if(ImGui::ColorEdit4("albedo", mat.albedo))
+                                {
+                                    currentMat.SetColor(glm::vec4(mat.albedo[0], mat.albedo[1],mat.albedo[2],mat.albedo[3]));
+                                }
+                                if(ImGui::BeginMenu("albedo texture"))
+                                {
+                                    for(auto& currentTexture : ProjectManager::ListTextures())
+                                    {
+                                        if(ImGui::MenuItem(currentTexture.c_str()))
+                                        {
+                                            mat.textures[0] = ProjectManager::GetTexture(currentTexture);
+                                            mat.textureFormats[0] = SRGB8;
+                                            addTextures = true;
+                                        }
+                                    }
+                                    ImGui::EndMenu();
+                                }
+                                
+                            }
+                            ImGui::EndChild();
+                            ImGui::BeginChild("emission",ImVec2(ImGui::GetWindowContentRegionWidth(), 85), true, ImGuiWindowFlags_NoScrollbar);
+                            {
+                                if(ImGui::ColorEdit4("emission", mat.emission))
+                                {
+                                    currentMat.SetEmission(glm::vec4(mat.emission[0], mat.emission[1],mat.emission[2],mat.emission[3]));
+                                }
+                                if(ImGui::DragFloat("emission power", &mat.emissionPower, 0.1f, 0.0f, 16.0f))
+                                {
+                                    currentMat.SetEmissionPower(mat.emissionPower);
+                                }
+                                if(ImGui::BeginMenu("emission texture"))
+                                {
+                                    for(auto& currentTexture : ProjectManager::ListTextures())
+                                    {
+                                        if(ImGui::MenuItem(currentTexture.c_str()))
+                                        {
+                                            mat.textures[5] = ProjectManager::GetTexture(currentTexture);
+                                            mat.textureFormats[5] = SRGB8;
+                                            addTextures = true;
+                                        }
+                                    }
+                                    ImGui::EndMenu();
+                                }
+                            }
+                            ImGui::EndChild();
+                            ImGui::BeginChild("normal",ImVec2(ImGui::GetWindowContentRegionWidth(), 85), true, ImGuiWindowFlags_NoScrollbar);
+                            {
+                                if(ImGui::BeginMenu("normal texture"))
+                                {
+                                    for(auto& currentTexture : ProjectManager::ListTextures())
+                                    {
+                                        if(ImGui::MenuItem(currentTexture.c_str()))
+                                        {
+                                            mat.textures[4] = ProjectManager::GetTexture(currentTexture);
+                                            mat.textureFormats[4] = UNORMRGB8;
+                                            addTextures = true;
+                                        }
+                                    }
+                                    ImGui::EndMenu();
+                                }
+                            }
+                            ImGui::EndChild();
+                            ImGui::BeginChild("metallic",ImVec2(ImGui::GetWindowContentRegionWidth(), 85), true, ImGuiWindowFlags_NoScrollbar);
+                            { 
+                                if(ImGui::DragFloat("metallic", &mat.metallic, 0.1f, 0.1f, 1.0f))
+                                {
+                                    currentMat.SetMetallic(mat.metallic);
+                                }
+                                const char* items[] = { "Red-Channel", "Green-Channel", "Blue-Channel"};
+                                if(ImGui::Combo("color channel", &mat.metallicColorChannel, items, IM_ARRAYSIZE(items)))
+                                {
+                                    MaterialManager::GetMaterial(editMaterialName).SetMetallicColorChannel(mat.metallicColorChannel);
+                                }
+                                if(ImGui::BeginMenu("metallic texture"))
+                                {
+                                    for(auto& currentTexture : ProjectManager::ListTextures())
+                                    {
+                                        if(ImGui::MenuItem(currentTexture.c_str()))
+                                        {
+                                            mat.textures[1] = ProjectManager::GetTexture(currentTexture);
+                                            mat.textureFormats[1] = UNORMRGB8;
+                                            addTextures = true;
+                                        }
+                                    }
+                                    ImGui::EndMenu();
+                                }
+                            }
+                            ImGui::EndChild();
+                            ImGui::BeginChild("roughness",ImVec2(ImGui::GetWindowContentRegionWidth(), 85), true, ImGuiWindowFlags_NoScrollbar);
+                            {
+                                if(ImGui::DragFloat("roughness", &mat.roughness, 0.1f, 0.1f, 1.0f))
+                                {
+                                    currentMat.SetRoughness(mat.roughness);
+                                }
+                                const char* items[] = { "Red-Channel", "Green-Channel", "Blue-Channel"};
+                                if(ImGui::Combo("color channel", &mat.roughnessColorChannel, items, IM_ARRAYSIZE(items)))
+                                {
+                                    MaterialManager::GetMaterial(editMaterialName).SetRoughnessColorChannel(mat.roughnessColorChannel);
+                                }
+                                if(ImGui::BeginMenu("roughness texture"))
+                                {
+                                    for(auto& currentTexture : ProjectManager::ListTextures())
+                                    {
+                                        if(ImGui::MenuItem(currentTexture.c_str()))
+                                        {
+                                            mat.textures[2] = ProjectManager::GetTexture(currentTexture);
+                                            mat.textureFormats[2] = UNORMRGB8;
+                                            addTextures = true;
+                                        }
+                                    }
+                                    ImGui::EndMenu();
+                                }
+                            }
+                            ImGui::EndChild();
+                            ImGui::BeginChild("ambient oclussion",ImVec2(ImGui::GetWindowContentRegionWidth(), 85), true, ImGuiWindowFlags_NoScrollbar);
+                            {
+                                if(ImGui::DragFloat("ao", &mat.ao, 0.1f, 0.1f, 1.0f))
+                                {
+                                    currentMat.SetAo(mat.ao);
+                                }
+                                if(ImGui::BeginMenu("ao texture"))
+                                {
+                                    for(auto& currentTexture : ProjectManager::ListTextures())
+                                    {
+                                        if(ImGui::MenuItem(currentTexture.c_str()))
+                                        {
+                                            mat.textures[3] = ProjectManager::GetTexture(currentTexture);
+                                            mat.textureFormats[3] = UNORMRGB8;
+                                            addTextures = true;
+                                        }
+                                    }
+                                    ImGui::EndMenu();
+                                }
+                            }
+                            ImGui::EndChild();
+                            
+                            if(addTextures)
+                            {
+                                currentMat.SetTextures(mat.textures, mat.textureFormats);
+                                MaterialManager::AddTextures(editMaterialName);
+                                addTextures = false;
                             }
                         }
-                        ImGui::EndMenu();
+                        ImGui::EndChild();   
+                        
                     }
-                    if(ImGui::BeginMenu("normal texture"))
-                    {
-                        for(auto& currentTexture : ProjectManager::ListTextures())
-                        {
-                            if(ImGui::MenuItem(currentTexture.c_str()))
-                            {
-                                mat.textures[4] = ProjectManager::GetTexture(currentTexture);
-                                mat.textureFormats[4] = UNORMRGB8;
-                                addTextures = true;
-                            }
-                        }
-                        ImGui::EndMenu();
-                    } 
-                    if(ImGui::BeginMenu("metallic texture"))
-                    {
-                        for(auto& currentTexture : ProjectManager::ListTextures())
-                        {
-                            if(ImGui::MenuItem(currentTexture.c_str()))
-                            {
-                                mat.textures[1] = ProjectManager::GetTexture(currentTexture);
-                                mat.textureFormats[1] = UNORMRGB8;
-                                addTextures = true;
-                            }
-                        }
-                        ImGui::EndMenu();
-                    }
-                    if(ImGui::BeginMenu("roughness texture"))
-                    {
-                        for(auto& currentTexture : ProjectManager::ListTextures())
-                        {
-                            if(ImGui::MenuItem(currentTexture.c_str()))
-                            {
-                                mat.textures[2] = ProjectManager::GetTexture(currentTexture);
-                                mat.textureFormats[2] = UNORMRGB8;
-                                addTextures = true;
-                            }
-                        }
-                        ImGui::EndMenu();
-                    }
-                    if(ImGui::BeginMenu("ao texture"))
-                    {
-                        for(auto& currentTexture : ProjectManager::ListTextures())
-                        {
-                            if(ImGui::MenuItem(currentTexture.c_str()))
-                            {
-                                mat.textures[3] = ProjectManager::GetTexture(currentTexture);
-                                mat.textureFormats[3] = UNORMRGB8;
-                                addTextures = true;
-                            }
-                        }
-                        ImGui::EndMenu();
-                    }   
-                    ImGui::EndChild();
-                    if(addTextures)
-                    {
-                        currentMat.SetTextures(mat.textures, mat.textureFormats);
-                        MaterialManager::AddTextures(editMaterialName);
-                        addTextures = false;
-                    }
+                    
                 }
                 ImGui::EndChild();
+                
             }
         }
     }

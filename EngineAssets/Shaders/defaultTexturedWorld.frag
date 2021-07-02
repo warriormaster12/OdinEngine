@@ -24,6 +24,9 @@ layout(set = 1, binding = 1) uniform MaterialData
     vec4 roughness; //float
     vec4 ao; //float
 
+    vec4 metallicChannelIndex; //int
+    vec4 roughnessChannelIndex; //int
+
     vec4 repeateCount; //int
 }materialData;
 
@@ -52,7 +55,7 @@ void main()
     vec3 N;
     if(PushConstants.textures[0] == 1)
     {
-        albedo = pow(texture(textureMaps[0], inUv).rgb, vec3(2.2));
+        albedo = pow(texture(textureMaps[0], inUv).rgb, vec3(2.2)) * vec3(materialData.albedo);
     }
     else
     {
@@ -60,7 +63,8 @@ void main()
     }
     if(PushConstants.textures[1] == 1)
     {
-        metallic  = texture(textureMaps[1], inUv).r;
+        vec4 inputTexture = texture(textureMaps[1], inUv);
+        metallic  = inputTexture[int(materialData.metallicChannelIndex)] * float(materialData.metallic);
     }
     else
     {
@@ -68,7 +72,8 @@ void main()
     }
     if(PushConstants.textures[2] == 1)
     {
-        roughness  = texture(textureMaps[2], inUv).r;
+        vec4 inputTexture = texture(textureMaps[2], inUv);
+        roughness  = inputTexture[int(materialData.roughnessChannelIndex)] * float(materialData.roughness);
     }
     else
     {
@@ -76,7 +81,7 @@ void main()
     }
     if(PushConstants.textures[3] == 1)
     {
-        ao = texture(textureMaps[3], inUv).r;
+        ao = texture(textureMaps[3], inUv).r * float(materialData.ao);
     }
     else
     {
@@ -104,7 +109,7 @@ void main()
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, vec3(materialData.albedo), float(materialData.metallic));
+    F0 = mix(F0, vec3(albedo), float(metallic));
 
     // reflectance equation
     vec3 Lo = vec3(0.0);

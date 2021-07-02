@@ -35,19 +35,6 @@ void GeometryPipeline::Init()
     
     Renderer::CreateShader({"EngineAssets/Shaders/defaultTexturedWorld.frag", "EngineAssets/Shaders/pbr_vert.vert"}, "default textured world", {"per frame layout", "per object layout", "texture data layout"},&descriptionInfo);
 
-    ShaderDescriptions descriptionInfo2;
-    descriptionInfo2.vertexLocations = {
-        {SRGB32,offsetof(Vertex, position)},
-        {SRG32, offsetof(Vertex, uv)},
-        {SRGB32,offsetof(Vertex, normal)}
-    };
-    descriptionInfo2.cullMode = CULL_MODE_BACK_BIT;
-    descriptionInfo2.depthTesting = true;
-    descriptionInfo2.depthCompareType = COMPARE_OP_LESS;
-    //descriptionInfo2.renderPassName = "test pass";
-
-    Renderer::CreateShader({"EngineAssets/Shaders/defaultWorld.frag", "EngineAssets/Shaders/pbr_vert.vert"}, "default world", {"per frame layout", "per object layout"},&descriptionInfo2);
-
     ShaderDescriptions descriptionInfo3;
     descriptionInfo3.vertexLocations = {
         {SRGB32,offsetof(Vertex, position)},

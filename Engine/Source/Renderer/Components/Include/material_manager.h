@@ -55,6 +55,11 @@ public:
     void SetMetallic(const float& input){metallic = input; updated = true;}
     float GetMetallic() {return metallic;}
 
+    void SetMetallicColorChannel(const float& input){metallicColorChannel = input; updated = true;}
+    int GetMetallicColorChannel(){return metallicColorChannel;}
+    void SetRoughnessColorChannel(const float& input){roughnessColorChannel = input; updated = true;}
+    int GetRoughnessColorChannel(){return roughnessColorChannel;}
+
     void ResetUpdate() {updated = false;}
     void UpdateMaterial() {updated = true;}
     bool isUpdated() { return updated;}
@@ -74,6 +79,9 @@ private:
     float roughness = 0.5f;
     float metallic = 0.5f;
     float ao = 1.0f;
+
+    int metallicColorChannel = 0;
+    int roughnessColorChannel = 0;
     
     std::vector<std::string> textures;
     std::vector<ColorFormat> textureFormats;
