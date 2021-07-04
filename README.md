@@ -1,6 +1,6 @@
 # Odin Engine
 ## Showcase video
-[![IMAGE ALT TEXT HERE](https://user-images.githubusercontent.com/33091666/124378971-1558c180-dcbd-11eb-9918-4f26cf29051f.png)](https://odysee.com/@OdinEngineDeveloper:4/Showcase1OdinEngine:7!)
+[![IMAGE ALT TEXT HERE](https://user-images.githubusercontent.com/33091666/124378971-1558c180-dcbd-11eb-9918-4f26cf29051f.png)](https://odysee.com/@OdinEngineDeveloper:4/Showcase1OdinEngine:7)
 ## Installation guide 
 
 ### Install the project and its dependencies
