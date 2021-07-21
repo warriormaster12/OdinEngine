@@ -12,5 +12,7 @@ struct Scene
     Entity* GetEntity(const std::string& name);
     std::vector<std::string>& GetEntities();
     void UpdateEntities(const float& deltaTime);
+    void RenameEntity(const std::string& oldName, const std::string& newName);
     void DestroyEntities();
+    void DestroyEntity(const std::string& name);
 };

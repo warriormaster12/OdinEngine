@@ -6,6 +6,11 @@
 
 #include <string>
 
+struct AABB {
+  glm::vec3 min {};
+  glm::vec3 max {};
+};
+
 class Camera {
 public:
 	Camera();
@@ -42,6 +47,10 @@ public:
 	glm::mat4 GetViewMatrix() const;
 	glm::mat4 GetProjectionMatrix(bool bReverse = false, bool flipY =true) const;
 	glm::mat4 GetRotationMatrix() const;
+
+	//void cull_AABBs_against_frustum(const std::vector<glm::mat4>& transforms,const std::vector<AABB>& aabb_list,std::vector<RenderObject>& out_visible_list);
+
+	bool TestAABBAgainstFrustum(glm::mat4& MVP);
 
 	bool& GetIsActive() {return isActive;}
 	void SetIsActive(const bool& input);

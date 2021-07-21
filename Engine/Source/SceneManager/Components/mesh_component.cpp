@@ -72,4 +72,5 @@ void MeshComponent::Update(const float& deltaTime)
 
 void MeshComponent::Destroy()
 {
+    
 }

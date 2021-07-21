@@ -51,5 +51,7 @@ void Entity::Destroy()
     {
         auto& currentComponent = *FindUnorderedMap(currentName, components);
         currentComponent->Destroy();
+        componentNames.clear();
+        components.erase(currentName);
     }
 }

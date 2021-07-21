@@ -263,6 +263,36 @@ void Camera::RenderCamera()
 	LightManager::Update();
 }
 
+bool Camera::TestAABBAgainstFrustum(glm::mat4& MVP)
+{
+	AABB aabb;
+    // Use our min max to define eight corners
+    glm::vec4 corners[8] = {
+        {aabb.min.x, aabb.min.y, aabb.min.z, 1.0}, // x y z
+        {aabb.max.x, aabb.min.y, aabb.min.z, 1.0}, // X y z
+        {aabb.min.x, aabb.max.y, aabb.min.z, 1.0}, // x Y z
+        {aabb.max.x, aabb.max.y, aabb.min.z, 1.0}, // X Y z
+
+        {aabb.min.x, aabb.min.y, aabb.max.z, 1.0}, // x y Z
+        {aabb.max.x, aabb.min.y, aabb.max.z, 1.0}, // X y Z
+        {aabb.min.x, aabb.max.y, aabb.max.z, 1.0}, // x Y Z
+        {aabb.max.x, aabb.max.y, aabb.max.z, 1.0}, // X Y Z
+    };
+
+    bool inside = false;
+
+    for (size_t corner_idx = 0; corner_idx < 8; corner_idx++) {
+        // Transform vertex
+        glm::vec4 corner = MVP * corners[corner_idx];
+        // Check vertex against clip space bounds
+        inside = inside ||
+            std::clamp(-corner.w, corner.x, corner.w) &&
+            std::clamp(-corner.w, corner.y, corner.w) &&
+            std::clamp(0.0f, corner.z, corner.w);
+    }
+    return inside;
+}
+
 
 glm::mat4 Camera::GetViewMatrix() const
 {

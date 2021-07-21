@@ -121,15 +121,32 @@ void SceneGraph::ShowSceneGraphWindow()
     if(showOptions == true)
     {
         static std::string entity = clickedEntity + " options";
+        static bool showRename = false;
         if(ImGui::BeginMenu(entity.c_str()))
         {
             if(ImGui::MenuItem("rename"))
             {
-
+                showRename = true;
             }
             if(ImGui::MenuItem("delete"))
             {
-
+                SceneManager::GetScene("scene").GetEntity(clickedEntity)->Destroy();
+                SceneManager::GetScene("scene").DestroyEntity(clickedEntity);
+                showOptions = false;
+            }
+            static std::string newName;
+            newName.resize(64);
+            if(ImGui::InputText("new name", newName.data(), newName.size(), ImGuiInputTextFlags_EnterReturnsTrue) && showRename == true && newName !="")
+            {
+                SceneManager::GetScene("scene").RenameEntity(clickedEntity, newName);
+                showRename = false;
+                showOptions = false;
+            }
+            else if(ImGui::Button("Apply") && showRename == true && newName !="")
+            {
+                SceneManager::GetScene("scene").RenameEntity(clickedEntity, newName);
+                showRename = false;
+                showOptions = false;
             }
             ImGui::EndMenu();
         }
